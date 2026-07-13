@@ -97,9 +97,10 @@ export function AppSidebar() {
                     </SidebarMenuItem>
                   );
                 })}
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
 
         <SidebarGroup className="mt-auto">
           {!collapsed && (
