@@ -1,39 +1,98 @@
-import { Search, Command, Download, Plus } from "lucide-react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { Bell, LogOut, Moon, Search, Sun, User } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useTheme } from "@/hooks/use-theme";
+import { toast } from "sonner";
+import { useState } from "react";
+import {
+  Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Fragment } from "react";
 
-export function Topbar({ title, subtitle }: { title: string; subtitle?: string }) {
+const routeLabels: Record<string, string> = {
+  "": "Dashboard", products: "Products", "new-collection": "New Collection",
+  b2b: "B2B Shop", "welcome-kits": "Welcome Kits", orders: "Orders",
+  samples: "Samples", status: "Order Updation", customers: "Customers",
+  agents: "B2B Agents", payments: "Payments", reviews: "Reviews",
+  analytics: "Analytics", settings: "Settings",
+};
+
+export function Topbar({ onSearch }: { onSearch?: (q: string) => void }) {
+  const { theme, toggle } = useTheme();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [q, setQ] = useState("");
+
+  const parts = pathname.split("/").filter(Boolean);
+  const crumbs = parts.length === 0 ? [{ label: "Dashboard", href: "/" }] : parts.map((p, i) => ({
+    label: routeLabels[p] ?? p.replace(/-/g, " "),
+    href: "/" + parts.slice(0, i + 1).join("/"),
+  }));
+
   return (
-    <header className="sticky top-0 z-30 glass border-b border-border">
-      <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
-        <SidebarTrigger className="shrink-0" />
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate font-display text-lg font-bold tracking-tight sm:text-xl">
-            {title}
-          </h1>
-          {subtitle && (
-            <p className="hidden truncate text-xs text-muted-foreground sm:block">{subtitle}</p>
-          )}
-        </div>
-
-        <div className="hidden items-center gap-2 rounded-full border border-border bg-background/60 px-3 py-1.5 text-sm text-muted-foreground md:flex md:w-72">
-          <Search className="h-4 w-4" />
-          <input
-            placeholder="Search orders, products, customers…"
-            className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground/70"
-          />
-          <kbd className="flex items-center gap-1 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-mono">
-            <Command className="h-3 w-3" /> K
-          </kbd>
-        </div>
-
-        <Button variant="outline" size="sm" className="hidden gap-1.5 sm:inline-flex">
-          <Download className="h-4 w-4" /> Export
-        </Button>
-        <Button size="sm" className="gap-1.5 bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90">
-          <Plus className="h-4 w-4" /> <span className="hidden sm:inline">New</span>
-        </Button>
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur">
+      <SidebarTrigger className="shrink-0" />
+      <div className="hidden min-w-0 flex-1 md:block">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild><Link to="/">Home</Link></BreadcrumbLink>
+            </BreadcrumbItem>
+            {crumbs.map((c, i) => (
+              <Fragment key={c.href}>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  {i === crumbs.length - 1
+                    ? <BreadcrumbPage className="capitalize">{c.label}</BreadcrumbPage>
+                    : <BreadcrumbLink asChild><Link to={c.href}>{c.label}</Link></BreadcrumbLink>}
+                </BreadcrumbItem>
+              </Fragment>
+            ))}
+          </BreadcrumbList>
+        </Breadcrumb>
       </div>
+
+      <div className="relative ml-auto hidden w-72 sm:block">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={q}
+          onChange={(e) => { setQ(e.target.value); onSearch?.(e.target.value); }}
+          placeholder="Search…"
+          className="pl-9"
+        />
+      </div>
+
+      <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
+        {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      </Button>
+      <Button variant="ghost" size="icon" onClick={() => toast("No new notifications")}>
+        <Bell className="h-4 w-4" />
+      </Button>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-9 gap-2 px-2">
+            <div className="grid h-7 w-7 place-items-center rounded-full bg-primary/10 text-primary">
+              <User className="h-4 w-4" />
+            </div>
+            <span className="hidden text-sm font-medium sm:inline">Admin</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-52">
+          <DropdownMenuLabel>Signed in as</DropdownMenuLabel>
+          <DropdownMenuItem disabled>admin@arreniux.com</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild><Link to="/settings">Settings</Link></DropdownMenuItem>
+          <DropdownMenuItem onClick={() => toast.success("Logged out (demo)")}>
+            <LogOut className="mr-2 h-4 w-4" /> Logout
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </header>
   );
 }
