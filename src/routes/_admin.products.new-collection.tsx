@@ -1,0 +1,90 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
+import { PageShell } from "@/components/admin/page-shell";
+import { DataTable, exportCsv, type Column } from "@/components/admin/data-table";
+import { StatusBadge } from "@/components/admin/status-badge";
+import { ConfirmButton } from "@/components/admin/confirm-button";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useCollection, inrFull, type NewCollectionProduct } from "@/lib/store";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/_admin/products/new-collection")({
+  head: () => ({ meta: [{ title: "New Collection — Arreniux Admin" }] }),
+  component: NewColl,
+});
+
+function NewColl() {
+  const { data, add, update, remove } = useCollection<NewCollectionProduct>("newCollection");
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<NewCollectionProduct | null>(null);
+  const [f, setF] = useState<any>({});
+
+  const openNew = () => { setEditing(null); setF({ code: "", name: "", material: "100% Cotton", description: "", samplePrice: 499, originalPrice: 2499, status: "Active", image: "" }); setOpen(true); };
+  const openEdit = (p: NewCollectionProduct) => { setEditing(p); setF(p); setOpen(true); };
+
+  const cols: Column<NewCollectionProduct>[] = [
+    { key: "code", header: "Code", render: (p) => <span className="font-mono text-xs">{p.code}</span> },
+    { key: "name", header: "Name", render: (p) => <span className="text-sm font-semibold">{p.name}</span>, sortable: true, getValue: (p) => p.name },
+    { key: "material", header: "Material", render: (p) => <span className="text-sm">{p.material}</span> },
+    { key: "sample", header: "Sample", render: (p) => <span className="num text-sm">{inrFull(p.samplePrice)}</span>, className: "text-right" },
+    { key: "price", header: "Original", render: (p) => <span className="num text-sm font-semibold">{inrFull(p.originalPrice)}</span>, className: "text-right" },
+    { key: "status", header: "Status", render: (p) => <StatusBadge value={p.status} /> },
+    { key: "actions", header: "", render: (p) => (
+      <div className="flex justify-end gap-1">
+        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
+        <ConfirmButton trigger={<Button size="icon" variant="ghost" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>}
+          onConfirm={() => { remove(p.id); toast.success("Deleted"); }} />
+      </div>
+    ), className: "text-right" },
+  ];
+
+  return (
+    <PageShell title="New Collection" subtitle="Seasonal drops & fresh launches"
+      actions={<Button onClick={openNew}><Plus className="mr-1 h-4 w-4" /> Add Item</Button>}>
+      <DataTable rows={data} columns={cols} searchKeys={["code", "name", "material"]}
+        onExport={() => { exportCsv("arreniux-new-collection.csv", data); toast.success("Exported"); }} />
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>{editing ? "Edit" : "Add"} New Collection Item</DialogTitle></DialogHeader>
+          <div className="grid gap-4 md:grid-cols-2">
+            <F label="Code"><Input value={f.code} onChange={(e) => setF({ ...f, code: e.target.value })} /></F>
+            <F label="Name"><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></F>
+            <F label="Material"><Input value={f.material} onChange={(e) => setF({ ...f, material: e.target.value })} /></F>
+            <F label="Status">
+              <Select value={f.status} onValueChange={(v) => setF({ ...f, status: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="Active">Active</SelectItem><SelectItem value="Inactive">Inactive</SelectItem></SelectContent>
+              </Select>
+            </F>
+            <F label="Sample Price"><Input type="number" value={f.samplePrice} onChange={(e) => setF({ ...f, samplePrice: +e.target.value })} /></F>
+            <F label="Original Price"><Input type="number" value={f.originalPrice} onChange={(e) => setF({ ...f, originalPrice: +e.target.value })} /></F>
+            <F label="Image (demo)"><Input type="file" accept="image/*" onChange={(e) => {
+              const file = e.target.files?.[0]; if (!file) return;
+              const rd = new FileReader(); rd.onload = () => setF({ ...f, image: rd.result }); rd.readAsDataURL(file);
+            }} /></F>
+          </div>
+          <F label="Description"><Textarea rows={3} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></F>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button onClick={() => {
+              if (editing) { update(editing.id, f); toast.success("Updated"); }
+              else { add({ ...f, createdAt: new Date().toISOString().slice(0, 10) } as any); toast.success("Added"); }
+              setOpen(false);
+            }}>{editing ? "Save" : "Add"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </PageShell>
+  );
+}
+
+function F({ label, children }: { label: string; children: React.ReactNode }) {
+  return <div className="space-y-1.5"><Label className="text-xs">{label}</Label>{children}</div>;
+}
