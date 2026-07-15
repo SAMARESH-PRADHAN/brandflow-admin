@@ -1,103 +1,61 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { Eye, Pencil, Printer } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { Eye, Download } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
-import { SectionCard } from "@/components/admin/section-card";
+import { DataTable, exportCsv, type Column } from "@/components/admin/data-table";
 import { StatusBadge } from "@/components/admin/status-badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import { orders, inr } from "@/lib/demo-data";
+import { useCollection, inrFull, type Order } from "@/lib/store";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_admin/orders")({
-  head: () => ({
-    meta: [
-      { title: "Orders — ARRHENIUX ERP" },
-      { name: "description", content: "All order channels — Categories, Bulk, Sample, B2B, and New Collection." },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Orders — Arreniux Admin" }] }),
   component: OrdersPage,
 });
 
-const tabs = [
-  { value: "all", label: "All Orders", count: orders.length },
-  { value: "Categories", label: "Categories", count: orders.filter((o) => o.type === "Categories").length },
-  { value: "Bulk", label: "Bulk", count: orders.filter((o) => o.type === "Bulk").length },
-  { value: "Sample", label: "Sample", count: orders.filter((o) => o.type === "Sample").length },
-  { value: "B2B", label: "B2B", count: orders.filter((o) => o.type === "B2B").length },
-  { value: "New Collection", label: "New Collection", count: orders.filter((o) => o.type === "New Collection").length },
-];
-
 function OrdersPage() {
+  const { data } = useCollection<Order>("orders");
+  const [tab, setTab] = useState<"All" | Order["type"]>("All");
+  const filtered = useMemo(() => tab === "All" ? data : data.filter((o) => o.type === tab), [data, tab]);
+
+  const cols: Column<Order>[] = [
+    { key: "id", header: "Order ID", render: (o) => <span className="font-mono text-xs">{o.id}</span>, sortable: true, getValue: (o) => o.id },
+    { key: "customer", header: "Customer", render: (o) => (
+      <div><div className="text-sm font-semibold">{o.customer}</div><div className="text-[11px] text-muted-foreground">{o.phone}</div></div>
+    ) },
+    { key: "type", header: "Type", render: (o) => <StatusBadge value={o.type} /> },
+    { key: "date", header: "Date", render: (o) => <span className="text-xs text-muted-foreground">{o.date}</span>, sortable: true, getValue: (o) => o.date },
+    { key: "amount", header: "Amount", render: (o) => <span className="num text-sm font-semibold">{inrFull(o.qty * o.unitPrice)}</span>, sortable: true, getValue: (o) => o.qty * o.unitPrice, className: "text-right" },
+    { key: "payment", header: "Payment", render: (o) => <StatusBadge value={o.paymentStatus} /> },
+    { key: "status", header: "Status", render: (o) => <StatusBadge value={o.status} /> },
+    { key: "address", header: "Ships to", render: (o) => <span className="line-clamp-1 max-w-[200px] text-xs text-muted-foreground">{o.address}</span> },
+    { key: "actions", header: "", render: (o) => (
+      <Button asChild size="sm" variant="outline"><Link to="/orders/$id" params={{ id: o.id }}><Eye className="mr-1 h-3.5 w-3.5" /> Details</Link></Button>
+    ), className: "text-right" },
+  ];
+
   return (
-    <PageShell title="Order Management" subtitle="Every booking, every channel, every status" tabs={tabs}>
-      {(tab, q) => {
-        const rows = orders.filter((o) => {
-          if (tab !== "all" && o.type !== tab) return false;
-          if (q && !o.id.toLowerCase().includes(q.toLowerCase()) && !o.customer.toLowerCase().includes(q.toLowerCase())) return false;
-          return true;
-        });
-        return <OrderTable rows={rows} />;
-      }}
+    <PageShell title="All Orders" subtitle="Normal, Bulk, B2B and New Collection orders in one place">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+        <TabsList className="flex-wrap">
+          <TabsTrigger value="All">All ({data.length})</TabsTrigger>
+          <TabsTrigger value="Normal">Normal ({data.filter((o) => o.type === "Normal").length})</TabsTrigger>
+          <TabsTrigger value="Bulk">Bulk ({data.filter((o) => o.type === "Bulk").length})</TabsTrigger>
+          <TabsTrigger value="B2B">B2B ({data.filter((o) => o.type === "B2B").length})</TabsTrigger>
+          <TabsTrigger value="New Collection">New Collection ({data.filter((o) => o.type === "New Collection").length})</TabsTrigger>
+        </TabsList>
+        <TabsContent value={tab} className="mt-4">
+          <DataTable rows={filtered} columns={cols} pageSize={10}
+            searchKeys={["id", "customer", "phone", "productName"]}
+            onExport={() => {
+              exportCsv(`arreniux-orders-${tab.toLowerCase()}.csv`,
+                filtered.map((o) => ({ id: o.id, customer: o.customer, phone: o.phone, type: o.type, date: o.date, qty: o.qty, amount: o.qty * o.unitPrice, payment: o.paymentStatus, status: o.status })));
+              toast.success("Exported");
+            }}
+          />
+        </TabsContent>
+      </Tabs>
     </PageShell>
-  );
-}
-
-function OrderTable({ rows }: { rows: typeof orders }) {
-  const totals = useMemo(() => ({
-    revenue: rows.reduce((a, b) => a + b.amount, 0),
-    orders: rows.length,
-  }), [rows]);
-
-  return (
-    <SectionCard
-      title={`${totals.orders} orders`}
-      subtitle={`Gross value ${inr(totals.revenue)}`}
-    >
-      <div className="overflow-x-auto scroll-thin">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Order ID</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Product</TableHead>
-              <TableHead className="text-right">Qty</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Payment</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead className="w-24"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.slice(0, 20).map((o) => (
-              <TableRow key={o.id} className="group">
-                <TableCell className="font-mono text-xs">{o.id}</TableCell>
-                <TableCell>
-                  <div className="text-sm font-semibold">{o.customer}</div>
-                  <div className="text-[11px] text-muted-foreground">{o.company}</div>
-                </TableCell>
-                <TableCell className="max-w-[200px] truncate text-sm">{o.product}</TableCell>
-                <TableCell className="text-right num">{o.qty}</TableCell>
-                <TableCell className="text-right num font-semibold">{inr(o.amount)}</TableCell>
-                <TableCell><StatusBadge value={o.type} /></TableCell>
-                <TableCell><StatusBadge value={o.paymentStatus} /></TableCell>
-                <TableCell><StatusBadge value={o.status} /></TableCell>
-                <TableCell className="text-xs text-muted-foreground">{o.date}</TableCell>
-                <TableCell>
-                  <div className="flex justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                    <Button size="icon" variant="ghost" className="h-8 w-8"><Eye className="h-4 w-4" /></Button>
-                    <Button size="icon" variant="ghost" className="h-8 w-8"><Pencil className="h-4 w-4" /></Button>
-                    <Button size="icon" variant="ghost" className="h-8 w-8"><Printer className="h-4 w-4" /></Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </SectionCard>
   );
 }

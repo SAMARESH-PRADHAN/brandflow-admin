@@ -1,39 +1,40 @@
 import { cn } from "@/lib/utils";
 
 const map: Record<string, string> = {
-  Paid: "bg-success/10 text-success ring-success/20",
-  Pending: "bg-warning/15 text-warning ring-warning/25",
-  Partial: "bg-info/10 text-info ring-info/20",
-  Failed: "bg-destructive/10 text-destructive ring-destructive/20",
-  Completed: "bg-success/10 text-success ring-success/20",
-  Delivered: "bg-chart-2/10 text-chart-2 ring-chart-2/20",
-  Processing: "bg-info/10 text-info ring-info/20",
-  Cancelled: "bg-destructive/10 text-destructive ring-destructive/20",
-  Approved: "bg-success/10 text-success ring-success/20",
-  Rejected: "bg-destructive/10 text-destructive ring-destructive/20",
-  Bulk: "bg-chart-2/10 text-chart-2 ring-chart-2/20",
-  Sample: "bg-warning/15 text-warning ring-warning/25",
-  B2B: "bg-chart-5/10 text-chart-5 ring-chart-5/20",
-  Categories: "bg-primary/10 text-primary ring-primary/20",
-  "New Collection": "bg-info/10 text-info ring-info/20",
-  Premium: "bg-primary/10 text-primary ring-primary/20",
-  Regular: "bg-muted text-muted-foreground ring-border",
-  Product: "bg-primary/10 text-primary ring-primary/20",
-  Company: "bg-chart-2/10 text-chart-2 ring-chart-2/20",
-  "B2B Agent": "bg-chart-5/10 text-chart-5 ring-chart-5/20",
-  Retail: "bg-muted text-muted-foreground ring-border",
+  // Order status
+  Placed: "bg-muted text-foreground",
+  Confirmed: "bg-info/10 text-info",
+  "In Production": "bg-warning/15 text-warning",
+  Shipped: "bg-chart-5/10 text-chart-5",
+  Delivered: "bg-success/10 text-success",
+  Cancelled: "bg-destructive/10 text-destructive",
+  // Payments
+  Paid: "bg-success/10 text-success",
+  Pending: "bg-warning/15 text-warning",
+  Partial: "bg-info/10 text-info",
+  Failed: "bg-destructive/10 text-destructive",
+  Refunded: "bg-muted text-muted-foreground",
+  // Order types
+  Normal: "bg-secondary text-foreground",
+  Bulk: "bg-info/10 text-info",
+  B2B: "bg-chart-5/10 text-chart-5",
+  "New Collection": "bg-primary/10 text-primary",
+  Sample: "bg-warning/15 text-warning",
+  // Product / user
+  Active: "bg-success/10 text-success",
+  Inactive: "bg-muted text-muted-foreground",
+  Approved: "bg-success/10 text-success",
+  Rejected: "bg-destructive/10 text-destructive",
+  Retail: "bg-info/10 text-info",
+  "B2B Agent": "bg-chart-5/10 text-chart-5",
+  Premium: "bg-primary/10 text-primary",
+  Regular: "bg-secondary text-foreground",
+  Others: "bg-muted text-muted-foreground",
 };
 
 export function StatusBadge({ value }: { value: string }) {
-  const cls = map[value] ?? "bg-muted text-muted-foreground ring-border";
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
-        cls,
-      )}
-    >
-      <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
+    <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold", map[value] ?? "bg-muted text-muted-foreground")}>
       {value}
     </span>
   );

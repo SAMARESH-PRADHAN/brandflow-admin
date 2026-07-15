@@ -72,17 +72,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "ARRHENIUX ERP — Admin Dashboard" },
+      { title: "Arreniux Admin Panel" },
       {
         name: "description",
         content:
-          "Premium ERP admin dashboard for ARRHENIUX corporate uniforms and custom merchandise — orders, products, analytics, and reports in one command center.",
+          "Premium frontend-only admin panel for Arreniux e-commerce — products, orders, customers, payments, reviews and analytics.",
       },
-      { name: "author", content: "ARRHENIUX" },
-      { property: "og:title", content: "ARRHENIUX ERP — Admin Dashboard" },
+      { name: "author", content: "Arreniux" },
+      { property: "og:title", content: "Arreniux Admin Panel" },
       {
         property: "og:description",
-        content: "The command center for premium corporate uniform operations.",
+        content: "Premium admin panel for Arreniux e-commerce with realistic demo data.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
