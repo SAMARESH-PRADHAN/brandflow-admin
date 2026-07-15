@@ -17,6 +17,9 @@ import { Route as AdminPaymentsRouteImport } from './routes/_admin.payments'
 import { Route as AdminOrdersRouteImport } from './routes/_admin.orders'
 import { Route as AdminCustomersRouteImport } from './routes/_admin.customers'
 import { Route as AdminAnalyticsRouteImport } from './routes/_admin.analytics'
+import { Route as AdminProductsWelcomeKitsRouteImport } from './routes/_admin.products.welcome-kits'
+import { Route as AdminProductsNewCollectionRouteImport } from './routes/_admin.products.new-collection'
+import { Route as AdminProductsB2bRouteImport } from './routes/_admin.products.b2b'
 
 const AdminRoute = AdminRouteImport.update({
   id: '/_admin',
@@ -57,6 +60,23 @@ const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminProductsWelcomeKitsRoute =
+  AdminProductsWelcomeKitsRouteImport.update({
+    id: '/welcome-kits',
+    path: '/welcome-kits',
+    getParentRoute: () => AdminProductsRoute,
+  } as any)
+const AdminProductsNewCollectionRoute =
+  AdminProductsNewCollectionRouteImport.update({
+    id: '/new-collection',
+    path: '/new-collection',
+    getParentRoute: () => AdminProductsRoute,
+  } as any)
+const AdminProductsB2bRoute = AdminProductsB2bRouteImport.update({
+  id: '/b2b',
+  path: '/b2b',
+  getParentRoute: () => AdminProductsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AdminIndexRoute
@@ -64,17 +84,23 @@ export interface FileRoutesByFullPath {
   '/customers': typeof AdminCustomersRoute
   '/orders': typeof AdminOrdersRoute
   '/payments': typeof AdminPaymentsRoute
-  '/products': typeof AdminProductsRoute
+  '/products': typeof AdminProductsRouteWithChildren
   '/reviews': typeof AdminReviewsRoute
+  '/products/b2b': typeof AdminProductsB2bRoute
+  '/products/new-collection': typeof AdminProductsNewCollectionRoute
+  '/products/welcome-kits': typeof AdminProductsWelcomeKitsRoute
 }
 export interface FileRoutesByTo {
   '/analytics': typeof AdminAnalyticsRoute
   '/customers': typeof AdminCustomersRoute
   '/orders': typeof AdminOrdersRoute
   '/payments': typeof AdminPaymentsRoute
-  '/products': typeof AdminProductsRoute
+  '/products': typeof AdminProductsRouteWithChildren
   '/reviews': typeof AdminReviewsRoute
   '/': typeof AdminIndexRoute
+  '/products/b2b': typeof AdminProductsB2bRoute
+  '/products/new-collection': typeof AdminProductsNewCollectionRoute
+  '/products/welcome-kits': typeof AdminProductsWelcomeKitsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -83,9 +109,12 @@ export interface FileRoutesById {
   '/_admin/customers': typeof AdminCustomersRoute
   '/_admin/orders': typeof AdminOrdersRoute
   '/_admin/payments': typeof AdminPaymentsRoute
-  '/_admin/products': typeof AdminProductsRoute
+  '/_admin/products': typeof AdminProductsRouteWithChildren
   '/_admin/reviews': typeof AdminReviewsRoute
   '/_admin/': typeof AdminIndexRoute
+  '/_admin/products/b2b': typeof AdminProductsB2bRoute
+  '/_admin/products/new-collection': typeof AdminProductsNewCollectionRoute
+  '/_admin/products/welcome-kits': typeof AdminProductsWelcomeKitsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -97,6 +126,9 @@ export interface FileRouteTypes {
     | '/payments'
     | '/products'
     | '/reviews'
+    | '/products/b2b'
+    | '/products/new-collection'
+    | '/products/welcome-kits'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/analytics'
@@ -106,6 +138,9 @@ export interface FileRouteTypes {
     | '/products'
     | '/reviews'
     | '/'
+    | '/products/b2b'
+    | '/products/new-collection'
+    | '/products/welcome-kits'
   id:
     | '__root__'
     | '/_admin'
@@ -116,6 +151,9 @@ export interface FileRouteTypes {
     | '/_admin/products'
     | '/_admin/reviews'
     | '/_admin/'
+    | '/_admin/products/b2b'
+    | '/_admin/products/new-collection'
+    | '/_admin/products/welcome-kits'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -180,15 +218,52 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/products/welcome-kits': {
+      id: '/_admin/products/welcome-kits'
+      path: '/welcome-kits'
+      fullPath: '/products/welcome-kits'
+      preLoaderRoute: typeof AdminProductsWelcomeKitsRouteImport
+      parentRoute: typeof AdminProductsRoute
+    }
+    '/_admin/products/new-collection': {
+      id: '/_admin/products/new-collection'
+      path: '/new-collection'
+      fullPath: '/products/new-collection'
+      preLoaderRoute: typeof AdminProductsNewCollectionRouteImport
+      parentRoute: typeof AdminProductsRoute
+    }
+    '/_admin/products/b2b': {
+      id: '/_admin/products/b2b'
+      path: '/b2b'
+      fullPath: '/products/b2b'
+      preLoaderRoute: typeof AdminProductsB2bRouteImport
+      parentRoute: typeof AdminProductsRoute
+    }
   }
 }
+
+interface AdminProductsRouteChildren {
+  AdminProductsB2bRoute: typeof AdminProductsB2bRoute
+  AdminProductsNewCollectionRoute: typeof AdminProductsNewCollectionRoute
+  AdminProductsWelcomeKitsRoute: typeof AdminProductsWelcomeKitsRoute
+}
+
+const AdminProductsRouteChildren: AdminProductsRouteChildren = {
+  AdminProductsB2bRoute: AdminProductsB2bRoute,
+  AdminProductsNewCollectionRoute: AdminProductsNewCollectionRoute,
+  AdminProductsWelcomeKitsRoute: AdminProductsWelcomeKitsRoute,
+}
+
+const AdminProductsRouteWithChildren = AdminProductsRoute._addFileChildren(
+  AdminProductsRouteChildren,
+)
 
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminCustomersRoute: typeof AdminCustomersRoute
   AdminOrdersRoute: typeof AdminOrdersRoute
   AdminPaymentsRoute: typeof AdminPaymentsRoute
-  AdminProductsRoute: typeof AdminProductsRoute
+  AdminProductsRoute: typeof AdminProductsRouteWithChildren
   AdminReviewsRoute: typeof AdminReviewsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -198,7 +273,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCustomersRoute: AdminCustomersRoute,
   AdminOrdersRoute: AdminOrdersRoute,
   AdminPaymentsRoute: AdminPaymentsRoute,
-  AdminProductsRoute: AdminProductsRoute,
+  AdminProductsRoute: AdminProductsRouteWithChildren,
   AdminReviewsRoute: AdminReviewsRoute,
   AdminIndexRoute: AdminIndexRoute,
 }

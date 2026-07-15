@@ -1,169 +1,200 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { Download, IndianRupee, ShoppingCart, Users, Package, TrendingUp, ClipboardList } from "lucide-react";
 import {
-  ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip,
-  BarChart, Bar, PieChart, Pie, Cell, Legend, RadarChart, PolarGrid,
-  PolarAngleAxis, PolarRadiusAxis, Radar,
+  ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, Tooltip, CartesianGrid, Legend,
 } from "recharts";
-import { Topbar } from "@/components/admin/topbar";
+import { PageShell } from "@/components/admin/page-shell";
+import { KpiCard } from "@/components/admin/kpi-card";
 import { SectionCard } from "@/components/admin/section-card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-  revenueMonthly, categorySales, orderTypeBreakdown, customerGrowth,
-  paymentStatusBreakdown, orderStatusBreakdown, inr, topProducts,
-} from "@/lib/demo-data";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useCollection, inr, inrFull, type Order, type Customer, type Product, type Payment } from "@/lib/store";
+import { exportCsv } from "@/components/admin/data-table";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_admin/analytics")({
-  head: () => ({
-    meta: [
-      { title: "Analytics — ARRHENIUX ERP" },
-      { name: "description", content: "Advanced analytics across revenue, sales, customers, products, orders, and every commerce channel." },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Analytics — Arreniux Admin" }] }),
   component: AnalyticsPage,
 });
 
-const CHART_COLORS = [
-  "var(--color-primary)", "var(--color-chart-2)", "var(--color-chart-3)",
-  "var(--color-chart-4)", "var(--color-chart-5)", "var(--color-chart-6)",
-];
-
-const modules = [
-  { key: "revenue", label: "Revenue" },
-  { key: "sales", label: "Sales" },
-  { key: "customer", label: "Customer" },
-  { key: "product", label: "Product" },
-  { key: "order", label: "Order" },
-  { key: "payment", label: "Payment" },
-  { key: "b2b", label: "B2B" },
-  { key: "sample", label: "Sample" },
-  { key: "newcol", label: "New Collection" },
-  { key: "arx", label: "ARRHENIUX" },
-];
+const COLORS = ["hsl(354 78% 47%)", "hsl(0 0% 12%)", "hsl(152 65% 40%)", "hsl(35 92% 50%)", "hsl(217 91% 55%)", "hsl(280 65% 50%)"];
 
 function AnalyticsPage() {
+  const { data: orders } = useCollection<Order>("orders");
+  const { data: samples } = useCollection<Order>("sampleOrders");
+  const { data: customers } = useCollection<Customer>("customers");
+  const { data: products } = useCollection<Product>("products");
+  const { data: payments } = useCollection<Payment>("payments");
+  const [range, setRange] = useState("Monthly");
+
+  const filtered = useMemo(() => {
+    const days = range === "Daily" ? 1 : range === "Weekly" ? 7 : range === "Monthly" ? 30 : range === "Yearly" ? 365 : 9999;
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
+    return orders.filter((o) => new Date(o.date) >= cutoff);
+  }, [orders, range]);
+
+  const revenue = filtered.reduce((a, o) => a + o.qty * o.unitPrice, 0);
+  const stats = { revenue, orders: filtered.length, customers: customers.length, productsSold: filtered.reduce((a, o) => a + o.qty, 0), aov: filtered.length ? revenue / filtered.length : 0, samples: samples.length };
+
+  const monthly = useMemo(() => {
+    const m: Record<string, { label: string; revenue: number; orders: number }> = {};
+    for (const o of orders) {
+      const k = o.date.slice(0, 7);
+      m[k] ??= { label: k, revenue: 0, orders: 0 };
+      m[k].revenue += o.qty * o.unitPrice;
+      m[k].orders += 1;
+    }
+    return Object.values(m).sort((a, b) => a.label.localeCompare(b.label)).slice(-12);
+  }, [orders]);
+
+  const catSales = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const o of filtered) m[o.category] = (m[o.category] ?? 0) + o.qty * o.unitPrice;
+    return Object.entries(m).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  }, [filtered]);
+
+  const topProducts = useMemo(() => {
+    const m: Record<string, { name: string; qty: number; revenue: number }> = {};
+    for (const o of filtered) {
+      m[o.productId] ??= { name: o.productName, qty: 0, revenue: 0 };
+      m[o.productId]!.qty += o.qty;
+      m[o.productId]!.revenue += o.qty * o.unitPrice;
+    }
+    return Object.values(m).sort((a, b) => b.revenue - a.revenue).slice(0, 6);
+  }, [filtered]);
+
+  const topCustomers = useMemo(() => {
+    const m: Record<string, { name: string; total: number }> = {};
+    for (const o of filtered) {
+      m[o.customerId] ??= { name: o.customer, total: 0 };
+      m[o.customerId]!.total += o.qty * o.unitPrice;
+    }
+    return Object.values(m).sort((a, b) => b.total - a.total).slice(0, 6);
+  }, [filtered]);
+
+  const orderTypes = useMemo(() =>
+    (["Normal", "Bulk", "B2B", "New Collection"] as const).map((t) => ({ name: t, value: filtered.filter((o) => o.type === t).length })),
+  [filtered]);
+
+  const payMethod = useMemo(() => {
+    const methods = ["UPI", "Credit Card", "Net Banking", "COD", "Wallet"];
+    return methods.map((m) => ({ name: m, value: payments.filter((p) => p.method === m).length }));
+  }, [payments]);
+
   return (
-    <>
-      <Topbar title="Analytics" subtitle="Deep dives across every dimension of the business" />
-      <main className="mx-auto w-full max-w-[1600px] space-y-6 p-4 sm:p-6 lg:p-8">
-        <Tabs defaultValue="revenue">
-          <TabsList className="h-11 flex-wrap gap-1 rounded-full bg-muted p-1">
-            {modules.map((m) => (
-              <TabsTrigger key={m.key} value={m.key} className="h-9 rounded-full px-4 text-xs">{m.label}</TabsTrigger>
+    <PageShell title="Analytics" subtitle="Business performance & trend analysis"
+      actions={<Button onClick={() => {
+        exportCsv("arreniux-analytics-report.csv", monthly);
+        toast.success("Report downloaded");
+      }}><Download className="mr-1 h-4 w-4" /> Download Report</Button>}>
+      <Tabs value={range} onValueChange={setRange}>
+        <TabsList>
+          <TabsTrigger value="Daily">Daily</TabsTrigger>
+          <TabsTrigger value="Weekly">Weekly</TabsTrigger>
+          <TabsTrigger value="Monthly">Monthly</TabsTrigger>
+          <TabsTrigger value="Yearly">Yearly</TabsTrigger>
+          <TabsTrigger value="All">All Time</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+        <KpiCard label="Revenue" value={inr(stats.revenue)} icon={IndianRupee} tone="primary" delta={12.4} index={0} />
+        <KpiCard label="Orders" value={stats.orders} icon={ShoppingCart} tone="info" delta={8.1} index={1} />
+        <KpiCard label="Customers" value={stats.customers} icon={Users} tone="success" delta={4.5} index={2} />
+        <KpiCard label="Products Sold" value={stats.productsSold} icon={Package} tone="chart-5" delta={9.3} index={3} />
+        <KpiCard label="Avg Order Value" value={inr(stats.aov)} icon={TrendingUp} tone="warning" delta={2.7} index={4} />
+        <KpiCard label="Sample Orders" value={stats.samples} icon={ClipboardList} tone="destructive" index={5} />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <SectionCard title="Revenue Trend" className="lg:col-span-2">
+          <div className="h-72">
+            <ResponsiveContainer>
+              <LineChart data={monthly}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 90%)" />
+                <XAxis dataKey="label" stroke="hsl(0 0% 45%)" fontSize={11} />
+                <YAxis stroke="hsl(0 0% 45%)" fontSize={11} tickFormatter={inr} />
+                <Tooltip formatter={(v: number) => inrFull(v)} />
+                <Line type="monotone" dataKey="revenue" stroke="hsl(354 78% 47%)" strokeWidth={2.5} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </SectionCard>
+        <SectionCard title="Order Types">
+          <div className="h-72">
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie data={orderTypes} dataKey="value" nameKey="name" outerRadius={80} innerRadius={45}>
+                  {orderTypes.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                </Pie>
+                <Tooltip /><Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Sales by Category" className="lg:col-span-2">
+          <div className="h-64">
+            <ResponsiveContainer>
+              <BarChart data={catSales}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 90%)" />
+                <XAxis dataKey="name" stroke="hsl(0 0% 45%)" fontSize={10} interval={0} angle={-15} textAnchor="end" height={60} />
+                <YAxis stroke="hsl(0 0% 45%)" fontSize={11} tickFormatter={inr} />
+                <Tooltip formatter={(v: number) => inrFull(v)} />
+                <Bar dataKey="value" fill="hsl(354 78% 47%)" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Payment Methods">
+          <div className="h-64">
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie data={payMethod} dataKey="value" nameKey="name" outerRadius={80}>
+                  {payMethod.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                </Pie>
+                <Tooltip /><Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Top Products" className="lg:col-span-1">
+          <div className="space-y-2">
+            {topProducts.map((p, i) => (
+              <div key={i} className="flex items-center justify-between rounded-lg border border-border p-2.5">
+                <div className="min-w-0"><div className="truncate text-xs font-semibold">{p.name}</div><div className="text-[11px] text-muted-foreground">{p.qty} sold</div></div>
+                <span className="num text-xs font-semibold">{inr(p.revenue)}</span>
+              </div>
             ))}
-          </TabsList>
+          </div>
+        </SectionCard>
 
-          <TabsContent value="revenue" className="mt-6 grid gap-6 lg:grid-cols-2">
-            <SectionCard title="Revenue over 12 months" subtitle="Current vs previous year">
-              <ChartBox>
-                <LineChart data={revenueMonthly}>
-                  <CartesianGrid strokeDasharray="3 6" stroke="var(--color-border)" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={inr} width={60} />
-                  <Tooltip formatter={(v: number) => inr(v)} />
-                  <Legend />
-                  <Line type="monotone" dataKey="current" stroke="var(--color-primary)" strokeWidth={2.5} />
-                  <Line type="monotone" dataKey="previous" stroke="var(--color-chart-2)" strokeWidth={2.5} strokeDasharray="4 4" />
-                </LineChart>
-              </ChartBox>
-            </SectionCard>
+        <SectionCard title="Top Customers" className="lg:col-span-1">
+          <div className="space-y-2">
+            {topCustomers.map((c, i) => (
+              <div key={i} className="flex items-center justify-between rounded-lg border border-border p-2.5">
+                <div className="text-xs font-semibold">{c.name}</div>
+                <span className="num text-xs font-semibold">{inr(c.total)}</span>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
 
-            <SectionCard title="Revenue by category" subtitle="Share of total booking value">
-              <ChartBox>
-                <BarChart data={categorySales} layout="vertical" margin={{ left: 40 }}>
-                  <CartesianGrid strokeDasharray="3 6" stroke="var(--color-border)" horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={inr} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={140} />
-                  <Tooltip formatter={(v: number) => inr(v)} />
-                  <Bar dataKey="value" fill="var(--color-primary)" radius={[0, 6, 6, 0]} />
-                </BarChart>
-              </ChartBox>
-            </SectionCard>
-          </TabsContent>
-
-          <TabsContent value="sales" className="mt-6 grid gap-6 lg:grid-cols-2">
-            <SectionCard title="Top selling products">
-              <ChartBox>
-                <BarChart data={topProducts.map((p) => ({ name: p.name.split(" — ")[0], v: p.orders }))}>
-                  <CartesianGrid strokeDasharray="3 6" stroke="var(--color-border)" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} angle={-30} textAnchor="end" height={70} interval={0} />
-                  <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Tooltip />
-                  <Bar dataKey="v" fill="var(--color-chart-2)" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ChartBox>
-            </SectionCard>
-            <SectionCard title="Channel mix (radar)">
-              <ChartBox>
-                <RadarChart data={orderTypeBreakdown}>
-                  <PolarGrid stroke="var(--color-border)" />
-                  <PolarAngleAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <PolarRadiusAxis tick={{ fontSize: 10 }} />
-                  <Radar dataKey="value" stroke="var(--color-primary)" fill="var(--color-primary)" fillOpacity={0.35} />
-                </RadarChart>
-              </ChartBox>
-            </SectionCard>
-          </TabsContent>
-
-          <TabsContent value="customer" className="mt-6">
-            <SectionCard title="Customer growth" subtitle="Monthly new registrations">
-              <ChartBox height={360}>
-                <LineChart data={customerGrowth}>
-                  <CartesianGrid strokeDasharray="3 6" stroke="var(--color-border)" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="customers" stroke="var(--color-chart-5)" strokeWidth={3} dot={{ r: 5 }} />
-                </LineChart>
-              </ChartBox>
-            </SectionCard>
-          </TabsContent>
-
-          <TabsContent value="product" className="mt-6 grid gap-6 lg:grid-cols-2">
-            <SectionCard title="Category share">
-              <PieCard data={categorySales} />
-            </SectionCard>
-            <SectionCard title="Top SKUs">
-              <ChartBox>
-                <BarChart data={topProducts.slice(0, 6).map((p) => ({ name: p.code, v: p.orders * p.price }))}>
-                  <CartesianGrid strokeDasharray="3 6" stroke="var(--color-border)" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={inr} width={60} />
-                  <Tooltip formatter={(v: number) => inr(v)} />
-                  <Bar dataKey="v" fill="var(--color-chart-4)" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ChartBox>
-            </SectionCard>
-          </TabsContent>
-
-          <TabsContent value="order" className="mt-6"><SectionCard title="Order status breakdown"><PieCard data={orderStatusBreakdown} /></SectionCard></TabsContent>
-          <TabsContent value="payment" className="mt-6"><SectionCard title="Payment status breakdown"><PieCard data={paymentStatusBreakdown} /></SectionCard></TabsContent>
-          <TabsContent value="b2b" className="mt-6"><SectionCard title="B2B channel"><PieCard data={orderTypeBreakdown} /></SectionCard></TabsContent>
-          <TabsContent value="sample" className="mt-6"><SectionCard title="Sample orders"><PieCard data={orderTypeBreakdown} /></SectionCard></TabsContent>
-          <TabsContent value="newcol" className="mt-6"><SectionCard title="New collection performance"><PieCard data={categorySales.slice(0, 4)} /></SectionCard></TabsContent>
-          <TabsContent value="arx" className="mt-6"><SectionCard title="ARRHENIUX signature line"><PieCard data={categorySales.slice(0, 5)} /></SectionCard></TabsContent>
-        </Tabs>
-      </main>
-    </>
-  );
-}
-
-function ChartBox({ children, height = 320 }: { children: React.ReactElement; height?: number }) {
-  return (
-    <div style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer>
-    </div>
-  );
-}
-function PieCard({ data }: { data: { name: string; value: number }[] }) {
-  return (
-    <ChartBox>
-      <PieChart>
-        <Pie data={data} dataKey="value" nameKey="name" innerRadius={60} outerRadius={110} paddingAngle={3}>
-          {data.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-        </Pie>
-        <Tooltip />
-        <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
-      </PieChart>
-    </ChartBox>
+        <SectionCard title="Top Categories" className="lg:col-span-1">
+          <div className="space-y-2">
+            {catSales.slice(0, 6).map((c, i) => (
+              <div key={i} className="flex items-center justify-between rounded-lg border border-border p-2.5">
+                <div className="text-xs font-semibold">{c.name}</div>
+                <span className="num text-xs font-semibold">{inr(c.value)}</span>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+      </div>
+    </PageShell>
   );
 }
