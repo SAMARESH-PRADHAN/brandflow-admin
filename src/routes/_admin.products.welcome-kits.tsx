@@ -18,7 +18,7 @@ function KitsPage() {
   const { data, add, update, remove } = useCollection<WelcomeKitItem>("welcomeKits");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<WelcomeKitItem | null>(null);
-  const [f, setF] = useState<any>({ name: "", price: 199, enabled: true, description: "", image: "" });
+  const [f, setF] = useState<any>({ name: "", price: 199, enabled: true, description: "", image: "", images: [] });
   const [q, setQ] = useState("");
 
   const filtered = data.filter((k) => k.name.toLowerCase().includes(q.toLowerCase()));
