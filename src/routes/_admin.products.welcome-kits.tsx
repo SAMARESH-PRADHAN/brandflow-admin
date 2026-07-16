@@ -67,6 +67,13 @@ function KitsPage() {
             <div className="space-y-1.5"><Label className="text-xs">Name</Label><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
             <div className="space-y-1.5"><Label className="text-xs">Price (₹)</Label><Input type="number" value={f.price} onChange={(e) => setF({ ...f, price: +e.target.value })} /></div>
             <div className="space-y-1.5"><Label className="text-xs">Description</Label><Textarea rows={3} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Product Images (up to 6)</Label>
+              <ImageUploader
+                images={f.images ?? []}
+                onChange={(imgs) => setF({ ...f, images: imgs, image: imgs[0] ?? "" })}
+              />
+            </div>
             <div className="flex items-center justify-between rounded-lg border border-border p-3">
               <Label className="text-sm">Enabled</Label>
               <Switch checked={f.enabled} onCheckedChange={(v) => setF({ ...f, enabled: v })} />
