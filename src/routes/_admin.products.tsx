@@ -16,6 +16,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useCollection, inrFull, type Product } from "@/lib/store";
+import { ImageUploader } from "@/components/admin/image-uploader";
 import { toast } from "sonner";
 
 
