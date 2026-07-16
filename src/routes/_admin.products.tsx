@@ -112,7 +112,7 @@ function ProductDialog({
   const set = (k: string, v: any) => setF((s: any) => ({ ...s, [k]: v }));
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (v) setF(editing ?? empty); }}>
+    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (v) setF(editing ? { ...editing, images: editing.images ?? (editing.image ? [editing.image] : []) } : empty); }}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader><DialogTitle>{editing ? "Edit Product" : "Add Product"}</DialogTitle></DialogHeader>
 
