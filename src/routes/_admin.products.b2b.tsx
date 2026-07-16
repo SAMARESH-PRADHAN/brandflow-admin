@@ -25,8 +25,8 @@ function B2BPage() {
   const [editing, setEditing] = useState<B2BProduct | null>(null);
   const [f, setF] = useState<any>({});
 
-  const openNew = () => { setEditing(null); setF({ code: "", name: "", subCategory: SUBS[0], material: "100% Cotton", description: "", samplePrice: 299, originalPrice: 1499, status: "Active", image: "" }); setOpen(true); };
-  const openEdit = (p: B2BProduct) => { setEditing(p); setF(p); setOpen(true); };
+  const openNew = () => { setEditing(null); setF({ code: "", name: "", subCategory: SUBS[0], material: "100% Cotton", description: "", samplePrice: 299, originalPrice: 1499, status: "Active", image: "", images: [] }); setOpen(true); };
+  const openEdit = (p: B2BProduct) => { setEditing(p); setF({ ...p, images: p.images ?? (p.image ? [p.image] : []) }); setOpen(true); };
 
   const cols: Column<B2BProduct>[] = [
     { key: "code", header: "Code", render: (p) => <span className="font-mono text-xs">{p.code}</span>, sortable: true, getValue: (p) => p.code },
