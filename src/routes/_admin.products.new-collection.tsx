@@ -21,8 +21,8 @@ function NewColl() {
   const [editing, setEditing] = useState<NewCollectionProduct | null>(null);
   const [f, setF] = useState<any>({});
 
-  const openNew = () => { setEditing(null); setF({ code: "", name: "", material: "100% Cotton", description: "", samplePrice: 499, originalPrice: 2499, status: "Active", image: "" }); setOpen(true); };
-  const openEdit = (p: NewCollectionProduct) => { setEditing(p); setF(p); setOpen(true); };
+  const openNew = () => { setEditing(null); setF({ code: "", name: "", material: "100% Cotton", description: "", samplePrice: 499, originalPrice: 2499, status: "Active", image: "", images: [] }); setOpen(true); };
+  const openEdit = (p: NewCollectionProduct) => { setEditing(p); setF({ ...p, images: p.images ?? (p.image ? [p.image] : []) }); setOpen(true); };
 
   const cols: Column<NewCollectionProduct>[] = [
     { key: "code", header: "Code", render: (p) => <span className="font-mono text-xs">{p.code}</span> },
