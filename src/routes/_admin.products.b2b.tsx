@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCollection, inrFull, type B2BProduct } from "@/lib/store";
+import { ImageUploader } from "@/components/admin/image-uploader";
 import { toast } from "sonner";
 
 
