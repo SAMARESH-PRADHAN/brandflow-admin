@@ -33,8 +33,12 @@ function KitsPage() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((k) => (
             <div key={k.id} className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-pop)]">
-              <div className="mb-3 grid h-24 place-items-center rounded-xl bg-secondary text-primary">
-                <Gift className="h-10 w-10" />
+              <div className="mb-3 aspect-video overflow-hidden rounded-xl bg-secondary text-primary">
+                {(k.images?.[0] || k.image) ? (
+                  <img src={k.images?.[0] || k.image} alt={k.name} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="grid h-full w-full place-items-center"><Gift className="h-10 w-10" /></div>
+                )}
               </div>
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
