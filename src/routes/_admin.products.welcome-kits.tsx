@@ -49,7 +49,7 @@ function KitsPage() {
               </div>
               <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{k.description}</p>
               <div className="mt-3 flex gap-1">
-                <Button size="sm" variant="outline" className="flex-1" onClick={() => { setEditing(k); setF(k); setOpen(true); }}>
+                <Button size="sm" variant="outline" className="flex-1" onClick={() => { setEditing(k); setF({ ...k, images: k.images ?? (k.image ? [k.image] : []) }); setOpen(true); }}>
                   <Pencil className="mr-1 h-3 w-3" /> Edit
                 </Button>
                 <ConfirmButton trigger={<Button size="sm" variant="outline" className="text-destructive"><Trash2 className="h-3 w-3" /></Button>}
