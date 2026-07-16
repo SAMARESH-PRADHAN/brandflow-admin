@@ -1,4 +1,3 @@
-import { createFileRoute } from "react-router-dom";
 import { useState } from "react";
 import { Plus, Pencil, Trash2, Eye } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";

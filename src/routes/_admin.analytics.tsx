@@ -1,4 +1,3 @@
-import { createFileRoute } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { Download, IndianRupee, ShoppingCart, Users, Package, TrendingUp, ClipboardList } from "lucide-react";
 import {

@@ -1,4 +1,3 @@
-import { createFileRoute } from "react-router-dom";
 import { useMemo } from "react";
 import { ArrowRight } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";

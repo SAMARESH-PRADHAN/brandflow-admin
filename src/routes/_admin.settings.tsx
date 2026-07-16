@@ -1,4 +1,3 @@
-import { createFileRoute } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Save, RefreshCw, Trash2 } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
