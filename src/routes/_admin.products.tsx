@@ -16,6 +16,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useCollection, inrFull, type Product } from "@/lib/store";
+import { ImageUploader } from "@/components/admin/image-uploader";
 import { toast } from "sonner";
 
 
@@ -102,16 +103,16 @@ function ProductDialog({
   const empty = {
     code: "", name: "", category: CATEGORIES[0]!, type: "Regular" as const,
     subCategory: SUBCATS[0]!, material: "100% Cotton", description: "",
-    samplePrice: 499, originalPrice: 1999, status: "Active" as const, image: "",
+    samplePrice: 499, originalPrice: 1999, status: "Active" as const, image: "", images: [] as string[],
     colors: COLORS_ALL.slice(0, 4).map(c => ({ ...c, showInCategory: true, showInBulk: true })),
   };
-  const [f, setF] = useState<any>(editing ?? empty);
+  const [f, setF] = useState<any>(editing ? { ...editing, images: editing.images ?? (editing.image ? [editing.image] : []) } : empty);
   // re-init on open
   useState(() => f);
   const set = (k: string, v: any) => setF((s: any) => ({ ...s, [k]: v }));
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (v) setF(editing ?? empty); }}>
+    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (v) setF(editing ? { ...editing, images: editing.images ?? (editing.image ? [editing.image] : []) } : empty); }}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader><DialogTitle>{editing ? "Edit Product" : "Add Product"}</DialogTitle></DialogHeader>
 
@@ -149,15 +150,16 @@ function ProductDialog({
               <SelectContent><SelectItem value="Active">Active</SelectItem><SelectItem value="Inactive">Inactive</SelectItem></SelectContent>
             </Select>
           </Field>
-          <Field label="Product Image (demo)">
-            <Input type="file" accept="image/*" onChange={(e) => {
-              const file = e.target.files?.[0]; if (!file) return;
-              const reader = new FileReader();
-              reader.onload = () => set("image", reader.result as string);
-              reader.readAsDataURL(file);
-            }} />
-          </Field>
+          <div className="md:col-span-2">
+            <Field label={`Product Images (up to 6)`}>
+              <ImageUploader
+                images={f.images ?? []}
+                onChange={(imgs) => setF((s: any) => ({ ...s, images: imgs, image: imgs[0] ?? "" }))}
+              />
+            </Field>
+          </div>
         </div>
+
 
         <Field label="Description"><Textarea rows={3} value={f.description} onChange={(e) => set("description", e.target.value)} /></Field>
 

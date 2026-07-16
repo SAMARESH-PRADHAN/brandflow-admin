@@ -23,21 +23,21 @@ export type Product = {
   id: string; code: string; name: string; category: string; type: "Regular" | "Premium" | "Others";
   subCategory: string; material: string; description: string;
   samplePrice: number; originalPrice: number; status: "Active" | "Inactive";
-  image: string; stock: number; orders: number; rating: number;
+  image: string; images?: string[]; stock: number; orders: number; rating: number;
   colors: { name: string; hex: string; showInCategory: boolean; showInBulk: boolean }[];
   createdAt: string;
 };
 export type B2BProduct = {
   id: string; code: string; name: string; subCategory: string; material: string;
   description: string; samplePrice: number; originalPrice: number;
-  status: "Active" | "Inactive"; image: string; createdAt: string;
+  status: "Active" | "Inactive"; image: string; images?: string[]; createdAt: string;
 };
 export type NewCollectionProduct = {
   id: string; code: string; name: string; material: string; description: string;
-  samplePrice: number; originalPrice: number; status: "Active" | "Inactive"; image: string; createdAt: string;
+  samplePrice: number; originalPrice: number; status: "Active" | "Inactive"; image: string; images?: string[]; createdAt: string;
 };
 export type WelcomeKitItem = {
-  id: string; name: string; price: number; enabled: boolean; image: string; description: string;
+  id: string; name: string; price: number; enabled: boolean; image: string; images?: string[]; description: string;
 };
 export type OrderStatus = "Placed" | "Confirmed" | "In Production" | "Shipped" | "Delivered";
 export type OrderType = "Normal" | "Bulk" | "B2B" | "New Collection";

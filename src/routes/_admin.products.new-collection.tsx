@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCollection, inrFull, type NewCollectionProduct } from "@/lib/store";
+import { ImageUploader } from "@/components/admin/image-uploader";
 import { toast } from "sonner";
 
 
@@ -20,8 +21,8 @@ function NewColl() {
   const [editing, setEditing] = useState<NewCollectionProduct | null>(null);
   const [f, setF] = useState<any>({});
 
-  const openNew = () => { setEditing(null); setF({ code: "", name: "", material: "100% Cotton", description: "", samplePrice: 499, originalPrice: 2499, status: "Active", image: "" }); setOpen(true); };
-  const openEdit = (p: NewCollectionProduct) => { setEditing(p); setF(p); setOpen(true); };
+  const openNew = () => { setEditing(null); setF({ code: "", name: "", material: "100% Cotton", description: "", samplePrice: 499, originalPrice: 2499, status: "Active", image: "", images: [] }); setOpen(true); };
+  const openEdit = (p: NewCollectionProduct) => { setEditing(p); setF({ ...p, images: p.images ?? (p.image ? [p.image] : []) }); setOpen(true); };
 
   const cols: Column<NewCollectionProduct>[] = [
     { key: "code", header: "Code", render: (p) => <span className="font-mono text-xs">{p.code}</span> },
@@ -60,11 +61,13 @@ function NewColl() {
             </F>
             <F label="Sample Price"><Input type="number" value={f.samplePrice} onChange={(e) => setF({ ...f, samplePrice: +e.target.value })} /></F>
             <F label="Original Price"><Input type="number" value={f.originalPrice} onChange={(e) => setF({ ...f, originalPrice: +e.target.value })} /></F>
-            <F label="Image (demo)"><Input type="file" accept="image/*" onChange={(e) => {
-              const file = e.target.files?.[0]; if (!file) return;
-              const rd = new FileReader(); rd.onload = () => setF({ ...f, image: rd.result }); rd.readAsDataURL(file);
-            }} /></F>
           </div>
+          <F label="Product Images (up to 6)">
+            <ImageUploader
+              images={f.images ?? []}
+              onChange={(imgs) => setF({ ...f, images: imgs, image: imgs[0] ?? "" })}
+            />
+          </F>
           <F label="Description"><Textarea rows={3} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></F>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>

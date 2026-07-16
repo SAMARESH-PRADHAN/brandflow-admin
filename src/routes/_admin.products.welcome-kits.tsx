@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCollection, inrFull, type WelcomeKitItem } from "@/lib/store";
+import { ImageUploader } from "@/components/admin/image-uploader";
 import { toast } from "sonner";
 
 
@@ -17,14 +18,14 @@ function KitsPage() {
   const { data, add, update, remove } = useCollection<WelcomeKitItem>("welcomeKits");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<WelcomeKitItem | null>(null);
-  const [f, setF] = useState<any>({ name: "", price: 199, enabled: true, description: "", image: "" });
+  const [f, setF] = useState<any>({ name: "", price: 199, enabled: true, description: "", image: "", images: [] });
   const [q, setQ] = useState("");
 
   const filtered = data.filter((k) => k.name.toLowerCase().includes(q.toLowerCase()));
 
   return (
     <PageShell title="Welcome Kit Management" subtitle="Corporate onboarding kit items"
-      actions={<Button onClick={() => { setEditing(null); setF({ name: "", price: 199, enabled: true, description: "", image: "" }); setOpen(true); }}>
+      actions={<Button onClick={() => { setEditing(null); setF({ name: "", price: 199, enabled: true, description: "", image: "", images: [] }); setOpen(true); }}>
         <Plus className="mr-1 h-4 w-4" /> Add Item
       </Button>}>
       <SectionCard title="Kit Items" subtitle={`${filtered.length} items in the Welcome Kit category`}
@@ -32,8 +33,12 @@ function KitsPage() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((k) => (
             <div key={k.id} className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-pop)]">
-              <div className="mb-3 grid h-24 place-items-center rounded-xl bg-secondary text-primary">
-                <Gift className="h-10 w-10" />
+              <div className="mb-3 aspect-video overflow-hidden rounded-xl bg-secondary text-primary">
+                {(k.images?.[0] || k.image) ? (
+                  <img src={k.images?.[0] || k.image} alt={k.name} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="grid h-full w-full place-items-center"><Gift className="h-10 w-10" /></div>
+                )}
               </div>
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
@@ -44,7 +49,7 @@ function KitsPage() {
               </div>
               <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{k.description}</p>
               <div className="mt-3 flex gap-1">
-                <Button size="sm" variant="outline" className="flex-1" onClick={() => { setEditing(k); setF(k); setOpen(true); }}>
+                <Button size="sm" variant="outline" className="flex-1" onClick={() => { setEditing(k); setF({ ...k, images: k.images ?? (k.image ? [k.image] : []) }); setOpen(true); }}>
                   <Pencil className="mr-1 h-3 w-3" /> Edit
                 </Button>
                 <ConfirmButton trigger={<Button size="sm" variant="outline" className="text-destructive"><Trash2 className="h-3 w-3" /></Button>}
@@ -62,6 +67,13 @@ function KitsPage() {
             <div className="space-y-1.5"><Label className="text-xs">Name</Label><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
             <div className="space-y-1.5"><Label className="text-xs">Price (₹)</Label><Input type="number" value={f.price} onChange={(e) => setF({ ...f, price: +e.target.value })} /></div>
             <div className="space-y-1.5"><Label className="text-xs">Description</Label><Textarea rows={3} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Product Images (up to 6)</Label>
+              <ImageUploader
+                images={f.images ?? []}
+                onChange={(imgs) => setF({ ...f, images: imgs, image: imgs[0] ?? "" })}
+              />
+            </div>
             <div className="flex items-center justify-between rounded-lg border border-border p-3">
               <Label className="text-sm">Enabled</Label>
               <Switch checked={f.enabled} onCheckedChange={(v) => setF({ ...f, enabled: v })} />

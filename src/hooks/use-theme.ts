@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 
 export function useTheme() {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const saved = (localStorage.getItem("arreniux:theme") as "light" | "dark" | null) ?? "light";
+    const saved = (localStorage.getItem("arreniux:theme") as "light" | "dark" | null) ?? "dark";
     setTheme(saved);
     document.documentElement.classList.toggle("dark", saved === "dark");
   }, []);
