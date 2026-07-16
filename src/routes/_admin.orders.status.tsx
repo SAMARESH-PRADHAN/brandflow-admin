@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { ArrowRight } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
@@ -7,10 +6,6 @@ import { Button } from "@/components/ui/button";
 import { useCollection, inrFull, type Order, type OrderStatus } from "@/lib/store";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_admin/orders/status")({
-  head: () => ({ meta: [{ title: "Order Updation — Arreniux Admin" }] }),
-  component: KanbanPage,
-});
 
 const STATUSES: OrderStatus[] = ["Placed", "Confirmed", "In Production", "Shipped", "Delivered"];
 const COLORS: Record<OrderStatus, string> = {
@@ -83,3 +78,5 @@ function KanbanPage() {
     </PageShell>
   );
 }
+
+export default KanbanPage;

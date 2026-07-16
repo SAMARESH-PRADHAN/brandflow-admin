@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Plus, Pencil, Trash2, Eye } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
@@ -19,10 +18,6 @@ import {
 import { useCollection, inrFull, type Product } from "@/lib/store";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_admin/products")({
-  head: () => ({ meta: [{ title: "Products — Arreniux Admin" }, { name: "description", content: "Main product catalog with color variants and visibility toggles." }] }),
-  component: ProductsPage,
-});
 
 const CATEGORIES = ["Corporate Shirts", "Polo T-Shirts", "Formal Trousers", "Blazers", "Hoodies", "Caps", "Aprons", "Bags"];
 const SUBCATS = ["Oxford", "Slim Fit", "Pique", "Dry-Fit", "Bomber", "Pullover", "Classic", "Executive"];
@@ -211,3 +206,5 @@ function ProductDialog({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="space-y-1.5"><Label className="text-xs">{label}</Label>{children}</div>;
 }
+
+export default ProductsPage;

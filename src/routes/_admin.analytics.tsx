@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Download, IndianRupee, ShoppingCart, Users, Package, TrendingUp, ClipboardList } from "lucide-react";
 import {
@@ -14,10 +13,6 @@ import { useCollection, inr, inrFull, type Order, type Customer, type Product, t
 import { exportCsv } from "@/components/admin/data-table";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_admin/analytics")({
-  head: () => ({ meta: [{ title: "Analytics — Arreniux Admin" }] }),
-  component: AnalyticsPage,
-});
 
 const COLORS = ["hsl(354 78% 47%)", "hsl(0 0% 12%)", "hsl(152 65% 40%)", "hsl(35 92% 50%)", "hsl(217 91% 55%)", "hsl(280 65% 50%)"];
 
@@ -198,3 +193,5 @@ function AnalyticsPage() {
     </PageShell>
   );
 }
+
+export default AnalyticsPage;

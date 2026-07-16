@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Save, RefreshCw, Trash2 } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
@@ -12,10 +11,6 @@ import { useTheme } from "@/hooks/use-theme";
 import { KEYS, readCollection, resetDemoData, type Settings } from "@/lib/store";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_admin/settings")({
-  head: () => ({ meta: [{ title: "Settings — Arreniux Admin" }] }),
-  component: SettingsPage,
-});
 
 function SettingsPage() {
   const { theme, toggle } = useTheme();
@@ -83,3 +78,5 @@ function SettingsPage() {
     </PageShell>
   );
 }
+
+export default SettingsPage;

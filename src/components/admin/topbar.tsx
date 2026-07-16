@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useLocation } from "react-router-dom";
 import { Bell, LogOut, Moon, Search, Sun, User } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
@@ -25,7 +25,7 @@ const routeLabels: Record<string, string> = {
 
 export function Topbar({ onSearch }: { onSearch?: (q: string) => void }) {
   const { theme, toggle } = useTheme();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const pathname = useLocation().pathname;
   const [q, setQ] = useState("");
 
   const parts = pathname.split("/").filter(Boolean);

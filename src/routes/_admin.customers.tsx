@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
@@ -14,10 +13,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCollection, inrFull, type Customer } from "@/lib/store";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_admin/customers")({
-  head: () => ({ meta: [{ title: "Customers — Arreniux Admin" }] }),
-  component: CustomersPage,
-});
 
 function CustomersPage() {
   const { data, add, update, remove } = useCollection<Customer>("customers");
@@ -96,3 +91,5 @@ function CustomersPage() {
     </PageShell>
   );
 }
+
+export default CustomersPage;

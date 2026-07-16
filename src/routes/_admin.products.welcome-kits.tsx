@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Plus, Pencil, Trash2, Gift } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
@@ -13,10 +12,6 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { useCollection, inrFull, type WelcomeKitItem } from "@/lib/store";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_admin/products/welcome-kits")({
-  head: () => ({ meta: [{ title: "Welcome Kits — Arreniux Admin" }] }),
-  component: KitsPage,
-});
 
 function KitsPage() {
   const { data, add, update, remove } = useCollection<WelcomeKitItem>("welcomeKits");
@@ -85,3 +80,5 @@ function KitsPage() {
     </PageShell>
   );
 }
+
+export default KitsPage;

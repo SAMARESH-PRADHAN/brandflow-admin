@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { Eye } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
@@ -9,10 +9,6 @@ import { Button } from "@/components/ui/button";
 import { useCollection, inrFull, type Order } from "@/lib/store";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_admin/orders/samples")({
-  head: () => ({ meta: [{ title: "Sample Orders — Arreniux Admin" }] }),
-  component: SamplesPage,
-});
 
 function SamplesPage() {
   const { data } = useCollection<Order>("sampleOrders");
@@ -30,7 +26,7 @@ function SamplesPage() {
     { key: "amount", header: "Amount", render: (o) => <span className="num text-sm font-semibold">{inrFull(o.qty * o.unitPrice)}</span>, className: "text-right" },
     { key: "status", header: "Status", render: (o) => <StatusBadge value={o.status} /> },
     { key: "actions", header: "", render: (o) => (
-      <Button asChild size="sm" variant="outline"><Link to="/orders/$id" params={{ id: o.id }}><Eye className="mr-1 h-3.5 w-3.5" /> View</Link></Button>
+      <Button asChild size="sm" variant="outline"><Link to={`/orders/${o.id}`}><Eye className="mr-1 h-3.5 w-3.5" /> View</Link></Button>
     ), className: "text-right" },
   ];
 
@@ -53,3 +49,5 @@ function SamplesPage() {
     </PageShell>
   );
 }
+
+export default SamplesPage;

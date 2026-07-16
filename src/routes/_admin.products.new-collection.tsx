@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
@@ -14,10 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCollection, inrFull, type NewCollectionProduct } from "@/lib/store";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_admin/products/new-collection")({
-  head: () => ({ meta: [{ title: "New Collection — Arreniux Admin" }] }),
-  component: NewColl,
-});
 
 function NewColl() {
   const { data, add, update, remove } = useCollection<NewCollectionProduct>("newCollection");
@@ -88,3 +83,5 @@ function NewColl() {
 function F({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="space-y-1.5"><Label className="text-xs">{label}</Label>{children}</div>;
 }
+
+export default NewColl;
