@@ -25,7 +25,7 @@ function KitsPage() {
 
   return (
     <PageShell title="Welcome Kit Management" subtitle="Corporate onboarding kit items"
-      actions={<Button onClick={() => { setEditing(null); setF({ name: "", price: 199, enabled: true, description: "", image: "" }); setOpen(true); }}>
+      actions={<Button onClick={() => { setEditing(null); setF({ name: "", price: 199, enabled: true, description: "", image: "", images: [] }); setOpen(true); }}>
         <Plus className="mr-1 h-4 w-4" /> Add Item
       </Button>}>
       <SectionCard title="Kit Items" subtitle={`${filtered.length} items in the Welcome Kit category`}
