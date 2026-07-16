@@ -1,7 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
-import { Bell, LogOut, Moon, Search, Sun, User } from "lucide-react";
+import { Bell, LogOut, Moon, Sun, User } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
