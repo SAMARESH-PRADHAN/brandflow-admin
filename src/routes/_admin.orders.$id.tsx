@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { Link, useParams } from "react-router-dom";
 import { useMemo } from "react";
 import { ArrowLeft, Download, Printer, CheckCircle2, Circle } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
@@ -8,15 +8,11 @@ import { Button } from "@/components/ui/button";
 import { useCollection, inrFull, type Order, type OrderStatus } from "@/lib/store";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_admin/orders/$id")({
-  head: () => ({ meta: [{ title: "Order Details — Arreniux Admin" }] }),
-  component: OrderDetail,
-});
 
 const STATUS_FLOW: OrderStatus[] = ["Placed", "Confirmed", "In Production", "Shipped", "Delivered"];
 
 function OrderDetail() {
-  const { id } = useParams({ from: "/_admin/orders/$id" });
+  const { id } = useParams();
   const { data: orders } = useCollection<Order>("orders");
   const { data: samples } = useCollection<Order>("sampleOrders");
   const order = useMemo(() => [...orders, ...samples].find((o) => o.id === id), [orders, samples, id]);
@@ -133,3 +129,5 @@ function Row({ label, value }: { label: string; value: string }) {
 function Line({ k, v, bold }: { k: string; v: string; bold?: boolean }) {
   return <div className="flex items-center justify-between"><span className="text-muted-foreground">{k}</span><span className={`num ${bold ? "font-display text-lg" : ""}`}>{v}</span></div>;
 }
+
+export default OrderDetail;

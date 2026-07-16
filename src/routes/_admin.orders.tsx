@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { Eye, Download } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
@@ -9,10 +9,6 @@ import { Button } from "@/components/ui/button";
 import { useCollection, inrFull, type Order } from "@/lib/store";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_admin/orders")({
-  head: () => ({ meta: [{ title: "Orders — Arreniux Admin" }] }),
-  component: OrdersPage,
-});
 
 function OrdersPage() {
   const { data } = useCollection<Order>("orders");
@@ -31,7 +27,7 @@ function OrdersPage() {
     { key: "status", header: "Status", render: (o) => <StatusBadge value={o.status} /> },
     { key: "address", header: "Ships to", render: (o) => <span className="line-clamp-1 max-w-[200px] text-xs text-muted-foreground">{o.address}</span> },
     { key: "actions", header: "", render: (o) => (
-      <Button asChild size="sm" variant="outline"><Link to="/orders/$id" params={{ id: o.id }}><Eye className="mr-1 h-3.5 w-3.5" /> Details</Link></Button>
+      <Button asChild size="sm" variant="outline"><Link to={`/orders/${o.id}`}><Eye className="mr-1 h-3.5 w-3.5" /> Details</Link></Button>
     ), className: "text-right" },
   ];
 
@@ -59,3 +55,5 @@ function OrdersPage() {
     </PageShell>
   );
 }
+
+export default OrdersPage;

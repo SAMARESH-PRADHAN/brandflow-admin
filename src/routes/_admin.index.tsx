@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link } from "react-router-dom";
 import { useMemo } from "react";
 import {
   Package, ShoppingCart, Clock, CheckCircle2, ClipboardList, Users, Boxes, Star,
@@ -15,15 +15,6 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { useCollection, inr, inrFull } from "@/lib/store";
 import type { Order, Product, Customer, Review, Payment } from "@/lib/store";
 
-export const Route = createFileRoute("/_admin/")({
-  head: () => ({
-    meta: [
-      { title: "Dashboard — Arreniux Admin" },
-      { name: "description", content: "Business command center for Arreniux — revenue, orders, products and customers." },
-    ],
-  }),
-  component: DashboardPage,
-});
 
 function DashboardPage() {
   const { data: products } = useCollection<Product>("products");
@@ -177,7 +168,7 @@ function DashboardPage() {
         <SectionCard title="Latest Orders" className="lg:col-span-2">
           <div className="space-y-2">
             {latestOrders.map((o) => (
-              <Link key={o.id} to="/orders/$id" params={{ id: o.id }} className="flex items-center justify-between rounded-xl border border-border bg-secondary/30 p-3 transition hover:bg-secondary">
+              <Link key={o.id} to={`/orders/${o.id}`} className="flex items-center justify-between rounded-xl border border-border bg-secondary/30 p-3 transition hover:bg-secondary">
                 <div className="min-w-0">
                   <div className="truncate text-sm font-semibold">{o.customer}</div>
                   <div className="truncate text-xs text-muted-foreground">{o.id} • {o.productName}</div>
@@ -264,3 +255,5 @@ function DashboardPage() {
     </PageShell>
   );
 }
+
+export default DashboardPage;

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { Check, X, Reply, Star } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
@@ -11,10 +11,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCollection, type Review } from "@/lib/store";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_admin/reviews")({
-  head: () => ({ meta: [{ title: "Reviews — Arreniux Admin" }] }),
-  component: ReviewsPage,
-});
 
 function ReviewsPage() {
   const { data, update, remove } = useCollection<Review>("reviews");
@@ -107,3 +103,5 @@ function ReviewsPage() {
     </PageShell>
   );
 }
+
+export default ReviewsPage;

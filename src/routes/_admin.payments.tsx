@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { CreditCard, CheckCircle2, Clock, RefreshCw, Wallet, Banknote, TrendingUp } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
@@ -10,10 +10,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCollection, inr, inrFull, type Payment } from "@/lib/store";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_admin/payments")({
-  head: () => ({ meta: [{ title: "Payments — Arreniux Admin" }] }),
-  component: PaymentsPage,
-});
 
 function PaymentsPage() {
   const { data } = useCollection<Payment>("payments");
@@ -83,3 +79,5 @@ function PaymentsPage() {
     </PageShell>
   );
 }
+
+export default PaymentsPage;

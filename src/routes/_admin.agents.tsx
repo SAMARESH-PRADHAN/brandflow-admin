@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "react-router-dom";
 import { useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
@@ -13,10 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCollection, type Agent } from "@/lib/store";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_admin/agents")({
-  head: () => ({ meta: [{ title: "B2B Agents — Arreniux Admin" }] }),
-  component: AgentsPage,
-});
 
 function AgentsPage() {
   const { data, add, update, remove } = useCollection<Agent>("agents");
@@ -86,3 +82,5 @@ function AgentsPage() {
     </PageShell>
   );
 }
+
+export default AgentsPage;

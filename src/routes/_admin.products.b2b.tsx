@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "react-router-dom";
 import { useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
@@ -16,10 +16,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCollection, inrFull, type B2BProduct } from "@/lib/store";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_admin/products/b2b")({
-  head: () => ({ meta: [{ title: "B2B Products — Arreniux Admin" }] }),
-  component: B2BPage,
-});
 
 const SUBS = ["Hospitality", "Corporate", "Healthcare", "Education", "Retail"];
 
@@ -103,3 +99,5 @@ function B2BPage() {
 function F({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="space-y-1.5"><Label className="text-xs">{label}</Label>{children}</div>;
 }
+
+export default B2BPage;
