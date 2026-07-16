@@ -61,11 +61,13 @@ function NewColl() {
             </F>
             <F label="Sample Price"><Input type="number" value={f.samplePrice} onChange={(e) => setF({ ...f, samplePrice: +e.target.value })} /></F>
             <F label="Original Price"><Input type="number" value={f.originalPrice} onChange={(e) => setF({ ...f, originalPrice: +e.target.value })} /></F>
-            <F label="Image (demo)"><Input type="file" accept="image/*" onChange={(e) => {
-              const file = e.target.files?.[0]; if (!file) return;
-              const rd = new FileReader(); rd.onload = () => setF({ ...f, image: rd.result }); rd.readAsDataURL(file);
-            }} /></F>
           </div>
+          <F label="Product Images (up to 6)">
+            <ImageUploader
+              images={f.images ?? []}
+              onChange={(imgs) => setF({ ...f, images: imgs, image: imgs[0] ?? "" })}
+            />
+          </F>
           <F label="Description"><Textarea rows={3} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></F>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
