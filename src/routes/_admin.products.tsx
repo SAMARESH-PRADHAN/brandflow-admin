@@ -150,15 +150,16 @@ function ProductDialog({
               <SelectContent><SelectItem value="Active">Active</SelectItem><SelectItem value="Inactive">Inactive</SelectItem></SelectContent>
             </Select>
           </Field>
-          <Field label="Product Image (demo)">
-            <Input type="file" accept="image/*" onChange={(e) => {
-              const file = e.target.files?.[0]; if (!file) return;
-              const reader = new FileReader();
-              reader.onload = () => set("image", reader.result as string);
-              reader.readAsDataURL(file);
-            }} />
-          </Field>
+          <div className="md:col-span-2">
+            <Field label={`Product Images (up to 6)`}>
+              <ImageUploader
+                images={f.images ?? []}
+                onChange={(imgs) => setF((s: any) => ({ ...s, images: imgs, image: imgs[0] ?? "" }))}
+              />
+            </Field>
+          </div>
         </div>
+
 
         <Field label="Description"><Textarea rows={3} value={f.description} onChange={(e) => set("description", e.target.value)} /></Field>
 
