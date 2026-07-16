@@ -8,8 +8,9 @@ import { initDemoData } from "@/lib/store";
 export default function AdminLayout() {
   useEffect(() => {
     initDemoData();
-    const t = localStorage.getItem("arreniux:theme");
-    if (t === "dark") document.documentElement.classList.add("dark");
+    const t = localStorage.getItem("arreniux:theme") ?? "dark";
+    document.documentElement.classList.toggle("dark", t === "dark");
+    if (!localStorage.getItem("arreniux:theme")) localStorage.setItem("arreniux:theme", "dark");
   }, []);
   return (
     <SidebarProvider defaultOpen>
