@@ -103,10 +103,10 @@ function ProductDialog({
   const empty = {
     code: "", name: "", category: CATEGORIES[0]!, type: "Regular" as const,
     subCategory: SUBCATS[0]!, material: "100% Cotton", description: "",
-    samplePrice: 499, originalPrice: 1999, status: "Active" as const, image: "",
+    samplePrice: 499, originalPrice: 1999, status: "Active" as const, image: "", images: [] as string[],
     colors: COLORS_ALL.slice(0, 4).map(c => ({ ...c, showInCategory: true, showInBulk: true })),
   };
-  const [f, setF] = useState<any>(editing ?? empty);
+  const [f, setF] = useState<any>(editing ? { ...editing, images: editing.images ?? (editing.image ? [editing.image] : []) } : empty);
   // re-init on open
   useState(() => f);
   const set = (k: string, v: any) => setF((s: any) => ({ ...s, [k]: v }));
