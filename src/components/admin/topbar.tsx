@@ -22,10 +22,9 @@ const routeLabels: Record<string, string> = {
   analytics: "Analytics", settings: "Settings",
 };
 
-export function Topbar({ onSearch }: { onSearch?: (q: string) => void }) {
+export function Topbar() {
   const { theme, toggle } = useTheme();
   const pathname = useLocation().pathname;
-  const [q, setQ] = useState("");
 
   const parts = pathname.split("/").filter(Boolean);
   const crumbs = parts.length === 0 ? [{ label: "Dashboard", href: "/" }] : parts.map((p, i) => ({
@@ -56,15 +55,8 @@ export function Topbar({ onSearch }: { onSearch?: (q: string) => void }) {
         </Breadcrumb>
       </div>
 
-      <div className="relative ml-auto hidden w-72 sm:block">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={q}
-          onChange={(e) => { setQ(e.target.value); onSearch?.(e.target.value); }}
-          placeholder="Search…"
-          className="pl-9"
-        />
-      </div>
+      <div className="ml-auto" />
+
 
       <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
         {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
