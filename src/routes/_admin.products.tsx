@@ -190,7 +190,7 @@ function ProductDialog({
   const set = (k: string, v: any) => setF((s: any) => ({ ...s, [k]: v }));
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (v) setF(editing ? { ...editing, images: editing.images ?? (editing.image ? [editing.image] : []) } : empty); }}>
+    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (v) setF(editing ? normalize(editing) : empty); }}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader><DialogTitle>{editing ? "Edit Product" : "Add Product"}</DialogTitle></DialogHeader>
 
@@ -239,7 +239,25 @@ function ProductDialog({
         </div>
 
 
+        <Field label="Product Overview"><Textarea rows={2} value={f.overview} onChange={(e) => set("overview", e.target.value)} placeholder="Short marketing overview shown on the product page" /></Field>
         <Field label="Description"><Textarea rows={3} value={f.description} onChange={(e) => set("description", e.target.value)} /></Field>
+
+        <Tabs defaultValue="spec" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="spec">Specifications</TabsTrigger>
+            <TabsTrigger value="guide">Design Guidelines</TabsTrigger>
+            <TabsTrigger value="wash">Wash Care</TabsTrigger>
+          </TabsList>
+          <TabsContent value="spec" className="mt-3">
+            <BulletListInput items={f.specifications} onChange={(v) => set("specifications", v)} placeholder="e.g., Fabric weight — 180 GSM" />
+          </TabsContent>
+          <TabsContent value="guide" className="mt-3">
+            <BulletListInput items={f.designGuidelines} onChange={(v) => set("designGuidelines", v)} placeholder="e.g., Logo max 4in on left chest" />
+          </TabsContent>
+          <TabsContent value="wash" className="mt-3">
+            <BulletListInput items={f.washCare} onChange={(v) => set("washCare", v)} placeholder="e.g., Machine wash cold, gentle cycle" />
+          </TabsContent>
+        </Tabs>
 
         <div>
           <Label className="mb-2 block">Color Variants — visibility toggles</Label>
