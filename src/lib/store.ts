@@ -304,6 +304,52 @@ function seedSettings(): Settings {
     address: "Bandra West, Mumbai, India", currency: "INR", theme: "light",
   };
 }
+function seedAgentVisits(agents: Agent[]): AgentVisit[] {
+  const outcomes = ["Interested", "Follow-up", "Not Interested", "Converted", "Sample Requested"] as const;
+  const reqs = ["500 corporate polo t-shirts", "Hotel staff uniform kit — 200 pcs", "Bulk hoodies for onboarding", "Custom aprons for restaurant chain", "Full welcome kit for new hires"];
+  return Array.from({ length: 40 }, (_, i) => {
+    const a = pick(agents); const first = pick(FIRST); const last = pick(LAST);
+    return {
+      id: `VIS-${9000 + i}`, agentId: a.id, agentName: a.name,
+      customerName: `${first} ${last}`,
+      customerPhone: `+91 9${between(100000000, 999999999)}`,
+      customerEmail: `${first.toLowerCase()}.${last.toLowerCase()}@corp.in`,
+      companyName: pick(COMPANIES),
+      address: `${between(1, 999)}, ${pick(STREETS)}`,
+      city: pick(CITIES),
+      visitDate: isoDate(between(0, 60)),
+      nextFollowUp: isoDate(-between(1, 14)),
+      outcome: pick([...outcomes]),
+      requirement: pick(reqs),
+      notes: "Discussed timelines, pricing tiers and sample dispatch.",
+      createdAt: isoNow(),
+    };
+  });
+}
+function seedNotifications(orders: Order[], products: Product[]): Notification[] {
+  const list: Notification[] = [];
+  orders.slice(0, 5).forEach((o, i) => list.push({
+    id: `NTF-${1000 + i}`, type: "order", title: "New order placed",
+    message: `${o.customer} placed ${o.id} • ${o.productName}`,
+    link: `/orders/${o.id}`, read: false, createdAt: isoNow(),
+  }));
+  orders.filter(o => o.paymentStatus === "Pending").slice(0, 3).forEach((o, i) => list.push({
+    id: `NTF-${1100 + i}`, type: "payment", title: "Payment pending",
+    message: `${o.customer} — ${o.id} awaiting payment`,
+    link: `/payments`, read: false, createdAt: isoNow(),
+  }));
+  products.filter(p => p.stock < 30).slice(0, 4).forEach((p, i) => list.push({
+    id: `NTF-${1200 + i}`, type: "stock", title: "Low stock alert",
+    message: `${p.name} (${p.code}) is down to ${p.stock} units`,
+    link: `/products`, read: i > 1, createdAt: isoNow(),
+  }));
+  list.push({
+    id: "NTF-9000", type: "system", title: "Welcome to Arreniux Admin",
+    message: "Explore the dashboard, orders, agents and reports.",
+    read: true, createdAt: isoNow(),
+  });
+  return list;
+}
 
 // ============ Core storage helpers ============
 function read<T>(key: string): T | null {
@@ -320,8 +366,9 @@ function write<T>(key: string, value: T) {
 export const KEYS = {
   products: "products", b2bProducts: "b2bProducts", newCollection: "newCollection",
   welcomeKits: "welcomeKits", orders: "orders", sampleOrders: "sampleOrders",
-  customers: "customers", agents: "agents", payments: "payments", reviews: "reviews",
-  settings: "settings",
+  customers: "customers", agents: "agents", agentVisits: "agentVisits",
+  notifications: "notifications",
+  payments: "payments", reviews: "reviews", settings: "settings",
 } as const;
 
 export function initDemoData(force = false) {
@@ -330,6 +377,7 @@ export function initDemoData(force = false) {
   if (has && !force) return;
   const products = seedProducts();
   const customers = seedCustomers();
+  const agents = seedAgents();
   const orders = seedOrders(products, customers);
   const samples = seedSampleOrders(products, customers);
   write(KEYS.products, products);
@@ -337,7 +385,9 @@ export function initDemoData(force = false) {
   write(KEYS.newCollection, seedNewCollection());
   write(KEYS.welcomeKits, seedWelcomeKits());
   write(KEYS.customers, customers);
-  write(KEYS.agents, seedAgents());
+  write(KEYS.agents, agents);
+  write(KEYS.agentVisits, seedAgentVisits(agents));
+  write(KEYS.notifications, seedNotifications(orders, products));
   write(KEYS.orders, orders);
   write(KEYS.sampleOrders, samples);
   write(KEYS.payments, seedPayments(orders));
