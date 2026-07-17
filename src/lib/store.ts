@@ -22,6 +22,8 @@ const between = (a: number, b: number) => Math.floor(r() * (b - a + 1)) + a;
 export type Product = {
   id: string; code: string; name: string; category: string; type: "Regular" | "Premium" | "Others";
   subCategory: string; material: string; description: string;
+  overview?: string;
+  specifications?: string[]; designGuidelines?: string[]; washCare?: string[];
   samplePrice: number; originalPrice: number; status: "Active" | "Inactive";
   image: string; images?: string[]; stock: number; orders: number; rating: number;
   colors: { name: string; hex: string; showInCategory: boolean; showInBulk: boolean }[];
@@ -59,8 +61,23 @@ export type Customer = {
   totalOrders: number; totalSpend: number; joinDate: string; status: "Active" | "Inactive";
 };
 export type Agent = {
-  id: string; name: string; phone: string; email: string; company: string;
-  commissionPct: number; status: "Active" | "Inactive"; assignedCustomers: number; joinDate: string;
+  id: string; name: string; phone: string; email: string; address: string;
+  status: "Active" | "Inactive"; joinDate: string;
+  /** @deprecated legacy demo */ company?: string;
+  /** @deprecated legacy demo */ commissionPct?: number;
+  /** @deprecated legacy demo */ assignedCustomers?: number;
+};
+export type AgentVisit = {
+  id: string; agentId: string; agentName: string;
+  customerName: string; customerPhone: string; customerEmail: string;
+  companyName: string; address: string; city: string;
+  visitDate: string; nextFollowUp: string;
+  outcome: "Interested" | "Follow-up" | "Not Interested" | "Converted" | "Sample Requested";
+  requirement: string; notes: string; createdAt: string;
+};
+export type Notification = {
+  id: string; type: "order" | "payment" | "review" | "stock" | "agent" | "system";
+  title: string; message: string; link?: string; read: boolean; createdAt: string;
 };
 export type Payment = {
   id: string; orderId: string; customer: string; amount: number;
