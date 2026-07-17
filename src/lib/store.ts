@@ -208,10 +208,8 @@ function seedAgents(): Agent[] {
       name: `${first} ${last}`,
       phone: `+91 9${between(100000000, 999999999)}`,
       email: `${first.toLowerCase()}@${pick(COMPANIES).split(" ")[0]!.toLowerCase()}.com`,
-      company: pick(COMPANIES),
-      commissionPct: between(3, 15),
+      address: `${between(1, 999)}, ${pick(STREETS)}, ${pick(CITIES)}`,
       status: r() > 0.1 ? "Active" : "Inactive",
-      assignedCustomers: between(2, 40),
       joinDate: isoDate(between(30, 900)),
     };
   });
