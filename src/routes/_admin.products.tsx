@@ -94,8 +94,73 @@ function ProductsPage() {
           setOpen(false);
         }}
       />
+
+      <ProductViewDialog product={viewing} onClose={() => setViewing(null)} />
     </PageShell>
   );
+}
+
+function ProductViewDialog({ product, onClose }: { product: Product | null; onClose: () => void }) {
+  return (
+    <Dialog open={!!product} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+        <DialogHeader><DialogTitle>{product?.name}</DialogTitle></DialogHeader>
+        {product && (
+          <div className="space-y-4">
+            {(product.images?.length || product.image) && (
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                {(product.images?.length ? product.images : [product.image]).filter(Boolean).map((src, i) => (
+                  <img key={i} src={src} alt="" className="aspect-square rounded-lg border border-border object-cover" />
+                ))}
+              </div>
+            )}
+            <div className="grid gap-2 text-sm md:grid-cols-2">
+              <Row k="Code" v={product.code} />
+              <Row k="Category" v={product.category} />
+              <Row k="Sub Category" v={product.subCategory} />
+              <Row k="Material" v={product.material} />
+              <Row k="Sample Price" v={inrFull(product.samplePrice)} />
+              <Row k="Original Price" v={inrFull(product.originalPrice)} />
+              <Row k="Stock" v={String(product.stock)} />
+              <Row k="Status" v={product.status} />
+            </div>
+            {product.overview && (
+              <ViewBlock title="Overview"><p className="text-sm text-muted-foreground">{product.overview}</p></ViewBlock>
+            )}
+            {product.description && (
+              <ViewBlock title="Description"><p className="text-sm text-muted-foreground">{product.description}</p></ViewBlock>
+            )}
+            {product.specifications?.length ? (
+              <ViewBlock title="Specifications"><ol className="ml-5 list-decimal space-y-1 text-sm">{product.specifications.map((s, i) => <li key={i}>{s}</li>)}</ol></ViewBlock>
+            ) : null}
+            {product.designGuidelines?.length ? (
+              <ViewBlock title="Design Guidelines"><ol className="ml-5 list-decimal space-y-1 text-sm">{product.designGuidelines.map((s, i) => <li key={i}>{s}</li>)}</ol></ViewBlock>
+            ) : null}
+            {product.washCare?.length ? (
+              <ViewBlock title="Wash Care"><ol className="ml-5 list-decimal space-y-1 text-sm">{product.washCare.map((s, i) => <li key={i}>{s}</li>)}</ol></ViewBlock>
+            ) : null}
+            {product.colors?.length ? (
+              <ViewBlock title="Color Variants">
+                <div className="flex flex-wrap gap-2">
+                  {product.colors.map((c) => (
+                    <span key={c.name} className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs">
+                      <span className="h-3 w-3 rounded-full border" style={{ background: c.hex }} /> {c.name}
+                    </span>
+                  ))}
+                </div>
+              </ViewBlock>
+            ) : null}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+function Row({ k, v }: { k: string; v: string }) {
+  return <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2"><span className="text-xs text-muted-foreground">{k}</span><span className="text-sm font-medium">{v}</span></div>;
+}
+function ViewBlock({ title, children }: { title: string; children: React.ReactNode }) {
+  return <div><div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</div>{children}</div>;
 }
 
 function ProductDialog({
@@ -107,10 +172,19 @@ function ProductDialog({
   const empty = {
     code: "", name: "", category: CATEGORIES[0]!, type: "Regular" as const,
     subCategory: SUBCATS[0]!, material: "100% Cotton", description: "",
+    overview: "", specifications: [] as string[], designGuidelines: [] as string[], washCare: [] as string[],
     samplePrice: 499, originalPrice: 1999, status: "Active" as const, image: "", images: [] as string[],
     colors: COLORS_ALL.slice(0, 4).map(c => ({ ...c, showInCategory: true, showInBulk: true })),
   };
-  const [f, setF] = useState<any>(editing ? { ...editing, images: editing.images ?? (editing.image ? [editing.image] : []) } : empty);
+  const normalize = (p: Product) => ({
+    ...p,
+    images: p.images ?? (p.image ? [p.image] : []),
+    overview: p.overview ?? "",
+    specifications: p.specifications ?? [],
+    designGuidelines: p.designGuidelines ?? [],
+    washCare: p.washCare ?? [],
+  });
+  const [f, setF] = useState<any>(editing ? normalize(editing) : empty);
   // re-init on open
   useState(() => f);
   const set = (k: string, v: any) => setF((s: any) => ({ ...s, [k]: v }));
