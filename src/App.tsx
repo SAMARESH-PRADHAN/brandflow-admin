@@ -15,6 +15,7 @@ import KanbanPage from "./routes/_admin.orders.status";
 import OrderDetail from "./routes/_admin.orders.$id";
 import CustomersPage from "./routes/_admin.customers";
 import AgentsPage from "./routes/_admin.agents";
+import AgentVisitsPage from "./routes/_admin.agent-visits";
 import PaymentsPage from "./routes/_admin.payments";
 import ReviewsPage from "./routes/_admin.reviews";
 import SettingsPage from "./routes/_admin.settings";
@@ -61,6 +62,7 @@ export default function App() {
             <Route path="orders/:id" element={<OrderDetail />} />
             <Route path="customers" element={<CustomersPage />} />
             <Route path="agents" element={<AgentsPage />} />
+            <Route path="agent-visits" element={<AgentVisitsPage />} />
             <Route path="payments" element={<PaymentsPage />} />
             <Route path="reviews" element={<ReviewsPage />} />
             <Route path="settings" element={<SettingsPage />} />
