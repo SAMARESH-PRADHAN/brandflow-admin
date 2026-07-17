@@ -9,14 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCollection, inrFull, type Product } from "@/lib/store";
 import { ImageUploader } from "@/components/admin/image-uploader";
+import { BulletListInput } from "@/components/admin/bullet-list-input";
 import { toast } from "sonner";
 
 
@@ -33,6 +31,7 @@ function ProductsPage() {
   const { data, add, update, remove } = useCollection<Product>("products");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [viewing, setViewing] = useState<Product | null>(null);
 
   const openNew = () => { setEditing(null); setOpen(true); };
   const openEdit = (p: Product) => { setEditing(p); setOpen(true); };
@@ -40,9 +39,14 @@ function ProductsPage() {
   const cols: Column<Product>[] = [
     { key: "code", header: "Code", render: (p) => <span className="font-mono text-xs">{p.code}</span>, sortable: true, getValue: (p) => p.code },
     { key: "name", header: "Product", render: (p) => (
-      <div>
-        <div className="text-sm font-semibold">{p.name}</div>
-        <div className="text-[11px] text-muted-foreground">{p.subCategory} • {p.material}</div>
+      <div className="flex items-center gap-3">
+        {(p.images?.[0] || p.image) && (
+          <img src={p.images?.[0] || p.image} alt={p.name} className="h-10 w-10 rounded-lg border border-border object-cover" />
+        )}
+        <div>
+          <div className="text-sm font-semibold">{p.name}</div>
+          <div className="text-[11px] text-muted-foreground">{p.subCategory} • {p.material}</div>
+        </div>
       </div>
     ), sortable: true, getValue: (p) => p.name },
     { key: "category", header: "Category", render: (p) => <span className="text-sm">{p.category}</span> },
@@ -60,7 +64,7 @@ function ProductsPage() {
     { key: "status", header: "Status", render: (p) => <StatusBadge value={p.status} /> },
     { key: "actions", header: "", render: (p) => (
       <div className="flex justify-end gap-1">
-        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => toast(`${p.name}`, { description: p.description })}><Eye className="h-4 w-4" /></Button>
+        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setViewing(p)}><Eye className="h-4 w-4" /></Button>
         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
         <ConfirmButton
           trigger={<Button size="icon" variant="ghost" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>}
@@ -90,8 +94,73 @@ function ProductsPage() {
           setOpen(false);
         }}
       />
+
+      <ProductViewDialog product={viewing} onClose={() => setViewing(null)} />
     </PageShell>
   );
+}
+
+function ProductViewDialog({ product, onClose }: { product: Product | null; onClose: () => void }) {
+  return (
+    <Dialog open={!!product} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+        <DialogHeader><DialogTitle>{product?.name}</DialogTitle></DialogHeader>
+        {product && (
+          <div className="space-y-4">
+            {(product.images?.length || product.image) && (
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                {(product.images?.length ? product.images : [product.image]).filter(Boolean).map((src, i) => (
+                  <img key={i} src={src} alt="" className="aspect-square rounded-lg border border-border object-cover" />
+                ))}
+              </div>
+            )}
+            <div className="grid gap-2 text-sm md:grid-cols-2">
+              <Row k="Code" v={product.code} />
+              <Row k="Category" v={product.category} />
+              <Row k="Sub Category" v={product.subCategory} />
+              <Row k="Material" v={product.material} />
+              <Row k="Sample Price" v={inrFull(product.samplePrice)} />
+              <Row k="Original Price" v={inrFull(product.originalPrice)} />
+              <Row k="Stock" v={String(product.stock)} />
+              <Row k="Status" v={product.status} />
+            </div>
+            {product.overview && (
+              <ViewBlock title="Overview"><p className="text-sm text-muted-foreground">{product.overview}</p></ViewBlock>
+            )}
+            {product.description && (
+              <ViewBlock title="Description"><p className="text-sm text-muted-foreground">{product.description}</p></ViewBlock>
+            )}
+            {product.specifications?.length ? (
+              <ViewBlock title="Specifications"><ol className="ml-5 list-decimal space-y-1 text-sm">{product.specifications.map((s, i) => <li key={i}>{s}</li>)}</ol></ViewBlock>
+            ) : null}
+            {product.designGuidelines?.length ? (
+              <ViewBlock title="Design Guidelines"><ol className="ml-5 list-decimal space-y-1 text-sm">{product.designGuidelines.map((s, i) => <li key={i}>{s}</li>)}</ol></ViewBlock>
+            ) : null}
+            {product.washCare?.length ? (
+              <ViewBlock title="Wash Care"><ol className="ml-5 list-decimal space-y-1 text-sm">{product.washCare.map((s, i) => <li key={i}>{s}</li>)}</ol></ViewBlock>
+            ) : null}
+            {product.colors?.length ? (
+              <ViewBlock title="Color Variants">
+                <div className="flex flex-wrap gap-2">
+                  {product.colors.map((c) => (
+                    <span key={c.name} className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs">
+                      <span className="h-3 w-3 rounded-full border" style={{ background: c.hex }} /> {c.name}
+                    </span>
+                  ))}
+                </div>
+              </ViewBlock>
+            ) : null}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+function Row({ k, v }: { k: string; v: string }) {
+  return <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2"><span className="text-xs text-muted-foreground">{k}</span><span className="text-sm font-medium">{v}</span></div>;
+}
+function ViewBlock({ title, children }: { title: string; children: React.ReactNode }) {
+  return <div><div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</div>{children}</div>;
 }
 
 function ProductDialog({
@@ -103,16 +172,25 @@ function ProductDialog({
   const empty = {
     code: "", name: "", category: CATEGORIES[0]!, type: "Regular" as const,
     subCategory: SUBCATS[0]!, material: "100% Cotton", description: "",
+    overview: "", specifications: [] as string[], designGuidelines: [] as string[], washCare: [] as string[],
     samplePrice: 499, originalPrice: 1999, status: "Active" as const, image: "", images: [] as string[],
     colors: COLORS_ALL.slice(0, 4).map(c => ({ ...c, showInCategory: true, showInBulk: true })),
   };
-  const [f, setF] = useState<any>(editing ? { ...editing, images: editing.images ?? (editing.image ? [editing.image] : []) } : empty);
+  const normalize = (p: Product) => ({
+    ...p,
+    images: p.images ?? (p.image ? [p.image] : []),
+    overview: p.overview ?? "",
+    specifications: p.specifications ?? [],
+    designGuidelines: p.designGuidelines ?? [],
+    washCare: p.washCare ?? [],
+  });
+  const [f, setF] = useState<any>(editing ? normalize(editing) : empty);
   // re-init on open
   useState(() => f);
   const set = (k: string, v: any) => setF((s: any) => ({ ...s, [k]: v }));
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (v) setF(editing ? { ...editing, images: editing.images ?? (editing.image ? [editing.image] : []) } : empty); }}>
+    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (v) setF(editing ? normalize(editing) : empty); }}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader><DialogTitle>{editing ? "Edit Product" : "Add Product"}</DialogTitle></DialogHeader>
 
@@ -161,7 +239,25 @@ function ProductDialog({
         </div>
 
 
+        <Field label="Product Overview"><Textarea rows={2} value={f.overview} onChange={(e) => set("overview", e.target.value)} placeholder="Short marketing overview shown on the product page" /></Field>
         <Field label="Description"><Textarea rows={3} value={f.description} onChange={(e) => set("description", e.target.value)} /></Field>
+
+        <Tabs defaultValue="spec" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="spec">Specifications</TabsTrigger>
+            <TabsTrigger value="guide">Design Guidelines</TabsTrigger>
+            <TabsTrigger value="wash">Wash Care</TabsTrigger>
+          </TabsList>
+          <TabsContent value="spec" className="mt-3">
+            <BulletListInput items={f.specifications} onChange={(v) => set("specifications", v)} placeholder="e.g., Fabric weight — 180 GSM" />
+          </TabsContent>
+          <TabsContent value="guide" className="mt-3">
+            <BulletListInput items={f.designGuidelines} onChange={(v) => set("designGuidelines", v)} placeholder="e.g., Logo max 4in on left chest" />
+          </TabsContent>
+          <TabsContent value="wash" className="mt-3">
+            <BulletListInput items={f.washCare} onChange={(v) => set("washCare", v)} placeholder="e.g., Machine wash cold, gentle cycle" />
+          </TabsContent>
+        </Tabs>
 
         <div>
           <Label className="mb-2 block">Color Variants — visibility toggles</Label>
