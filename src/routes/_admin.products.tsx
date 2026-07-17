@@ -31,6 +31,7 @@ function ProductsPage() {
   const { data, add, update, remove } = useCollection<Product>("products");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [viewing, setViewing] = useState<Product | null>(null);
 
   const openNew = () => { setEditing(null); setOpen(true); };
   const openEdit = (p: Product) => { setEditing(p); setOpen(true); };
@@ -38,9 +39,14 @@ function ProductsPage() {
   const cols: Column<Product>[] = [
     { key: "code", header: "Code", render: (p) => <span className="font-mono text-xs">{p.code}</span>, sortable: true, getValue: (p) => p.code },
     { key: "name", header: "Product", render: (p) => (
-      <div>
-        <div className="text-sm font-semibold">{p.name}</div>
-        <div className="text-[11px] text-muted-foreground">{p.subCategory} • {p.material}</div>
+      <div className="flex items-center gap-3">
+        {(p.images?.[0] || p.image) && (
+          <img src={p.images?.[0] || p.image} alt={p.name} className="h-10 w-10 rounded-lg border border-border object-cover" />
+        )}
+        <div>
+          <div className="text-sm font-semibold">{p.name}</div>
+          <div className="text-[11px] text-muted-foreground">{p.subCategory} • {p.material}</div>
+        </div>
       </div>
     ), sortable: true, getValue: (p) => p.name },
     { key: "category", header: "Category", render: (p) => <span className="text-sm">{p.category}</span> },
@@ -58,7 +64,7 @@ function ProductsPage() {
     { key: "status", header: "Status", render: (p) => <StatusBadge value={p.status} /> },
     { key: "actions", header: "", render: (p) => (
       <div className="flex justify-end gap-1">
-        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => toast(`${p.name}`, { description: p.description })}><Eye className="h-4 w-4" /></Button>
+        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setViewing(p)}><Eye className="h-4 w-4" /></Button>
         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
         <ConfirmButton
           trigger={<Button size="icon" variant="ghost" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>}
