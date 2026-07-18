@@ -1,13 +1,13 @@
 import { Link, useParams } from "react-router-dom";
 import { useMemo } from "react";
-import { ArrowLeft, Download, Printer, CheckCircle2, Circle } from "lucide-react";
+import { ArrowLeft, Download, FileDown, Image as ImageIcon, CheckCircle2, Circle } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
 import { SectionCard } from "@/components/admin/section-card";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Button } from "@/components/ui/button";
 import { useCollection, inrFull, type Order, type OrderStatus } from "@/lib/store";
+import { generateOrderPDF, downloadOrderLogo } from "@/lib/pdf";
 import { toast } from "sonner";
-
 
 const STATUS_FLOW: OrderStatus[] = ["Placed", "Confirmed", "In Production", "Shipped", "Delivered"];
 
@@ -36,8 +36,14 @@ function OrderDetail() {
     <PageShell
       title={`Order ${order.id}`} subtitle={`${order.type}${order.isSample ? " • Sample" : ""} • ${order.date}`}
       actions={<>
-        <Button variant="outline" onClick={() => window.print()}><Printer className="mr-1 h-4 w-4" /> Print</Button>
-        <Button onClick={() => { window.print(); toast.success("PDF ready — use browser Save as PDF"); }}><Download className="mr-1 h-4 w-4" /> Download PDF</Button>
+        <Button onClick={() => { generateOrderPDF(order); toast.success("PDF downloaded"); }}>
+          <FileDown className="mr-1 h-4 w-4" /> Download PDF
+        </Button>
+        {order.uploadedLogo && (
+          <Button variant="outline" onClick={() => { downloadOrderLogo(order); toast.success("Artwork downloaded"); }}>
+            <Download className="mr-1 h-4 w-4" /> Download Artwork
+          </Button>
+        )}
         <Button asChild variant="outline"><Link to="/orders"><ArrowLeft className="mr-1 h-4 w-4" /> Back</Link></Button>
       </>}
     >
@@ -63,10 +69,22 @@ function OrderDetail() {
             <Row label="Print Location" value={order.printLocation} />
           </div>
           <div className="mt-3 rounded-lg bg-secondary/40 p-3 text-xs">{order.description}</div>
-          {order.uploadedLogo && (
-            <div className="mt-3">
-              <div className="mb-1 text-xs font-semibold text-muted-foreground">Uploaded Logo</div>
-              <img src={order.uploadedLogo} alt="logo" className="max-h-24 rounded-lg border border-border" />
+        </SectionCard>
+
+        <SectionCard title="Customer Artwork / Logo" className="lg:col-span-3">
+          {order.uploadedLogo ? (
+            <div className="flex flex-wrap items-center gap-4">
+              <img src={order.uploadedLogo} alt="Customer artwork" className="max-h-56 rounded-lg border border-border bg-secondary/30 object-contain" />
+              <div className="flex flex-col gap-2">
+                <div className="text-sm text-muted-foreground">Uploaded by the customer for print/embroidery reference.</div>
+                <Button variant="outline" size="sm" onClick={() => { downloadOrderLogo(order); toast.success("Downloaded original file"); }}>
+                  <Download className="mr-1 h-4 w-4" /> Download original clarity
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+              <ImageIcon className="h-4 w-4" /> No artwork uploaded by the customer.
             </div>
           )}
         </SectionCard>
