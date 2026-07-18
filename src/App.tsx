@@ -18,7 +18,7 @@ import AgentsPage from "./routes/_admin.agents";
 import AgentVisitsPage from "./routes/_admin.agent-visits";
 import PaymentsPage from "./routes/_admin.payments";
 import ReviewsPage from "./routes/_admin.reviews";
-import SettingsPage from "./routes/_admin.settings";
+
 
 const queryClient = new QueryClient();
 
@@ -65,7 +65,7 @@ export default function App() {
             <Route path="agent-visits" element={<AgentVisitsPage />} />
             <Route path="payments" element={<PaymentsPage />} />
             <Route path="reviews" element={<ReviewsPage />} />
-            <Route path="settings" element={<SettingsPage />} />
+            
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

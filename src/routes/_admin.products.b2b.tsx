@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
 import { DataTable, exportCsv, type Column } from "@/components/admin/data-table";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -8,14 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCollection, inrFull, type B2BProduct } from "@/lib/store";
 import { ImageUploader } from "@/components/admin/image-uploader";
+import { ProductViewDialog } from "@/components/admin/product-view-dialog";
 import { toast } from "sonner";
-
 
 const SUBS = ["Hospitality", "Corporate", "Healthcare", "Education", "Retail"];
 
@@ -23,6 +21,7 @@ function B2BPage() {
   const { data, add, update, remove } = useCollection<B2BProduct>("b2bProducts");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<B2BProduct | null>(null);
+  const [viewing, setViewing] = useState<B2BProduct | null>(null);
   const [f, setF] = useState<any>({});
 
   const openNew = () => { setEditing(null); setF({ code: "", name: "", subCategory: SUBS[0], material: "100% Cotton", description: "", samplePrice: 299, originalPrice: 1499, status: "Active", image: "", images: [] }); setOpen(true); };
@@ -30,7 +29,12 @@ function B2BPage() {
 
   const cols: Column<B2BProduct>[] = [
     { key: "code", header: "Code", render: (p) => <span className="font-mono text-xs">{p.code}</span>, sortable: true, getValue: (p) => p.code },
-    { key: "name", header: "Product Name", render: (p) => <span className="text-sm font-semibold">{p.name}</span>, sortable: true, getValue: (p) => p.name },
+    { key: "name", header: "Product Name", render: (p) => (
+      <div className="flex items-center gap-3">
+        {(p.images?.[0] || p.image) && <img src={p.images?.[0] || p.image} alt={p.name} className="h-10 w-10 rounded-lg border border-border object-cover" />}
+        <span className="text-sm font-semibold">{p.name}</span>
+      </div>
+    ), sortable: true, getValue: (p) => p.name },
     { key: "sub", header: "B2B Sub Category", render: (p) => <span className="text-sm">{p.subCategory}</span> },
     { key: "material", header: "Material", render: (p) => <span className="text-xs text-muted-foreground">{p.material}</span> },
     { key: "sample", header: "Sample", render: (p) => <span className="num text-sm">{inrFull(p.samplePrice)}</span>, className: "text-right" },
@@ -38,6 +42,7 @@ function B2BPage() {
     { key: "status", header: "Status", render: (p) => <StatusBadge value={p.status} /> },
     { key: "actions", header: "", render: (p) => (
       <div className="flex justify-end gap-1">
+        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setViewing(p)}><Eye className="h-4 w-4" /></Button>
         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
         <ConfirmButton
           trigger={<Button size="icon" variant="ghost" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>}
@@ -78,10 +83,7 @@ function B2BPage() {
             </F>
           </div>
           <F label="Product Images (up to 6)">
-            <ImageUploader
-              images={f.images ?? []}
-              onChange={(imgs) => setF({ ...f, images: imgs, image: imgs[0] ?? "" })}
-            />
+            <ImageUploader images={f.images ?? []} onChange={(imgs) => setF({ ...f, images: imgs, image: imgs[0] ?? "" })} />
           </F>
           <F label="Description"><Textarea rows={3} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></F>
           <DialogFooter>
@@ -94,6 +96,8 @@ function B2BPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ProductViewDialog product={viewing as any} onClose={() => setViewing(null)} />
     </PageShell>
   );
 }

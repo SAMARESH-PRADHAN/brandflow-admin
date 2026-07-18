@@ -19,6 +19,7 @@ const pick = <T,>(a: T[]): T => a[Math.floor(r() * a.length)]!;
 const between = (a: number, b: number) => Math.floor(r() * (b - a + 1)) + a;
 
 // ============ Types ============
+export type ProductVisibility = "Category" | "Bulk" | "Both";
 export type Product = {
   id: string; code: string; name: string; category: string; type: "Regular" | "Premium" | "Others";
   subCategory: string; material: string; description: string;
@@ -26,6 +27,7 @@ export type Product = {
   specifications?: string[]; designGuidelines?: string[]; washCare?: string[];
   samplePrice: number; originalPrice: number; status: "Active" | "Inactive";
   image: string; images?: string[]; stock: number; orders: number; rating: number;
+  visibility: ProductVisibility;
   colors: { name: string; hex: string; showInCategory: boolean; showInBulk: boolean }[];
   createdAt: string;
 };
@@ -33,10 +35,12 @@ export type B2BProduct = {
   id: string; code: string; name: string; subCategory: string; material: string;
   description: string; samplePrice: number; originalPrice: number;
   status: "Active" | "Inactive"; image: string; images?: string[]; createdAt: string;
+  overview?: string; specifications?: string[]; designGuidelines?: string[]; washCare?: string[];
 };
 export type NewCollectionProduct = {
   id: string; code: string; name: string; material: string; description: string;
   samplePrice: number; originalPrice: number; status: "Active" | "Inactive"; image: string; images?: string[]; createdAt: string;
+  overview?: string; specifications?: string[]; designGuidelines?: string[]; washCare?: string[];
 };
 export type WelcomeKitItem = {
   id: string; name: string; price: number; enabled: boolean; image: string; images?: string[]; description: string;
@@ -140,6 +144,7 @@ function seedProducts(): Product[] {
       colors: shuffled.map((c) => ({
         ...c, showInCategory: r() > 0.3, showInBulk: r() > 0.2,
       })),
+      visibility: pick(["Category", "Bulk", "Both"] as const),
       createdAt: isoDate(between(0, 240)),
     };
   });
@@ -214,6 +219,13 @@ function seedAgents(): Agent[] {
     };
   });
 }
+const DEMO_LOGO_SVGS = [
+  `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 120'><rect width='200' height='120' fill='%230b1220'/><text x='100' y='68' font-family='Arial,sans-serif' font-size='28' font-weight='700' fill='%23fff' text-anchor='middle'>ACME</text></svg>`,
+  `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 120'><rect width='200' height='120' fill='%23fef2f2'/><circle cx='60' cy='60' r='34' fill='%23dc2626'/><text x='115' y='70' font-family='Georgia,serif' font-size='24' font-weight='700' fill='%23111'>NOVA</text></svg>`,
+  `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 120'><rect width='200' height='120' fill='%23ecfdf5'/><polygon points='30,90 60,30 90,90' fill='%2316a34a'/><text x='115' y='70' font-family='Arial,sans-serif' font-size='22' font-weight='800' fill='%23064e3b'>PEAK</text></svg>`,
+  `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 120'><rect width='200' height='120' fill='%23111827'/><text x='100' y='72' font-family='Arial Black,sans-serif' font-size='34' font-weight='900' fill='%23fbbf24' text-anchor='middle'>ORBIT</text></svg>`,
+];
+
 function seedOrders(products: Product[], customers: Customer[]): Order[] {
   return Array.from({ length: 100 }, (_, i) => {
     const c = pick(customers);
@@ -231,7 +243,8 @@ function seedOrders(products: Product[], customers: Customer[]): Order[] {
       customerId: c.id, customer: c.name, phone: c.phone, email: c.email, address: c.address,
       productId: p.id, productCode: p.code, productName: p.name, category: p.category,
       productType: p.type, subCategory: p.subCategory, material: p.material, description: p.description,
-      printType: pick(PRINT_TYPES), printLocation: pick(PRINT_LOCATIONS), uploadedLogo: "",
+      printType: pick(PRINT_TYPES), printLocation: pick(PRINT_LOCATIONS),
+      uploadedLogo: r() > 0.35 ? pick(DEMO_LOGO_SVGS) : "",
       sizes: { S: between(0, qty / 4), M: between(0, qty / 3), L: between(0, qty / 3), XL: between(0, qty / 4), XXL: between(0, qty / 6) },
       qty, unitPrice: p.originalPrice, gstPct, shipping,
       type, status,
@@ -248,7 +261,7 @@ function seedOrders(products: Product[], customers: Customer[]): Order[] {
 function seedSampleOrders(products: Product[], customers: Customer[]): Order[] {
   return Array.from({ length: 25 }, (_, i) => {
     const c = pick(customers); const p = pick(products);
-    const type = pick(["Normal", "Bulk", "B2B", "New Collection"] as const);
+    const type = pick(["Normal", "B2B"] as const);
     const status = pick(["Placed", "Confirmed", "In Production", "Shipped", "Delivered"] as const);
     const statusOrder: OrderStatus[] = ["Placed", "Confirmed", "In Production", "Shipped", "Delivered"];
     const idx = statusOrder.indexOf(status);
@@ -258,7 +271,8 @@ function seedSampleOrders(products: Product[], customers: Customer[]): Order[] {
       customerId: c.id, customer: c.name, phone: c.phone, email: c.email, address: c.address,
       productId: p.id, productCode: p.code, productName: p.name, category: p.category,
       productType: p.type, subCategory: p.subCategory, material: p.material, description: p.description,
-      printType: pick(PRINT_TYPES), printLocation: pick(PRINT_LOCATIONS), uploadedLogo: "",
+      printType: pick(PRINT_TYPES), printLocation: pick(PRINT_LOCATIONS),
+      uploadedLogo: r() > 0.35 ? pick(DEMO_LOGO_SVGS) : "",
       sizes: { M: 1 },
       qty: 1, unitPrice: p.samplePrice, gstPct: 5, shipping: 99,
       type, status,
