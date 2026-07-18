@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
 import { DataTable, exportCsv, type Column } from "@/components/admin/data-table";
@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCollection, inrFull, type Customer } from "@/lib/store";
+import { DateRangeFilter, inRange, type DateRange } from "@/components/admin/date-range-filter";
 import { toast } from "sonner";
 
 
@@ -20,8 +21,11 @@ function CustomersPage() {
   const [editing, setEditing] = useState<Customer | null>(null);
   const [f, setF] = useState<any>({});
   const [tab, setTab] = useState<"All" | "Active" | "Inactive">("All");
+  const [range, setRange] = useState<DateRange>({ from: "", to: "" });
 
-  const filtered = tab === "All" ? data : data.filter((c) => c.status === tab);
+  const filtered = useMemo(() => data.filter((c) =>
+    (tab === "All" || c.status === tab) && inRange(c.joinDate, range)
+  ), [data, tab, range]);
   const openNew = () => { setEditing(null); setF({ name: "", phone: "", email: "", address: "", status: "Active", totalOrders: 0, totalSpend: 0, joinDate: new Date().toISOString().slice(0, 10) }); setOpen(true); };
   const openEdit = (c: Customer) => { setEditing(c); setF(c); setOpen(true); };
 
