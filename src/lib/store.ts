@@ -19,6 +19,7 @@ const pick = <T,>(a: T[]): T => a[Math.floor(r() * a.length)]!;
 const between = (a: number, b: number) => Math.floor(r() * (b - a + 1)) + a;
 
 // ============ Types ============
+export type ProductVisibility = "Category" | "Bulk" | "Both";
 export type Product = {
   id: string; code: string; name: string; category: string; type: "Regular" | "Premium" | "Others";
   subCategory: string; material: string; description: string;
@@ -26,6 +27,7 @@ export type Product = {
   specifications?: string[]; designGuidelines?: string[]; washCare?: string[];
   samplePrice: number; originalPrice: number; status: "Active" | "Inactive";
   image: string; images?: string[]; stock: number; orders: number; rating: number;
+  visibility: ProductVisibility;
   colors: { name: string; hex: string; showInCategory: boolean; showInBulk: boolean }[];
   createdAt: string;
 };
@@ -33,10 +35,12 @@ export type B2BProduct = {
   id: string; code: string; name: string; subCategory: string; material: string;
   description: string; samplePrice: number; originalPrice: number;
   status: "Active" | "Inactive"; image: string; images?: string[]; createdAt: string;
+  overview?: string; specifications?: string[]; designGuidelines?: string[]; washCare?: string[];
 };
 export type NewCollectionProduct = {
   id: string; code: string; name: string; material: string; description: string;
   samplePrice: number; originalPrice: number; status: "Active" | "Inactive"; image: string; images?: string[]; createdAt: string;
+  overview?: string; specifications?: string[]; designGuidelines?: string[]; washCare?: string[];
 };
 export type WelcomeKitItem = {
   id: string; name: string; price: number; enabled: boolean; image: string; images?: string[]; description: string;
@@ -140,6 +144,7 @@ function seedProducts(): Product[] {
       colors: shuffled.map((c) => ({
         ...c, showInCategory: r() > 0.3, showInBulk: r() > 0.2,
       })),
+      visibility: pick(["Category", "Bulk", "Both"] as const),
       createdAt: isoDate(between(0, 240)),
     };
   });
