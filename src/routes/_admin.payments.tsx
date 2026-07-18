@@ -6,6 +6,7 @@ import { SectionCard } from "@/components/admin/section-card";
 import { DataTable, exportCsv, type Column } from "@/components/admin/data-table";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DateRangeFilter, inRange, type DateRange } from "@/components/admin/date-range-filter";
 import { useCollection, inr, inrFull, type Payment } from "@/lib/store";
 import { toast } from "sonner";
 
@@ -13,13 +14,17 @@ import { toast } from "sonner";
 function PaymentsPage() {
   const { data } = useCollection<Payment>("payments");
   const [range, setRange] = useState("All");
+  const [dr, setDr] = useState<DateRange>({ from: "", to: "" });
 
   const filtered = useMemo(() => {
-    if (range === "All") return data;
-    const days = range === "Daily" ? 1 : range === "Weekly" ? 7 : range === "Monthly" ? 30 : 365;
-    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
-    return data.filter((p) => new Date(p.date) >= cutoff);
-  }, [data, range]);
+    let base = data;
+    if (range !== "All") {
+      const days = range === "Daily" ? 1 : range === "Weekly" ? 7 : range === "Monthly" ? 30 : 365;
+      const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
+      base = base.filter((p) => new Date(p.date) >= cutoff);
+    }
+    return base.filter((p) => inRange(p.date, dr));
+  }, [data, range, dr]);
 
   const stats = useMemo(() => {
     const total = filtered.reduce((a, p) => a + p.amount, 0);
@@ -59,6 +64,7 @@ function PaymentsPage() {
           <TabsTrigger value="Yearly">Yearly</TabsTrigger>
         </TabsList>
       </Tabs>
+      <DateRangeFilter value={dr} onChange={setDr} label="Payment date" />
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <KpiCard label="Total Payments" value={inr(stats.total)} icon={CreditCard} tone="primary" index={0} />
@@ -73,7 +79,7 @@ function PaymentsPage() {
 
       <SectionCard title="Recent Payments" subtitle={`${filtered.length} transactions`}>
         <DataTable rows={filtered} columns={cols} pageSize={10} searchKeys={["id", "customer", "orderId", "method"]}
-          onExport={() => { exportCsv("arreniux-payments.csv", filtered); toast.success("Exported"); }} />
+          onExport={() => { exportCsv("arreniux-payments.csv", filtered); toast.success("Exported filtered rows"); }} />
       </SectionCard>
     </PageShell>
   );

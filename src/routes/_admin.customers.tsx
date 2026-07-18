@@ -60,9 +60,10 @@ function CustomersPage() {
           <TabsTrigger value="Active">Active</TabsTrigger>
           <TabsTrigger value="Inactive">Inactive</TabsTrigger>
         </TabsList>
-        <TabsContent value={tab} className="mt-4">
+        <TabsContent value={tab} className="mt-4 space-y-3">
+          <DateRangeFilter value={range} onChange={setRange} label="Join date" />
           <DataTable rows={filtered} columns={cols} searchKeys={["name", "email", "phone", "address"]}
-            onExport={() => { exportCsv("arreniux-customers.csv", filtered); toast.success("Exported"); }} />
+            onExport={() => { exportCsv("arreniux-customers.csv", filtered); toast.success("Exported filtered rows"); }} />
         </TabsContent>
       </Tabs>
 

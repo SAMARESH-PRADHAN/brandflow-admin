@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, BarChart3, Package, PackagePlus, Boxes, Gift,
   ShoppingCart, ClipboardList, GitBranch, Users, Briefcase, MapPin,
-  CreditCard, Star, Settings, Sparkles,
+  CreditCard, Star, Sparkles,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -34,7 +34,6 @@ const nav = [
   { label: "Business", items: [
     { title: "Payments", url: "/payments", icon: CreditCard },
     { title: "Reviews", url: "/reviews", icon: Star },
-    { title: "Settings", url: "/settings", icon: Settings },
   ]},
 ] as const;
 
