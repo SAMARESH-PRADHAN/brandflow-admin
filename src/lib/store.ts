@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-const PREFIX = "arreniux:";
+const PREFIX = "arreniux:v3:";
 const CHANGE_EVENT = "arreniux:change";
 
 // Seeded PRNG for deterministic demo data
