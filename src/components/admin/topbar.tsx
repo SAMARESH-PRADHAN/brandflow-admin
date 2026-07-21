@@ -123,25 +123,6 @@ export function Topbar() {
         </PopoverContent>
       </Popover>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-9 gap-2 px-2">
-            <div className="grid h-7 w-7 place-items-center rounded-full bg-primary/10 text-primary">
-              <User className="h-4 w-4" />
-            </div>
-            <span className="hidden text-sm font-medium sm:inline">Admin</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-52">
-          <DropdownMenuLabel>Signed in as</DropdownMenuLabel>
-          <DropdownMenuItem disabled>admin@arreniux.com</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem asChild><Link to="/settings">Settings</Link></DropdownMenuItem>
-          <DropdownMenuItem onClick={() => toast.success("Logged out (demo)")}>
-            <LogOut className="mr-2 h-4 w-4" /> Logout
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </header>
   );
 }
