@@ -65,16 +65,16 @@ export type Customer = {
   totalOrders: number; totalSpend: number; joinDate: string; status: "Active" | "Inactive";
 };
 export type Agent = {
-  id: string; name: string; phone: string; email: string; address: string;
+  id: string; code: string; name: string; phone: string; email: string; address: string;
   status: "Active" | "Inactive"; joinDate: string;
   /** @deprecated legacy demo */ company?: string;
   /** @deprecated legacy demo */ commissionPct?: number;
   /** @deprecated legacy demo */ assignedCustomers?: number;
 };
 export type AgentVisit = {
-  id: string; agentId: string; agentName: string;
+  id: string; agentId: string; agentName: string; agentCode: string;
   customerName: string; customerPhone: string; customerEmail: string;
-  companyName: string; address: string; city: string;
+  companyName: string; address: string; city: string; gstNumber: string;
   visitDate: string; nextFollowUp: string;
   outcome: "Interested" | "Follow-up" | "Not Interested" | "Converted" | "Sample Requested";
   requirement: string; notes: string; createdAt: string;
