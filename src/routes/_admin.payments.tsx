@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CreditCard, CheckCircle2, Clock, RefreshCw, Wallet, Banknote, TrendingUp } from "lucide-react";
+import { CreditCard, CheckCircle2, Clock, Wallet, TrendingUp } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
 import { KpiCard } from "@/components/admin/kpi-card";
 import { SectionCard } from "@/components/admin/section-card";
