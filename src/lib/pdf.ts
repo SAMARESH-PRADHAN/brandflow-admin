@@ -1,6 +1,8 @@
 import jsPDF from "jspdf";
 import type { Order } from "@/lib/store";
-import { inrFull } from "@/lib/store";
+
+// jsPDF's built-in Helvetica cannot render the ₹ glyph — fall back to "Rs."
+const rs = (n: number) => `Rs. ${(n ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
 // Simple invoice PDF with Arreniux header + optional customer logo/artwork.
 export function generateOrderPDF(order: Order, opts?: { brand?: string; download?: boolean }) {
