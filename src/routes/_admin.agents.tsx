@@ -73,6 +73,7 @@ function AgentsPage() {
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button onClick={() => {
               if (!f.name) { toast.error("Name required"); return; }
+              if (!f.code) { toast.error("Agent code required"); return; }
               if (editing) { update(editing.id, f); toast.success("Updated"); }
               else { add(f); toast.success("Added"); }
               setOpen(false);
