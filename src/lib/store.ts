@@ -210,6 +210,7 @@ function seedAgents(): Agent[] {
     const first = pick(FIRST), last = pick(LAST);
     return {
       id: `AGT-${7000 + i}`,
+      code: `ARX-AG${String(100 + i).padStart(3, "0")}`,
       name: `${first} ${last}`,
       phone: `+91 9${between(100000000, 999999999)}`,
       email: `${first.toLowerCase()}@${pick(COMPANIES).split(" ")[0]!.toLowerCase()}.com`,
