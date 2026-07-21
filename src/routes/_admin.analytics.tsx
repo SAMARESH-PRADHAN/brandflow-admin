@@ -74,8 +74,12 @@ function AnalyticsPage() {
   [filtered]);
 
   const payMethod = useMemo(() => {
-    const methods = ["UPI", "Credit Card", "Net Banking", "COD", "Wallet"];
-    return methods.map((m) => ({ name: m, value: payments.filter((p) => p.method === m).length }));
+    const upi = payments.filter((p) => p.method === "UPI").length;
+    const card = payments.filter((p) => p.method === "Credit Card").length;
+    return [
+      { name: "UPI", value: upi },
+      { name: "Card", value: card },
+    ];
   }, [payments]);
 
   return (
