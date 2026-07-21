@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
 import {
-  Package, ShoppingCart, Clock, CheckCircle2, ClipboardList, Users, Boxes, Star,
-  TrendingUp, IndianRupee, CreditCard,
+  ShoppingCart, Clock, CheckCircle2, ClipboardList, Users, Boxes, Star, IndianRupee,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -84,8 +83,6 @@ function DashboardPage() {
   const COLORS = ["hsl(354 78% 47%)", "hsl(0 0% 12%)", "hsl(152 65% 40%)", "hsl(35 92% 50%)", "hsl(217 91% 55%)", "hsl(280 65% 50%)"];
 
   const latestOrders = orders.slice(0, 6);
-  const recentReviews = reviews.slice(0, 4);
-  const lowStock = [...products].sort((a, b) => a.stock - b.stock).slice(0, 5);
 
   return (
     <PageShell title="Dashboard" subtitle="Real-time overview of your Arreniux business">
@@ -198,60 +195,6 @@ function DashboardPage() {
         </SectionCard>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <SectionCard title="Recent Reviews">
-          <div className="space-y-3">
-            {recentReviews.map((r) => (
-              <div key={r.id} className="rounded-lg border border-border p-3">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold">{r.customer}</div>
-                  <div className="text-xs text-warning">{"★".repeat(r.rating)}</div>
-                </div>
-                <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">{r.comment}</div>
-                <div className="mt-2 flex items-center justify-between">
-                  <span className="text-[11px] text-muted-foreground">{r.product}</span>
-                  <StatusBadge value={r.status} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </SectionCard>
-
-        <SectionCard title="Low Stock" subtitle="Reorder alerts">
-          <div className="space-y-2">
-            {lowStock.map((p) => (
-              <div key={p.id} className="flex items-center justify-between rounded-lg border border-border p-2.5">
-                <div className="min-w-0">
-                  <div className="truncate text-xs font-semibold">{p.name}</div>
-                  <div className="text-[11px] text-muted-foreground">{p.code}</div>
-                </div>
-                <span className={`num text-xs font-bold ${p.stock < 30 ? "text-destructive" : "text-warning"}`}>{p.stock}</span>
-              </div>
-            ))}
-          </div>
-        </SectionCard>
-
-        <SectionCard title="Today's Snapshot">
-          <div className="space-y-3">
-            <div className="rounded-lg bg-primary/10 p-3">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-primary">Today's Sales</div>
-              <div className="mt-1 font-display text-2xl num">{inr(stats.todaySales)}</div>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-border p-3">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground"><CreditCard className="h-4 w-4" /> Pending payments</div>
-              <div className="num text-sm font-bold">{inr(stats.pendingPayments)}</div>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-border p-3">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground"><TrendingUp className="h-4 w-4" /> Growth</div>
-              <div className="text-sm font-bold text-success">+12.4%</div>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-border p-3">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground"><Package className="h-4 w-4" /> Active products</div>
-              <div className="num text-sm font-bold">{products.filter((p) => p.status === "Active").length}</div>
-            </div>
-          </div>
-        </SectionCard>
-      </div>
     </PageShell>
   );
 }

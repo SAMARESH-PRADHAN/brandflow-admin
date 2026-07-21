@@ -1,18 +1,15 @@
 import { useMemo, useState } from "react";
-import { Check, X, Reply, Star } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { PageShell } from "@/components/admin/page-shell";
 import { SectionCard } from "@/components/admin/section-card";
 import { StatusBadge } from "@/components/admin/status-badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCollection, type Review } from "@/lib/store";
-import { toast } from "sonner";
 
 
 function ReviewsPage() {
-  const { data, update, remove } = useCollection<Review>("reviews");
+  const { data } = useCollection<Review>("reviews");
   const [tab, setTab] = useState<"All" | Review["status"]>("All");
   const [q, setQ] = useState("");
 
@@ -82,18 +79,6 @@ function ReviewsPage() {
                 </div>
               </div>
               <p className="mt-2 text-sm">{r.comment}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={() => { update(r.id, { status: "Approved" }); toast.success("Approved"); }}>
-                  <Check className="mr-1 h-3.5 w-3.5" /> Approve
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => { update(r.id, { status: "Rejected" }); toast("Rejected"); }}>
-                  <X className="mr-1 h-3.5 w-3.5" /> Reject
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => toast("Reply drafted (demo)")}>
-                  <Reply className="mr-1 h-3.5 w-3.5" /> Reply
-                </Button>
-                <Button size="sm" variant="ghost" className="ml-auto text-destructive" onClick={() => { remove(r.id); toast.success("Deleted"); }}>Delete</Button>
-              </div>
             </div>
           ))}
           {filtered.length === 0 && <div className="py-8 text-center text-sm text-muted-foreground">No reviews match your filter</div>}

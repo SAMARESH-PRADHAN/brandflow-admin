@@ -21,16 +21,17 @@ function AgentsPage() {
   const [editing, setEditing] = useState<Agent | null>(null);
   const [f, setF] = useState<any>({});
 
-  const openNew = () => { setEditing(null); setF({ name: "", phone: "", email: "", address: "", status: "Active", joinDate: new Date().toISOString().slice(0, 10) }); setOpen(true); };
+  const openNew = () => { setEditing(null); setF({ code: "", name: "", phone: "", email: "", address: "", status: "Active", joinDate: new Date().toISOString().slice(0, 10) }); setOpen(true); };
   const openEdit = (a: Agent) => { setEditing(a); setF(a); setOpen(true); };
 
   const cols: Column<Agent>[] = [
     { key: "name", header: "Agent", render: (a) => (
       <div className="flex items-center gap-3">
         <div className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-bold">{a.name.split(" ").map(x => x[0]).join("").slice(0,2)}</div>
-        <div><div className="text-sm font-semibold">{a.name}</div><div className="text-[11px] text-muted-foreground">{a.id}</div></div>
+        <div><div className="text-sm font-semibold">{a.name}</div><div className="text-[11px] text-muted-foreground">{a.code}</div></div>
       </div>
     ), sortable: true, getValue: (a) => a.name },
+    { key: "code", header: "Agent Code", render: (a) => <span className="font-mono text-xs">{a.code}</span>, sortable: true, getValue: (a) => a.code },
     { key: "contact", header: "Contact", render: (a) => (<div><div className="text-xs">{a.email}</div><div className="text-[11px] text-muted-foreground">{a.phone}</div></div>) },
     { key: "address", header: "Address", render: (a) => <span className="line-clamp-1 max-w-[260px] text-xs">{a.address}</span> },
     { key: "join", header: "Joined", render: (a) => <span className="text-xs text-muted-foreground">{a.joinDate}</span> },
@@ -55,9 +56,10 @@ function AgentsPage() {
         <DialogContent>
           <DialogHeader><DialogTitle>{editing ? "Edit Agent" : "Add Agent"}</DialogTitle></DialogHeader>
           <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-1.5"><Label className="text-xs">Agent Code</Label><Input value={f.code} onChange={(e) => setF({ ...f, code: e.target.value })} placeholder="ARX-AG001" /></div>
             <div className="space-y-1.5"><Label className="text-xs">Agent Name</Label><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
             <div className="space-y-1.5"><Label className="text-xs">Phone</Label><Input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></div>
-            <div className="space-y-1.5 md:col-span-2"><Label className="text-xs">Email</Label><Input type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label className="text-xs">Email</Label><Input type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></div>
             <div className="space-y-1.5 md:col-span-2"><Label className="text-xs">Address</Label><Textarea rows={2} value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} /></div>
             <div className="space-y-1.5"><Label className="text-xs">Join Date</Label><Input type="date" value={f.joinDate} onChange={(e) => setF({ ...f, joinDate: e.target.value })} /></div>
             <div className="space-y-1.5"><Label className="text-xs">Status</Label>
@@ -71,6 +73,7 @@ function AgentsPage() {
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button onClick={() => {
               if (!f.name) { toast.error("Name required"); return; }
+              if (!f.code) { toast.error("Agent code required"); return; }
               if (editing) { update(editing.id, f); toast.success("Updated"); }
               else { add(f); toast.success("Added"); }
               setOpen(false);

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCollection, inrFull, type Product, type ProductVisibility } from "@/lib/store";
@@ -195,20 +196,39 @@ function ProductDialog({
               <SelectContent><SelectItem value="Active">Active</SelectItem><SelectItem value="Inactive">Inactive</SelectItem></SelectContent>
             </Select>
           </Field>
-          <Field label="Available In">
-            <Select value={f.visibility} onValueChange={(v) => set("visibility", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Category">Only Category section</SelectItem>
-                <SelectItem value="Bulk">Only Bulk Order section</SelectItem>
-                <SelectItem value="Both">Both sections</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
+          <div className="md:col-span-2 grid gap-3 sm:grid-cols-2">
+            <div className="flex items-center justify-between rounded-lg border border-border p-3">
+              <div>
+                <Label className="text-xs">Show in Category section</Label>
+                <div className="text-[11px] text-muted-foreground">Visible in retail/category listing</div>
+              </div>
+              <Switch
+                checked={f.visibility === "Category" || f.visibility === "Both"}
+                onCheckedChange={(v) => {
+                  const bulk = f.visibility === "Bulk" || f.visibility === "Both";
+                  set("visibility", v ? (bulk ? "Both" : "Category") : (bulk ? "Bulk" : "Category"));
+                }}
+              />
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-border p-3">
+              <div>
+                <Label className="text-xs">Show in Bulk Order section</Label>
+                <div className="text-[11px] text-muted-foreground">Visible in B2B/bulk listing</div>
+              </div>
+              <Switch
+                checked={f.visibility === "Bulk" || f.visibility === "Both"}
+                onCheckedChange={(v) => {
+                  const cat = f.visibility === "Category" || f.visibility === "Both";
+                  set("visibility", v ? (cat ? "Both" : "Bulk") : (cat ? "Category" : "Bulk"));
+                }}
+              />
+            </div>
+          </div>
           <div className="md:col-span-2">
-            <Field label="Product Images (up to 6)">
+            <Field label="Product Images (up to 4)">
               <ImageUploader
                 images={f.images ?? []}
+                max={4}
                 onChange={(imgs) => setF((s: any) => ({ ...s, images: imgs, image: imgs[0] ?? "" }))}
               />
             </Field>

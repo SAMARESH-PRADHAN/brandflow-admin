@@ -1,14 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
-import { Bell, LogOut, Moon, Sun, User, ShoppingCart, CreditCard, Star, Package, Briefcase, Info, CheckCheck } from "lucide-react";
+import { Bell, Moon, Sun, ShoppingCart, CreditCard, Star, Package, Briefcase, Info, CheckCheck } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useTheme } from "@/hooks/use-theme";
-import { toast } from "sonner";
 import {
   Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
@@ -123,25 +118,6 @@ export function Topbar() {
         </PopoverContent>
       </Popover>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-9 gap-2 px-2">
-            <div className="grid h-7 w-7 place-items-center rounded-full bg-primary/10 text-primary">
-              <User className="h-4 w-4" />
-            </div>
-            <span className="hidden text-sm font-medium sm:inline">Admin</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-52">
-          <DropdownMenuLabel>Signed in as</DropdownMenuLabel>
-          <DropdownMenuItem disabled>admin@arreniux.com</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem asChild><Link to="/settings">Settings</Link></DropdownMenuItem>
-          <DropdownMenuItem onClick={() => toast.success("Logged out (demo)")}>
-            <LogOut className="mr-2 h-4 w-4" /> Logout
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </header>
   );
 }

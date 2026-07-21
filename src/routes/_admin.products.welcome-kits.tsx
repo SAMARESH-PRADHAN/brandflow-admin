@@ -68,9 +68,10 @@ function KitsPage() {
             <div className="space-y-1.5"><Label className="text-xs">Price (₹)</Label><Input type="number" value={f.price} onChange={(e) => setF({ ...f, price: +e.target.value })} /></div>
             <div className="space-y-1.5"><Label className="text-xs">Description</Label><Textarea rows={3} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Product Images (up to 6)</Label>
+              <Label className="text-xs">Product Image (1)</Label>
               <ImageUploader
                 images={f.images ?? []}
+                max={1}
                 onChange={(imgs) => setF({ ...f, images: imgs, image: imgs[0] ?? "" })}
               />
             </div>

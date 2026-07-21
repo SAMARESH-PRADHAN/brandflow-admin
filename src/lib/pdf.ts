@@ -1,6 +1,8 @@
 import jsPDF from "jspdf";
 import type { Order } from "@/lib/store";
-import { inrFull } from "@/lib/store";
+
+// jsPDF's built-in Helvetica cannot render the ₹ glyph — fall back to "Rs."
+const rs = (n: number) => `Rs. ${(n ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
 // Simple invoice PDF with Arreniux header + optional customer logo/artwork.
 export function generateOrderPDF(order: Order, opts?: { brand?: string; download?: boolean }) {
@@ -105,12 +107,12 @@ export function generateOrderPDF(order: Order, opts?: { brand?: string; download
     y += 14;
   };
   line("Quantity", String(order.qty));
-  line("Unit Price", inrFull(order.unitPrice));
-  line("Subtotal", inrFull(subtotal));
-  line(`GST (${order.gstPct}%)`, inrFull(gst));
-  line("Shipping", inrFull(order.shipping));
+  line("Unit Price", rs(order.unitPrice));
+  line("Subtotal", rs(subtotal));
+  line(`GST (${order.gstPct}%)`, rs(gst));
+  line("Shipping", rs(order.shipping));
   doc.line(40, y, W - 40, y); y += 6;
-  line("Grand Total", inrFull(grand), true);
+  line("Grand Total", rs(grand), true);
 
   doc.setFontSize(8); doc.setTextColor(120);
   doc.text(`Generated ${new Date().toLocaleString()} • ${brand} Admin Panel (demo)`, 40, doc.internal.pageSize.getHeight() - 24);

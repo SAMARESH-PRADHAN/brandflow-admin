@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-const PREFIX = "arreniux:";
+const PREFIX = "arreniux:v3:";
 const CHANGE_EVENT = "arreniux:change";
 
 // Seeded PRNG for deterministic demo data
@@ -65,16 +65,16 @@ export type Customer = {
   totalOrders: number; totalSpend: number; joinDate: string; status: "Active" | "Inactive";
 };
 export type Agent = {
-  id: string; name: string; phone: string; email: string; address: string;
+  id: string; code: string; name: string; phone: string; email: string; address: string;
   status: "Active" | "Inactive"; joinDate: string;
   /** @deprecated legacy demo */ company?: string;
   /** @deprecated legacy demo */ commissionPct?: number;
   /** @deprecated legacy demo */ assignedCustomers?: number;
 };
 export type AgentVisit = {
-  id: string; agentId: string; agentName: string;
+  id: string; agentId: string; agentName: string; agentCode: string;
   customerName: string; customerPhone: string; customerEmail: string;
-  companyName: string; address: string; city: string;
+  companyName: string; address: string; city: string; gstNumber: string;
   visitDate: string; nextFollowUp: string;
   outcome: "Interested" | "Follow-up" | "Not Interested" | "Converted" | "Sample Requested";
   requirement: string; notes: string; createdAt: string;
@@ -210,6 +210,7 @@ function seedAgents(): Agent[] {
     const first = pick(FIRST), last = pick(LAST);
     return {
       id: `AGT-${7000 + i}`,
+      code: `ARX-AG${String(100 + i).padStart(3, "0")}`,
       name: `${first} ${last}`,
       phone: `+91 9${between(100000000, 999999999)}`,
       email: `${first.toLowerCase()}@${pick(COMPANIES).split(" ")[0]!.toLowerCase()}.com`,
@@ -324,13 +325,14 @@ function seedAgentVisits(agents: Agent[]): AgentVisit[] {
   return Array.from({ length: 40 }, (_, i) => {
     const a = pick(agents); const first = pick(FIRST); const last = pick(LAST);
     return {
-      id: `VIS-${9000 + i}`, agentId: a.id, agentName: a.name,
+      id: `VIS-${9000 + i}`, agentId: a.id, agentName: a.name, agentCode: a.code,
       customerName: `${first} ${last}`,
       customerPhone: `+91 9${between(100000000, 999999999)}`,
       customerEmail: `${first.toLowerCase()}.${last.toLowerCase()}@corp.in`,
       companyName: pick(COMPANIES),
       address: `${between(1, 999)}, ${pick(STREETS)}`,
       city: pick(CITIES),
+      gstNumber: `${between(10, 37)}${pick(["AABCU", "AAECR", "AAACT", "AAFCS"])}${between(1000, 9999)}${pick(["A", "B", "C", "D"])}1Z${between(1, 9)}`,
       visitDate: isoDate(between(0, 60)),
       nextFollowUp: isoDate(-between(1, 14)),
       outcome: pick([...outcomes]),

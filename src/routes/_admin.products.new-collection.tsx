@@ -79,7 +79,7 @@ function NewColl() {
             <F label="Original Price"><Input type="number" value={f.originalPrice} onChange={(e) => setF({ ...f, originalPrice: +e.target.value })} /></F>
           </div>
           <F label="Product Images (up to 6)">
-            <ImageUploader images={f.images ?? []} onChange={(imgs) => setF({ ...f, images: imgs, image: imgs[0] ?? "" })} />
+            <ImageUploader images={f.images ?? []} max={4} onChange={(imgs) => setF({ ...f, images: imgs, image: imgs[0] ?? "" })} />
           </F>
           <F label="Product Overview"><Textarea rows={2} value={f.overview} onChange={(e) => setF({ ...f, overview: e.target.value })} placeholder="Short marketing summary" /></F>
           <F label="Description"><Textarea rows={3} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></F>
