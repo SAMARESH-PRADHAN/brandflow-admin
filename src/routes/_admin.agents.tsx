@@ -21,7 +21,7 @@ function AgentsPage() {
   const [editing, setEditing] = useState<Agent | null>(null);
   const [f, setF] = useState<any>({});
 
-  const openNew = () => { setEditing(null); setF({ name: "", phone: "", email: "", address: "", status: "Active", joinDate: new Date().toISOString().slice(0, 10) }); setOpen(true); };
+  const openNew = () => { setEditing(null); setF({ code: "", name: "", phone: "", email: "", address: "", status: "Active", joinDate: new Date().toISOString().slice(0, 10) }); setOpen(true); };
   const openEdit = (a: Agent) => { setEditing(a); setF(a); setOpen(true); };
 
   const cols: Column<Agent>[] = [
