@@ -83,8 +83,6 @@ function DashboardPage() {
   const COLORS = ["hsl(354 78% 47%)", "hsl(0 0% 12%)", "hsl(152 65% 40%)", "hsl(35 92% 50%)", "hsl(217 91% 55%)", "hsl(280 65% 50%)"];
 
   const latestOrders = orders.slice(0, 6);
-  const recentReviews = reviews.slice(0, 4);
-  const lowStock = [...products].sort((a, b) => a.stock - b.stock).slice(0, 5);
 
   return (
     <PageShell title="Dashboard" subtitle="Real-time overview of your Arreniux business">
