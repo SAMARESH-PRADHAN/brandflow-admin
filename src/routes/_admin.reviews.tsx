@@ -1,18 +1,15 @@
 import { useMemo, useState } from "react";
-import { Check, X, Reply, Star } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { PageShell } from "@/components/admin/page-shell";
 import { SectionCard } from "@/components/admin/section-card";
 import { StatusBadge } from "@/components/admin/status-badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCollection, type Review } from "@/lib/store";
-import { toast } from "sonner";
 
 
 function ReviewsPage() {
-  const { data, update, remove } = useCollection<Review>("reviews");
+  const { data } = useCollection<Review>("reviews");
   const [tab, setTab] = useState<"All" | Review["status"]>("All");
   const [q, setQ] = useState("");
 
