@@ -1,7 +1,6 @@
-import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, MapPin, Calendar, Phone, Eye } from "lucide-react";
+import { useState } from "react";
+import { Plus, Pencil, Trash2, Eye } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
-import { KpiCard } from "@/components/admin/kpi-card";
 import { DataTable, exportCsv, type Column } from "@/components/admin/data-table";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { ConfirmButton } from "@/components/admin/confirm-button";
@@ -22,26 +21,15 @@ export default function AgentVisitsPage() {
   const [open, setOpen] = useState(false);
   const [viewing, setViewing] = useState<AgentVisit | null>(null);
   const [editing, setEditing] = useState<AgentVisit | null>(null);
-  const [outcome, setOutcome] = useState<"All" | AgentVisit["outcome"]>("All");
   const [f, setF] = useState<any>({});
-
-  const filtered = useMemo(() =>
-    outcome === "All" ? data : data.filter((v) => v.outcome === outcome), [data, outcome]);
-
-  const stats = useMemo(() => ({
-    total: data.length,
-    thisWeek: data.filter((v) => (Date.now() - new Date(v.visitDate).getTime()) / 86400000 < 7).length,
-    converted: data.filter((v) => v.outcome === "Converted").length,
-    followUp: data.filter((v) => v.outcome === "Follow-up").length,
-  }), [data]);
 
   const openNew = () => {
     const a = agents[0];
     setEditing(null);
     setF({
-      agentId: a?.id ?? "", agentName: a?.name ?? "",
+      agentId: a?.id ?? "", agentName: a?.name ?? "", agentCode: a?.code ?? "",
       customerName: "", customerPhone: "", customerEmail: "",
-      companyName: "", address: "", city: "",
+      companyName: "", address: "", city: "", gstNumber: "",
       visitDate: new Date().toISOString().slice(0, 10),
       nextFollowUp: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
       outcome: "Interested", requirement: "", notes: "",
@@ -52,14 +40,13 @@ export default function AgentVisitsPage() {
 
   const cols: Column<AgentVisit>[] = [
     { key: "date", header: "Visit Date", render: (v) => <span className="text-xs">{v.visitDate}</span>, sortable: true, getValue: (v) => v.visitDate },
-    { key: "agent", header: "Agent", render: (v) => <span className="text-sm font-semibold">{v.agentName}</span> },
-    { key: "customer", header: "Customer", render: (v) => (
-      <div><div className="text-sm font-semibold">{v.customerName}</div><div className="text-[11px] text-muted-foreground">{v.customerPhone}</div></div>
+    { key: "agent", header: "Agent", render: (v) => (
+      <div><div className="text-sm font-semibold">{v.agentName}</div><div className="text-[11px] font-mono text-muted-foreground">{v.agentCode}</div></div>
     ) },
-    { key: "company", header: "Company", render: (v) => <span className="text-sm">{v.companyName}</span> },
-    { key: "city", header: "City", render: (v) => <span className="text-xs">{v.city}</span> },
-    { key: "outcome", header: "Outcome", render: (v) => <StatusBadge value={v.outcome} /> },
-    { key: "next", header: "Next Follow-up", render: (v) => <span className="text-xs text-muted-foreground">{v.nextFollowUp}</span> },
+    { key: "customer", header: "Customer Name", render: (v) => <span className="text-sm font-semibold">{v.customerName}</span> },
+    { key: "mobile", header: "Mobile No", render: (v) => <span className="text-xs">{v.customerPhone}</span> },
+    { key: "address", header: "Address", render: (v) => <span className="line-clamp-1 max-w-[260px] text-xs">{v.address}, {v.city}</span> },
+    { key: "gst", header: "GST Number", render: (v) => <span className="font-mono text-xs">{v.gstNumber || "—"}</span> },
     { key: "actions", header: "", render: (v) => (
       <div className="flex justify-end gap-1">
         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setViewing(v)}><Eye className="h-4 w-4" /></Button>
@@ -73,30 +60,12 @@ export default function AgentVisitsPage() {
   return (
     <PageShell
       title="Agent Visited Customer Details"
-      subtitle="Track every B2B agent visit and follow-up"
+      subtitle="Track every B2B agent visit"
       actions={<Button onClick={openNew}><Plus className="mr-1 h-4 w-4" /> Log Visit</Button>}
     >
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <KpiCard label="Total Visits" value={stats.total} icon={MapPin} tone="primary" index={0} />
-        <KpiCard label="This Week" value={stats.thisWeek} icon={Calendar} tone="info" index={1} />
-        <KpiCard label="Converted" value={stats.converted} icon={Phone} tone="success" index={2} />
-        <KpiCard label="Pending Follow-ups" value={stats.followUp} icon={Calendar} tone="warning" index={3} />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Label className="text-xs text-muted-foreground">Filter outcome:</Label>
-        <Select value={outcome} onValueChange={(v) => setOutcome(v as any)}>
-          <SelectTrigger className="h-9 w-48"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All">All Outcomes</SelectItem>
-            {OUTCOMES.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <DataTable rows={filtered} columns={cols} pageSize={10}
-        searchKeys={["agentName", "customerName", "companyName", "city", "customerPhone"]}
-        onExport={() => { exportCsv("arreniux-agent-visits.csv", filtered); toast.success("Exported"); }} />
+      <DataTable rows={data} columns={cols} pageSize={10}
+        searchKeys={["agentName", "agentCode", "customerName", "companyName", "city", "customerPhone", "gstNumber"]}
+        onExport={() => { exportCsv("arreniux-agent-visits.csv", data); toast.success("Exported"); }} />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
@@ -105,18 +74,19 @@ export default function AgentVisitsPage() {
             <F label="Agent">
               <Select value={f.agentId} onValueChange={(v) => {
                 const a = agents.find((x) => x.id === v);
-                setF({ ...f, agentId: v, agentName: a?.name ?? "" });
+                setF({ ...f, agentId: v, agentName: a?.name ?? "", agentCode: a?.code ?? "" });
               }}>
                 <SelectTrigger><SelectValue placeholder="Select agent" /></SelectTrigger>
-                <SelectContent>{agents.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{agents.map((a) => <SelectItem key={a.id} value={a.id}>{a.name} • {a.code}</SelectItem>)}</SelectContent>
               </Select>
             </F>
             <F label="Visit Date"><Input type="date" value={f.visitDate} onChange={(e) => setF({ ...f, visitDate: e.target.value })} /></F>
             <F label="Customer Name"><Input value={f.customerName} onChange={(e) => setF({ ...f, customerName: e.target.value })} /></F>
-            <F label="Customer Phone"><Input value={f.customerPhone} onChange={(e) => setF({ ...f, customerPhone: e.target.value })} /></F>
+            <F label="Mobile No"><Input value={f.customerPhone} onChange={(e) => setF({ ...f, customerPhone: e.target.value })} /></F>
             <F label="Customer Email"><Input type="email" value={f.customerEmail} onChange={(e) => setF({ ...f, customerEmail: e.target.value })} /></F>
             <F label="Company Name"><Input value={f.companyName} onChange={(e) => setF({ ...f, companyName: e.target.value })} /></F>
             <F label="City"><Input value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} /></F>
+            <F label="GST Number"><Input value={f.gstNumber} onChange={(e) => setF({ ...f, gstNumber: e.target.value })} placeholder="27AABCU9603R1ZM" /></F>
             <F label="Next Follow-up"><Input type="date" value={f.nextFollowUp} onChange={(e) => setF({ ...f, nextFollowUp: e.target.value })} /></F>
             <F label="Outcome">
               <Select value={f.outcome} onValueChange={(v) => setF({ ...f, outcome: v })}>
@@ -145,12 +115,13 @@ export default function AgentVisitsPage() {
           <DialogHeader><DialogTitle>Visit Details</DialogTitle></DialogHeader>
           {viewing && (
             <div className="space-y-2 text-sm">
-              <RowV k="Agent" v={viewing.agentName} />
+              <RowV k="Agent" v={`${viewing.agentName} (${viewing.agentCode})`} />
               <RowV k="Customer" v={viewing.customerName} />
-              <RowV k="Phone" v={viewing.customerPhone} />
+              <RowV k="Mobile" v={viewing.customerPhone} />
               <RowV k="Email" v={viewing.customerEmail} />
               <RowV k="Company" v={viewing.companyName} />
               <RowV k="Address" v={`${viewing.address}, ${viewing.city}`} />
+              <RowV k="GST Number" v={viewing.gstNumber || "—"} />
               <RowV k="Visit Date" v={viewing.visitDate} />
               <RowV k="Follow-up" v={viewing.nextFollowUp} />
               <div className="flex items-center justify-between"><span className="text-muted-foreground">Outcome</span><StatusBadge value={viewing.outcome} /></div>
