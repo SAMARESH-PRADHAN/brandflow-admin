@@ -1,14 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
-import { Bell, LogOut, Moon, Sun, User, ShoppingCart, CreditCard, Star, Package, Briefcase, Info, CheckCheck } from "lucide-react";
+import { Bell, Moon, Sun, ShoppingCart, CreditCard, Star, Package, Briefcase, Info, CheckCheck } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useTheme } from "@/hooks/use-theme";
-import { toast } from "sonner";
 import {
   Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
