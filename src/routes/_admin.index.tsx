@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
 import {
-  Package, ShoppingCart, Clock, CheckCircle2, ClipboardList, Users, Boxes, Star,
-  TrendingUp, IndianRupee, CreditCard,
+  ShoppingCart, Clock, CheckCircle2, ClipboardList, Users, Boxes, Star, IndianRupee,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
