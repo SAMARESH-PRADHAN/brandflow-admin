@@ -79,18 +79,6 @@ function ReviewsPage() {
                 </div>
               </div>
               <p className="mt-2 text-sm">{r.comment}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={() => { update(r.id, { status: "Approved" }); toast.success("Approved"); }}>
-                  <Check className="mr-1 h-3.5 w-3.5" /> Approve
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => { update(r.id, { status: "Rejected" }); toast("Rejected"); }}>
-                  <X className="mr-1 h-3.5 w-3.5" /> Reject
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => toast("Reply drafted (demo)")}>
-                  <Reply className="mr-1 h-3.5 w-3.5" /> Reply
-                </Button>
-                <Button size="sm" variant="ghost" className="ml-auto text-destructive" onClick={() => { remove(r.id); toast.success("Deleted"); }}>Delete</Button>
-              </div>
             </div>
           ))}
           {filtered.length === 0 && <div className="py-8 text-center text-sm text-muted-foreground">No reviews match your filter</div>}
