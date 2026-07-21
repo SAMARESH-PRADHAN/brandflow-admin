@@ -325,13 +325,14 @@ function seedAgentVisits(agents: Agent[]): AgentVisit[] {
   return Array.from({ length: 40 }, (_, i) => {
     const a = pick(agents); const first = pick(FIRST); const last = pick(LAST);
     return {
-      id: `VIS-${9000 + i}`, agentId: a.id, agentName: a.name,
+      id: `VIS-${9000 + i}`, agentId: a.id, agentName: a.name, agentCode: a.code,
       customerName: `${first} ${last}`,
       customerPhone: `+91 9${between(100000000, 999999999)}`,
       customerEmail: `${first.toLowerCase()}.${last.toLowerCase()}@corp.in`,
       companyName: pick(COMPANIES),
       address: `${between(1, 999)}, ${pick(STREETS)}`,
       city: pick(CITIES),
+      gstNumber: `${between(10, 37)}${pick(["AABCU", "AAECR", "AAACT", "AAFCS"])}${between(1000, 9999)}${pick(["A", "B", "C", "D"])}1Z${between(1, 9)}`,
       visitDate: isoDate(between(0, 60)),
       nextFollowUp: isoDate(-between(1, 14)),
       outcome: pick([...outcomes]),
