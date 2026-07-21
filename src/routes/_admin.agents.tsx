@@ -28,9 +28,10 @@ function AgentsPage() {
     { key: "name", header: "Agent", render: (a) => (
       <div className="flex items-center gap-3">
         <div className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-bold">{a.name.split(" ").map(x => x[0]).join("").slice(0,2)}</div>
-        <div><div className="text-sm font-semibold">{a.name}</div><div className="text-[11px] text-muted-foreground">{a.id}</div></div>
+        <div><div className="text-sm font-semibold">{a.name}</div><div className="text-[11px] text-muted-foreground">{a.code}</div></div>
       </div>
     ), sortable: true, getValue: (a) => a.name },
+    { key: "code", header: "Agent Code", render: (a) => <span className="font-mono text-xs">{a.code}</span>, sortable: true, getValue: (a) => a.code },
     { key: "contact", header: "Contact", render: (a) => (<div><div className="text-xs">{a.email}</div><div className="text-[11px] text-muted-foreground">{a.phone}</div></div>) },
     { key: "address", header: "Address", render: (a) => <span className="line-clamp-1 max-w-[260px] text-xs">{a.address}</span> },
     { key: "join", header: "Joined", render: (a) => <span className="text-xs text-muted-foreground">{a.joinDate}</span> },
