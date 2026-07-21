@@ -56,9 +56,10 @@ function AgentsPage() {
         <DialogContent>
           <DialogHeader><DialogTitle>{editing ? "Edit Agent" : "Add Agent"}</DialogTitle></DialogHeader>
           <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-1.5"><Label className="text-xs">Agent Code</Label><Input value={f.code} onChange={(e) => setF({ ...f, code: e.target.value })} placeholder="ARX-AG001" /></div>
             <div className="space-y-1.5"><Label className="text-xs">Agent Name</Label><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
             <div className="space-y-1.5"><Label className="text-xs">Phone</Label><Input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></div>
-            <div className="space-y-1.5 md:col-span-2"><Label className="text-xs">Email</Label><Input type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label className="text-xs">Email</Label><Input type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></div>
             <div className="space-y-1.5 md:col-span-2"><Label className="text-xs">Address</Label><Textarea rows={2} value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} /></div>
             <div className="space-y-1.5"><Label className="text-xs">Join Date</Label><Input type="date" value={f.joinDate} onChange={(e) => setF({ ...f, joinDate: e.target.value })} /></div>
             <div className="space-y-1.5"><Label className="text-xs">Status</Label>
