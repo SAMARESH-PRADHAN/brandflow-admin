@@ -83,7 +83,7 @@ function B2BPage() {
             </F>
           </div>
           <F label="Product Images (up to 6)">
-            <ImageUploader images={f.images ?? []} onChange={(imgs) => setF({ ...f, images: imgs, image: imgs[0] ?? "" })} />
+            <ImageUploader images={f.images ?? []} max={4} onChange={(imgs) => setF({ ...f, images: imgs, image: imgs[0] ?? "" })} />
           </F>
           <F label="Description"><Textarea rows={3} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></F>
           <DialogFooter>
