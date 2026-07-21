@@ -66,15 +66,13 @@ function PaymentsPage() {
       </Tabs>
       <DateRangeFilter value={dr} onChange={setDr} label="Payment date" />
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
         <KpiCard label="Total Payments" value={inr(stats.total)} icon={CreditCard} tone="primary" index={0} />
         <KpiCard label="Completed" value={inr(stats.paid)} icon={CheckCircle2} tone="success" index={1} />
         <KpiCard label="Pending" value={inr(stats.pending)} icon={Clock} tone="warning" index={2} />
-        <KpiCard label="Refunded" value={inr(stats.refunded)} icon={RefreshCw} tone="destructive" index={3} />
-        <KpiCard label="COD" value={inr(stats.cod)} icon={Banknote} tone="info" index={4} />
-        <KpiCard label="Online" value={inr(stats.online)} icon={Wallet} tone="chart-5" index={5} />
-        <KpiCard label="Success Rate" value={`${stats.successRate.toFixed(1)}%`} icon={TrendingUp} tone="success" index={6} />
-        <KpiCard label="Transactions" value={filtered.length} icon={CreditCard} tone="primary" index={7} />
+        <KpiCard label="Online" value={inr(stats.online)} icon={Wallet} tone="chart-5" index={3} />
+        <KpiCard label="Success Rate" value={`${stats.successRate.toFixed(1)}%`} icon={TrendingUp} tone="success" index={4} />
+        <KpiCard label="Transactions" value={filtered.length} icon={CreditCard} tone="primary" index={5} />
       </div>
 
       <SectionCard title="Recent Payments" subtitle={`${filtered.length} transactions`}>
