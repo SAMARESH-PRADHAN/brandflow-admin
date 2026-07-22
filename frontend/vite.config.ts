@@ -9,5 +9,11 @@ export default defineConfig({
     host: "::",
     port: 8080,
     strictPort: true,
+    proxy: {
+      "/api": {
+        target: process.env.VITE_API_PROXY ?? "http://localhost:3000",
+        changeOrigin: true,
+      },
+    },
   },
 });
