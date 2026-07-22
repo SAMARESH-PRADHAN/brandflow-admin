@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Pencil, Trash2, Eye } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Trash2, Eye } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
 import { DataTable, exportCsv, type Column } from "@/components/admin/data-table";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -12,31 +12,44 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCollection, type AgentVisit, type Agent } from "@/lib/store";
 import { toast } from "sonner";
+import {
+  DateRangeFilter,
+  inRange,
+  type DateRange,
+} from "@/components/admin/date-range-filter";
 
 const OUTCOMES = ["Interested", "Follow-up", "Not Interested", "Converted", "Sample Requested"] as const;
 
 export default function AgentVisitsPage() {
   const { data, add, update, remove } = useCollection<AgentVisit>("agentVisits");
   const { data: agents } = useCollection<Agent>("agents");
-  const [open, setOpen] = useState(false);
+  // const [open, setOpen] = useState(false);
   const [viewing, setViewing] = useState<AgentVisit | null>(null);
-  const [editing, setEditing] = useState<AgentVisit | null>(null);
-  const [f, setF] = useState<any>({});
-
-  const openNew = () => {
-    const a = agents[0];
-    setEditing(null);
-    setF({
-      agentId: a?.id ?? "", agentName: a?.name ?? "", agentCode: a?.code ?? "",
-      customerName: "", customerPhone: "", customerEmail: "",
-      companyName: "", address: "", city: "", gstNumber: "",
-      visitDate: new Date().toISOString().slice(0, 10),
-      nextFollowUp: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
-      outcome: "Interested", requirement: "", notes: "",
-    });
-    setOpen(true);
-  };
-  const openEdit = (v: AgentVisit) => { setEditing(v); setF(v); setOpen(true); };
+  // const [editing, setEditing] = useState<AgentVisit | null>(null);
+  // const [f, setF] = useState<any>({});
+  const [range, setRange] = useState<DateRange>({
+  from: "",
+  to: "",
+});
+const filtered = useMemo(() => {
+  return data.filter((visit) =>
+    inRange(visit.visitDate, range)
+  );
+}, [data, range]);
+  // const openNew = () => {
+  //   const a = agents[0];
+  //   setEditing(null);
+  //   setF({
+  //     agentId: a?.id ?? "", agentName: a?.name ?? "", agentCode: a?.code ?? "",
+  //     customerName: "", customerPhone: "", customerEmail: "",
+  //     companyName: "", address: "", city: "", gstNumber: "",
+  //     visitDate: new Date().toISOString().slice(0, 10),
+  //     nextFollowUp: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+  //     outcome: "Interested", requirement: "", notes: "",
+  //   });
+  //   setOpen(true);
+  // };
+  // const openEdit = (v: AgentVisit) => { setEditing(v); setF(v); setOpen(true); };
 
   const cols: Column<AgentVisit>[] = [
     { key: "date", header: "Visit Date", render: (v) => <span className="text-xs">{v.visitDate}</span>, sortable: true, getValue: (v) => v.visitDate },
@@ -50,7 +63,7 @@ export default function AgentVisitsPage() {
     { key: "actions", header: "", render: (v) => (
       <div className="flex justify-end gap-1">
         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setViewing(v)}><Eye className="h-4 w-4" /></Button>
-        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(v)}><Pencil className="h-4 w-4" /></Button>
+        {/* <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(v)}><Pencil className="h-4 w-4" /></Button> */}
         <ConfirmButton trigger={<Button size="icon" variant="ghost" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>}
           onConfirm={() => { remove(v.id); toast.success("Visit removed"); }} />
       </div>
@@ -61,13 +74,27 @@ export default function AgentVisitsPage() {
     <PageShell
       title="Agent Visited Customer Details"
       subtitle="Track every B2B agent visit"
-      actions={<Button onClick={openNew}><Plus className="mr-1 h-4 w-4" /> Log Visit</Button>}
+      // actions={<Button onClick={openNew}><Plus className="mr-1 h-4 w-4" /> Log Visit</Button>}
     >
-      <DataTable rows={data} columns={cols} pageSize={10}
-        searchKeys={["agentName", "agentCode", "customerName", "companyName", "city", "customerPhone", "gstNumber"]}
-        onExport={() => { exportCsv("arreniux-agent-visits.csv", data); toast.success("Exported"); }} />
+      <div className="space-y-4">
+  <DateRangeFilter
+    value={range}
+    onChange={setRange}
+    label="Visit Date"
+  />
 
-      <Dialog open={open} onOpenChange={setOpen}>
+  <DataTable
+    rows={filtered} columns={cols} pageSize={10}
+        searchKeys={["agentName", "agentCode", "customerName", "companyName", "city", "customerPhone", "gstNumber"]}
+        onExport={() => {
+  exportCsv(
+    "arreniux-agent-visits.csv",
+    filtered
+  );
+  toast.success("Exported");
+}}/> </div>
+
+      {/* <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader><DialogTitle>{editing ? "Edit Visit" : "Log Agent Visit"}</DialogTitle></DialogHeader>
           <div className="grid gap-3 md:grid-cols-2">
@@ -108,7 +135,7 @@ export default function AgentVisitsPage() {
             }}>{editing ? "Save" : "Log Visit"}</Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
 
       <Dialog open={!!viewing} onOpenChange={(v) => !v && setViewing(null)}>
         <DialogContent className="max-w-lg">

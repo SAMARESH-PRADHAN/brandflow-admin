@@ -2,21 +2,27 @@ import { useMemo, useState } from "react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { PageShell } from "@/components/admin/page-shell";
 import { SectionCard } from "@/components/admin/section-card";
-import { StatusBadge } from "@/components/admin/status-badge";
+// import { StatusBadge } from "@/components/admin/status-badge";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCollection, type Review } from "@/lib/store";
 
 
 function ReviewsPage() {
   const { data } = useCollection<Review>("reviews");
-  const [tab, setTab] = useState<"All" | Review["status"]>("All");
+  // const [tab, setTab] = useState<"All" | Review["status"]>("All");
   const [q, setQ] = useState("");
 
-  const filtered = useMemo(() => data.filter((r) =>
-    (tab === "All" || r.status === tab) &&
-    (!q || r.customer.toLowerCase().includes(q.toLowerCase()) || r.product.toLowerCase().includes(q.toLowerCase()))
-  ), [data, tab, q]);
+  const filtered = useMemo(
+  () =>
+    data.filter(
+      (r) =>
+        !q ||
+        r.customer.toLowerCase().includes(q.toLowerCase()) ||
+        r.product.toLowerCase().includes(q.toLowerCase())
+    ),
+  [data, q]
+);
 
   const avg = data.reduce((a, r) => a + r.rating, 0) / (data.length || 1);
   const dist = [5, 4, 3, 2, 1].map((s) => ({ star: `${s}★`, count: data.filter((r) => r.rating === s).length }));
@@ -47,18 +53,19 @@ function ReviewsPage() {
       </div>
 
       <SectionCard
-        title="Latest Reviews" subtitle={`${filtered.length} shown`}
+  title="Latest Reviews"
+  subtitle={`${filtered.length} shown`}
         actions={
           <>
             <Input placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} className="w-52" />
-            <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+            {/* <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
               <TabsList>
                 <TabsTrigger value="All">All</TabsTrigger>
                 <TabsTrigger value="Pending">Pending</TabsTrigger>
                 <TabsTrigger value="Approved">Approved</TabsTrigger>
                 <TabsTrigger value="Rejected">Rejected</TabsTrigger>
               </TabsList>
-            </Tabs>
+            </Tabs> */}
           </>
         }
       >
@@ -75,7 +82,7 @@ function ReviewsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-warning">{"★".repeat(r.rating)}<span className="text-muted">{"★".repeat(5 - r.rating)}</span></span>
-                  <StatusBadge value={r.status} />
+                  {/* <StatusBadge value={r.status} /> */}
                 </div>
               </div>
               <p className="mt-2 text-sm">{r.comment}</p>
