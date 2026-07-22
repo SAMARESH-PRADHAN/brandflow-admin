@@ -3,11 +3,9 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/admin/app-sidebar";
 import { Topbar } from "@/components/admin/topbar";
 import { useEffect } from "react";
-import { initDemoData } from "@/lib/store";
 
 export default function AdminLayout() {
   useEffect(() => {
-    initDemoData();
     const t = localStorage.getItem("arreniux:theme") ?? "dark";
     document.documentElement.classList.toggle("dark", t === "dark");
     if (!localStorage.getItem("arreniux:theme")) localStorage.setItem("arreniux:theme", "dark");
