@@ -1,15 +1,15 @@
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
 import { DataTable, exportCsv, type Column } from "@/components/admin/data-table";
-import { StatusBadge } from "@/components/admin/status-badge";
+// import { StatusBadge } from "@/components/admin/status-badge";
 import { ConfirmButton } from "@/components/admin/confirm-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+// import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCollection, inrFull, type Customer } from "@/lib/store";
 import { DateRangeFilter, inRange, type DateRange } from "@/components/admin/date-range-filter";
 import { toast } from "sonner";
@@ -17,17 +17,18 @@ import { toast } from "sonner";
 
 function CustomersPage() {
   const { data, add, update, remove } = useCollection<Customer>("customers");
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Customer | null>(null);
-  const [f, setF] = useState<any>({});
-  const [tab, setTab] = useState<"All" | "Active" | "Inactive">("All");
+  // const [open, setOpen] = useState(false);
+  // const [editing, setEditing] = useState<Customer | null>(null);
+  // const [f, setF] = useState<any>({});
+  // const [tab, setTab] = useState<"All" | "Active" | "Inactive">("All");
   const [range, setRange] = useState<DateRange>({ from: "", to: "" });
 
-  const filtered = useMemo(() => data.filter((c) =>
-    (tab === "All" || c.status === tab) && inRange(c.joinDate, range)
-  ), [data, tab, range]);
-  const openNew = () => { setEditing(null); setF({ name: "", phone: "", email: "", address: "", status: "Active", totalOrders: 0, totalSpend: 0, joinDate: new Date().toISOString().slice(0, 10) }); setOpen(true); };
-  const openEdit = (c: Customer) => { setEditing(c); setF(c); setOpen(true); };
+  const filtered = useMemo(
+  () => data.filter((c) => inRange(c.joinDate, range)),
+  [data, range]
+);
+  // const openNew = () => { setEditing(null); setF({ name: "", phone: "", email: "", address: "", status: "Active", totalOrders: 0, totalSpend: 0, joinDate: new Date().toISOString().slice(0, 10) }); setOpen(true); };
+  // const openEdit = (c: Customer) => { setEditing(c); setF(c); setOpen(true); };
 
   const cols: Column<Customer>[] = [
     { key: "name", header: "Customer", render: (c) => (
@@ -41,10 +42,10 @@ function CustomersPage() {
     { key: "orders", header: "Orders", render: (c) => <span className="num text-sm">{c.totalOrders}</span>, className: "text-right", sortable: true, getValue: (c) => c.totalOrders },
     { key: "spend", header: "Total Spend", render: (c) => <span className="num text-sm font-semibold">{inrFull(c.totalSpend)}</span>, className: "text-right", sortable: true, getValue: (c) => c.totalSpend },
     { key: "join", header: "Join Date", render: (c) => <span className="text-xs text-muted-foreground">{c.joinDate}</span> },
-    { key: "status", header: "Status", render: (c) => <StatusBadge value={c.status} /> },
+    // { key: "status", header: "Status", render: (c) => <StatusBadge value={c.status} /> },
     { key: "actions", header: "", render: (c) => (
       <div className="flex justify-end gap-1">
-        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
+        {/* <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button> */}
         <ConfirmButton trigger={<Button size="icon" variant="ghost" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>}
           onConfirm={() => { remove(c.id); toast.success("Deleted"); }} />
       </div>
@@ -52,9 +53,8 @@ function CustomersPage() {
   ];
 
   return (
-    <PageShell title="Customers" subtitle="Retail buyer directory"
-      actions={<Button onClick={openNew}><Plus className="mr-1 h-4 w-4" /> Add Customer</Button>}>
-      <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+    <PageShell title="Customers" subtitle="Retail buyer directory">
+      {/* <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
         <TabsList>
           <TabsTrigger value="All">All ({data.length})</TabsTrigger>
           <TabsTrigger value="Active">Active</TabsTrigger>
@@ -65,9 +65,26 @@ function CustomersPage() {
           <DataTable rows={filtered} columns={cols} searchKeys={["name", "email", "phone", "address"]}
             onExport={() => { exportCsv("arreniux-customers.csv", filtered); toast.success("Exported filtered rows"); }} />
         </TabsContent>
-      </Tabs>
+      </Tabs> */}
+      <div className="space-y-3">
+  <DateRangeFilter
+    value={range}
+    onChange={setRange}
+    label="Join date"
+  />
 
-      <Dialog open={open} onOpenChange={setOpen}>
+  <DataTable
+    rows={filtered}
+    columns={cols}
+    searchKeys={["name", "email", "phone", "address"]}
+    onExport={() => {
+      exportCsv("arreniux-customers.csv", filtered);
+      toast.success("Exported filtered rows");
+    }}
+  />
+</div>
+
+      {/* <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>{editing ? "Edit Customer" : "Add Customer"}</DialogTitle></DialogHeader>
           <div className="grid gap-3 md:grid-cols-2">
@@ -92,7 +109,7 @@ function CustomersPage() {
             }}>{editing ? "Save" : "Add"}</Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </PageShell>
   );
 }
