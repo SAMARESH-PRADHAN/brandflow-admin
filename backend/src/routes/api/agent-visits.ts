@@ -9,18 +9,16 @@ agentVisitRoutes.get("/", async (c) => {
   const { agentId, outcome } = c.req.query();
   const conditions: string[] = [];
   const params: unknown[] = [];
-
-  if (agentId) {
-    params.push(agentId);
-    conditions.push(`agent_id = $${params.length}`);
-  }
-  if (outcome) {
-    params.push(outcome);
-    conditions.push(`outcome = $${params.length}`);
-  }
-
+  if (agentId) { params.push(agentId); conditions.push(`agent_id = $${params.length}`); }
+  if (outcome) { params.push(outcome); conditions.push(`outcome = $${params.length}`); }
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
-  const rows = await query(`SELECT * FROM agent_visits ${where} ORDER BY visit_date DESC`, params);
+  const rows = await query(
+    `SELECT id, agent_id, agent_name, agent_code, customer_name, customer_phone, customer_email,
+            company_name, address, city, gst_number, visit_date, next_follow_up, outcome,
+            requirement, notes, created_at
+     FROM agent_visits ${where} ORDER BY visit_date DESC`,
+    params,
+  );
   return c.json(rows.map(mapAgentVisit));
 });
 

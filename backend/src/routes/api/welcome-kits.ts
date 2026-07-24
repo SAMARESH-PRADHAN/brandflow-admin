@@ -6,7 +6,10 @@ import { deleteById, newId, parseJsonBody, patchById } from "../../lib/http.js";
 export const welcomeKitRoutes = new Hono();
 
 welcomeKitRoutes.get("/", async (c) => {
-  const rows = await query("SELECT * FROM welcome_kit_items ORDER BY name ASC");
+  const rows = await query(
+    `SELECT id, name, price, enabled, image, images, description
+     FROM welcome_kit_items ORDER BY name ASC`,
+  );
   return c.json(rows.map(mapWelcomeKitItem));
 });
 

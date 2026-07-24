@@ -10,21 +10,18 @@ productRoutes.get("/", async (c) => {
   const conditions: string[] = [];
   const params: unknown[] = [];
 
-  if (status) {
-    params.push(status);
-    conditions.push(`status = $${params.length}`);
-  }
-  if (category) {
-    params.push(category);
-    conditions.push(`category = $${params.length}`);
-  }
-  if (type) {
-    params.push(type);
-    conditions.push(`type = $${params.length}`);
-  }
+  if (status) { params.push(status); conditions.push(`status = $${params.length}`); }
+  if (category) { params.push(category); conditions.push(`category = $${params.length}`); }
+  if (type) { params.push(type); conditions.push(`type = $${params.length}`); }
 
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
-  const rows = await query(`SELECT * FROM products ${where} ORDER BY created_at DESC`, params);
+  const rows = await query(
+    `SELECT id, code, name, category, type, sub_category, material, description,
+            sample_price, original_price, status, image, images, stock, orders_count,
+            rating, visibility, colors, created_at
+     FROM products ${where} ORDER BY created_at DESC`,
+    params,
+  );
   return c.json(rows.map(mapProduct));
 });
 

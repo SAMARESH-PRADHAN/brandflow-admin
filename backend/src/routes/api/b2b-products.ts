@@ -6,7 +6,11 @@ import { deleteById, newId, parseJsonBody, patchById } from "../../lib/http.js";
 export const b2bProductRoutes = new Hono();
 
 b2bProductRoutes.get("/", async (c) => {
-  const rows = await query("SELECT * FROM b2b_products ORDER BY created_at DESC");
+  const rows = await query(
+    `SELECT id, code, name, sub_category, material, description,
+            sample_price, original_price, status, image, images, created_at
+     FROM b2b_products ORDER BY created_at DESC`,
+  );
   return c.json(rows.map(mapB2BProduct));
 });
 

@@ -6,10 +6,13 @@ import { deleteById, newId, parseJsonBody, patchById } from "../../lib/http.js";
 export const newCollectionRoutes = new Hono();
 
 newCollectionRoutes.get("/", async (c) => {
-  const rows = await query("SELECT * FROM new_collection_products ORDER BY created_at DESC");
+  const rows = await query(
+    `SELECT id, code, name, material, description,
+            sample_price, original_price, status, image, images, created_at
+     FROM new_collection_products ORDER BY created_at DESC`,
+  );
   return c.json(rows.map(mapNewCollectionProduct));
 });
-
 newCollectionRoutes.get("/:id", async (c) => {
   const row = await queryOne("SELECT * FROM new_collection_products WHERE id = $1", [c.req.param("id")]);
   if (!row) return c.json({ error: "Product not found" }, 404);
