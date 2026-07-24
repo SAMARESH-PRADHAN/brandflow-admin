@@ -83,10 +83,16 @@ async function insertOrder(body: Record<string, unknown>, isSample: boolean) {
 }
 
 export const orderRoutes = new Hono();
-
+const ORDER_LIST_COLUMNS = `
+  id, customer_id, customer_name, phone, email, address,
+  product_id, product_code, product_name, category, product_type, sub_category,
+  material, description, print_type, print_location, uploaded_logo,
+  sizes, qty, unit_price, gst_pct, shipping,
+  type, status, payment_status, payment_method, is_sample, order_date, timeline
+`;
 orderRoutes.get("/", async (c) => {
   const { where, params } = buildOrderFilters(c, false);
-  const rows = await query(`SELECT * FROM orders ${where} ORDER BY order_date DESC`, params);
+  const rows = await query(`SELECT ${ORDER_LIST_COLUMNS} FROM orders ${where} ORDER BY order_date DESC`, params);
   return c.json(rows.map(mapOrder));
 });
 
@@ -154,7 +160,7 @@ export const sampleOrderRoutes = new Hono();
 
 sampleOrderRoutes.get("/", async (c) => {
   const { where, params } = buildOrderFilters(c, true);
-  const rows = await query(`SELECT * FROM orders ${where} ORDER BY order_date DESC`, params);
+  const rows = await query(`SELECT ${ORDER_LIST_COLUMNS} FROM orders ${where} ORDER BY order_date DESC`, params);
   return c.json(rows.map(mapOrder));
 });
 

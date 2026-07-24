@@ -7,9 +7,10 @@ export const customerRoutes = new Hono();
 
 customerRoutes.get("/", async (c) => {
   const { status } = c.req.query();
+  const cols = `id, name, phone, email, address, total_orders, total_spend, join_date, status`;
   const rows = status
-    ? await query("SELECT * FROM customers WHERE status = $1 ORDER BY join_date DESC", [status])
-    : await query("SELECT * FROM customers ORDER BY join_date DESC");
+    ? await query(`SELECT ${cols} FROM customers WHERE status = $1 ORDER BY join_date DESC`, [status])
+    : await query(`SELECT ${cols} FROM customers ORDER BY join_date DESC`);
   return c.json(rows.map(mapCustomer));
 });
 

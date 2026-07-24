@@ -211,78 +211,72 @@ export const KEYS = {
 } as const;
 
 // ============ Hook ============
-export function useCollection<T extends { id: string }>(key: string): {
-  data: T[];
-  loading: boolean;
-  error: string | null;
-  reload: () => Promise<void>;
-  setAll: (v: T[]) => void;
-  add: (v: Omit<T, "id"> & { id?: string }) => Promise<T>;
-  update: (id: string, patch: Partial<T>) => Promise<void>;
-  remove: (id: string) => Promise<void>;
-} {
-  const [data, setData] = useState<T[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-  const reload = useCallback(async () => {
-    setLoading(true);
-    try {
-      const items = await listCollection<T>(key);
-      setData(items);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load data");
-    } finally {
-      setLoading(false);
-    }
-  }, [key]);
+export function useCollection<T extends { id: string }>(key: string) {
+  const queryClient = useQueryClient();
+  const queryKey = ["collection", key] as const;
 
-  useEffect(() => {
-    reload();
-  }, [reload]);
+  const { data = [], isLoading, error, refetch } = useQuery<T[]>({
+    queryKey,
+    queryFn: () => listCollection<T>(key),
+  });
 
   const setAll = useCallback(
     (v: T[]) => {
       if (key === KEYS.notifications && v.every((item) => (item as unknown as Notification).read)) {
         markAllNotificationsRead<T>()
-          .then(setData)
-          .catch((err) => setError(err instanceof Error ? err.message : "Failed to update notifications"));
+          .then((items) => queryClient.setQueryData(queryKey, items))
+          .catch((err) => console.error(err));
         return;
       }
-      setData(v);
+      queryClient.setQueryData(queryKey, v);
     },
-    [key],
+    [key, queryClient],
   );
 
-  const add = useCallback(
-    async (v: Omit<T, "id"> & { id?: string }) => {
-      const item = await createItem<T>(key, v);
-      setData((prev) => [item, ...prev]);
-      return item;
+  const addMutation = useMutation({
+    mutationFn: (v: Omit<T, "id"> & { id?: string }) => createItem<T>(key, v),
+    onSuccess: (item) => {
+      queryClient.setQueryData<T[]>(queryKey, (prev = []) => [item, ...prev]);
+      queryClient.invalidateQueries({ queryKey });
     },
-    [key],
-  );
+  });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: Partial<T> }) => updateItem<T>(key, id, patch),
+    onSuccess: (item, { id }) => {
+      queryClient.setQueryData<T[]>(queryKey, (prev = []) => prev.map((x) => (x.id === id ? item : x)));
+      queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: (id: string) => deleteItem(key, id),
+    onSuccess: (_void, id) => {
+      queryClient.setQueryData<T[]>(queryKey, (prev = []) => prev.filter((x) => x.id !== id));
+      queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
+  const add = useCallback((v: Omit<T, "id"> & { id?: string }) => addMutation.mutateAsync(v), [addMutation]);
   const update = useCallback(
-    async (id: string, patch: Partial<T>) => {
-      const item = await updateItem<T>(key, id, patch);
-      setData((prev) => prev.map((x) => (x.id === id ? item : x)));
-    },
-    [key],
+    (id: string, patch: Partial<T>) => updateMutation.mutateAsync({ id, patch }).then(() => undefined),
+    [updateMutation],
   );
+  const remove = useCallback((id: string) => removeMutation.mutateAsync(id).then(() => undefined), [removeMutation]);
 
-  const remove = useCallback(
-    async (id: string) => {
-      await deleteItem(key, id);
-      setData((prev) => prev.filter((x) => x.id !== id));
-    },
-    [key],
-  );
-
-  return { data, loading, error, reload, setAll, add, update, remove };
+  return {
+    data,
+    loading: isLoading,
+    error: error ? (error instanceof Error ? error.message : "Failed to load data") : null,
+    reload: async () => { await refetch(); },
+    setAll,
+    add,
+    update,
+    remove,
+  };
 }
-
 // ============ Format helpers ============
 export function inr(n: number) {
   if (n == null || isNaN(n)) return "₹0";

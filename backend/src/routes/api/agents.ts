@@ -6,7 +6,10 @@ import { deleteById, newId, parseJsonBody, patchById } from "../../lib/http.js";
 export const agentRoutes = new Hono();
 
 agentRoutes.get("/", async (c) => {
-  const rows = await query("SELECT * FROM agents ORDER BY join_date DESC");
+  const rows = await query(
+    `SELECT id, code, name, phone, email, address, status, join_date
+     FROM agents ORDER BY join_date DESC`,
+  );
   return c.json(rows.map(mapAgent));
 });
 

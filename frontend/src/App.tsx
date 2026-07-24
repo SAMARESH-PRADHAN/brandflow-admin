@@ -20,7 +20,14 @@ import PaymentsPage from "./routes/_admin.payments";
 import ReviewsPage from "./routes/_admin.reviews";
 
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function NotFound() {
   return (

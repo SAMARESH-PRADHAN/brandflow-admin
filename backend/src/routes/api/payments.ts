@@ -7,9 +7,10 @@ export const paymentRoutes = new Hono();
 
 paymentRoutes.get("/", async (c) => {
   const { status } = c.req.query();
+  const cols = `id, order_id, customer, amount, method, status, paid_date`;
   const rows = status
-    ? await query("SELECT * FROM payments WHERE status = $1 ORDER BY paid_date DESC", [status])
-    : await query("SELECT * FROM payments ORDER BY paid_date DESC");
+    ? await query(`SELECT ${cols} FROM payments WHERE status = $1 ORDER BY paid_date DESC`, [status])
+    : await query(`SELECT ${cols} FROM payments ORDER BY paid_date DESC`);
   return c.json(rows.map(mapPayment));
 });
 
