@@ -18,10 +18,9 @@ import { BulletListInput } from "@/components/admin/bullet-list-input";
 import { ProductViewDialog } from "@/components/admin/product-view-dialog";
 import { mutationError } from "@/lib/mutation-error";
 import { toast } from "sonner";
+import { CATEGORY_NAMES, findTaxCategory, getSubOptions, type Tier } from "@/lib/catalog-taxonomy";
 
-const CATEGORIES = ["Corporate Shirts", "Polo T-Shirts", "Formal Trousers", "Blazers", "Hoodies", "Caps", "Aprons", "Bags"];
-const SUBCATS = ["Oxford", "Slim Fit", "Pique", "Dry-Fit", "Bomber", "Pullover", "Classic", "Executive"];
-const TYPES = ["Regular", "Premium", "Others"] as const;
+const TYPES = ["Regular", "Premium"] as const;
 const VISIBILITIES: ProductVisibility[] = ["Category", "Bulk", "Both"];
 
 function ProductsPage() {
@@ -34,6 +33,29 @@ function ProductsPage() {
   const [fType, setFType] = useState("All");
   const [fSub, setFSub] = useState("All");
   const [fVis, setFVis] = useState("All");
+
+  // Sub-category filter options depend on the selected category filter.
+  const filterSubOptions = useMemo(() => {
+    if (fCat === "All") {
+      // union of every sub-category across all categories
+      const all = new Set<string>();
+      CATEGORY_NAMES.forEach((name) => {
+        const cat = findTaxCategory(name);
+        if (!cat) return;
+        if (cat.hasTiers) {
+          (cat.regular ?? []).forEach((s) => all.add(s));
+          (cat.premium ?? []).forEach((s) => all.add(s));
+        } else {
+          (cat.items ?? []).forEach((s) => all.add(s));
+        }
+      });
+      return Array.from(all);
+    }
+    const cat = findTaxCategory(fCat);
+    if (!cat) return [];
+    if (!cat.hasTiers) return cat.items ?? [];
+    return [...new Set([...(cat.regular ?? []), ...(cat.premium ?? [])])];
+  }, [fCat]);
 
   const filtered = useMemo(() => data.filter((p) =>
     (fCat === "All" || p.category === fCat) &&
@@ -94,9 +116,14 @@ function ProductsPage() {
     >
       <div className="flex flex-wrap items-end gap-2 rounded-xl border border-border bg-secondary/30 p-3">
         <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground"><Filter className="h-4 w-4" /> Filters</div>
-        <FilterSelect label="Category" value={fCat} onChange={setFCat} options={["All", ...CATEGORIES]} />
+        <FilterSelect
+          label="Category"
+          value={fCat}
+          onChange={(v) => { setFCat(v); setFSub("All"); }}
+          options={["All", ...CATEGORY_NAMES]}
+        />
         <FilterSelect label="Type" value={fType} onChange={setFType} options={["All", ...TYPES]} />
-        <FilterSelect label="Sub Category" value={fSub} onChange={setFSub} options={["All", ...SUBCATS]} />
+        <FilterSelect label="Sub Category" value={fSub} onChange={setFSub} options={["All", ...filterSubOptions]} />
         <FilterSelect label="Available In" value={fVis} onChange={setFVis} options={["All", ...VISIBILITIES]} />
         {(fCat !== "All" || fType !== "All" || fSub !== "All" || fVis !== "All") && (
           <Button size="sm" variant="ghost" onClick={() => { setFCat("All"); setFType("All"); setFSub("All"); setFVis("All"); }}>Clear</Button>
@@ -149,20 +176,8 @@ function FilterSelect({ label, value, onChange, options }: { label: string; valu
   );
 }
 
-function ProductDialog({
-  open, onOpenChange, editing, onSubmit,
-}: {
-  open: boolean; onOpenChange: (v: boolean) => void; editing: Product | null;
-  onSubmit: (v: Partial<Product>) => void | Promise<void>;
-}) {
-  const empty = {
-    code: "", name: "", category: CATEGORIES[0]!, type: "Regular" as const,
-    subCategory: SUBCATS[0]!, material: "100% Cotton", description: "",
-    overview: "", specifications: [] as string[], designGuidelines: [] as string[], washCare: [] as string[],
-    samplePrice: 499, originalPrice: 1999, status: "Active" as const, image: "", images: [] as string[],
-    visibility: "Both" as ProductVisibility,
-  };
-  const normalize = (p: Product) => ({
+function normalizeProduct(p: Product) {
+  return {
     ...p,
     images: p.images ?? (p.image ? [p.image] : []),
     overview: p.overview ?? "",
@@ -170,40 +185,88 @@ function ProductDialog({
     designGuidelines: p.designGuidelines ?? [],
     washCare: p.washCare ?? [],
     visibility: (p.visibility ?? "Both") as ProductVisibility,
-  });
-  const [f, setF] = useState<any>(editing ? normalize(editing) : empty);
+  };
+}
+
+function ProductDialog({
+  open, onOpenChange, editing, onSubmit,
+}: {
+  open: boolean; onOpenChange: (v: boolean) => void; editing: Product | null;
+  onSubmit: (v: Partial<Product>) => void | Promise<void>;
+}) {
+  const firstCategory = CATEGORY_NAMES[0]!;
+  const empty = {
+    code: "", name: "", category: firstCategory, type: "Regular" as const,
+    subCategory: getSubOptions(firstCategory, "Regular")[0] ?? "",
+    material: "100% Cotton", description: "",
+    overview: "", specifications: [] as string[], designGuidelines: [] as string[], washCare: [] as string[],
+    samplePrice: 499, originalPrice: 1999, status: "Active" as const, image: "", images: [] as string[],
+    visibility: "Both" as ProductVisibility,
+  };
+
+  const [f, setF] = useState<any>(editing ? normalizeProduct(editing) : empty);
   const set = (k: string, v: any) => setF((s: any) => ({ ...s, [k]: v }));
 
+  const activeCat = findTaxCategory(f.category);
+  const catHasTiers = activeCat?.hasTiers ?? false;
+  const subOptions = getSubOptions(f.category, f.type as Tier);
+
+  const onCategoryChange = (name: string) => {
+    const cat = findTaxCategory(name);
+    const nextSub = cat?.hasTiers
+      ? (cat.regular?.[0] ?? "")
+      : (cat?.items?.[0] ?? "");
+    setF((s: any) => ({ ...s, category: name, type: "Regular", subCategory: nextSub }));
+  };
+
+  const onTypeChange = (type: "Regular" | "Premium") => {
+    const nextSub = getSubOptions(f.category, type)[0] ?? "";
+    setF((s: any) => ({ ...s, type, subCategory: nextSub }));
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (v) setF(editing ? normalize(editing) : empty); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        onOpenChange(v);
+        if (v) setF(editing ? normalizeProduct(editing) : empty);
+      }}
+    >
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader><DialogTitle>{editing ? "Edit Product" : "Add Product"}</DialogTitle></DialogHeader>
 
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Product Code"><Input value={f.code} onChange={(e) => set("code", e.target.value)} placeholder="ARX-0001" /></Field>
           <Field label="Product Name"><Input value={f.name} onChange={(e) => set("name", e.target.value)} /></Field>
+
           <Field label="Category">
-            <Select value={f.category} onValueChange={(v) => set("category", v)}>
+            <Select value={f.category} onValueChange={onCategoryChange}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+              <SelectContent>{CATEGORY_NAMES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
           </Field>
-          <Field label="Product Type">
-            <Select value={f.type} onValueChange={(v) => set("type", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Regular">Regular</SelectItem>
-                <SelectItem value="Premium">Premium</SelectItem>
-                <SelectItem value="Others">Others</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
+
+          {catHasTiers && (
+            <Field label="Tier (Regular / Premium)">
+              <Select value={f.type} onValueChange={onTypeChange}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Regular">Regular</SelectItem>
+                  <SelectItem value="Premium">Premium</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+          )}
+
           <Field label="Sub Category">
             <Select value={f.subCategory} onValueChange={(v) => set("subCategory", v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{SUBCATS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              <SelectContent>
+                {subOptions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
             </Select>
           </Field>
+
           <Field label="Material"><Input value={f.material} onChange={(e) => set("material", e.target.value)} /></Field>
           <Field label="Sample Price"><Input type="number" value={f.samplePrice} onChange={(e) => set("samplePrice", Number(e.target.value))} /></Field>
           <Field label="Original Price"><Input type="number" value={f.originalPrice} onChange={(e) => set("originalPrice", Number(e.target.value))} /></Field>
@@ -213,6 +276,7 @@ function ProductDialog({
               <SelectContent><SelectItem value="Active">Active</SelectItem><SelectItem value="Inactive">Inactive</SelectItem></SelectContent>
             </Select>
           </Field>
+
           <div className="md:col-span-2 grid gap-3 sm:grid-cols-2">
             <div className="flex items-center justify-between rounded-lg border border-border p-3">
               <div>
