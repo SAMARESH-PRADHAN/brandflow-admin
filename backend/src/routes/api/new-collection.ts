@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { query, queryOne, execute } from "../../db/pool.js";
 import { mapNewCollectionProduct } from "../../lib/mappers.js";
-import { deleteById, newId, parseJsonBody, patchById } from "../../lib/http.js";
+import { deleteByIdWithImageCleanup, cleanupRemovedImagesOnPatch, newId, parseJsonBody, patchById } from "../../lib/http.js";
 
 export const newCollectionRoutes = new Hono();
 
@@ -54,7 +54,13 @@ newCollectionRoutes.post("/", async (c) => {
 
 newCollectionRoutes.patch("/:id", async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
-  await patchById("new_collection_products", c.req.param("id"), body, {
+  const id = c.req.param("id");
+  const existing = await queryOne("SELECT * FROM new_collection_products WHERE id = $1", [id]);
+  if (!existing) return c.json({ error: "Product not found" }, 404);
+
+  await cleanupRemovedImagesOnPatch(existing as Record<string, unknown>, body);
+
+  await patchById("new_collection_products", id, body, {
     code: "code",
     name: "name",
     material: "material",
@@ -65,7 +71,6 @@ newCollectionRoutes.patch("/:id", async (c) => {
     status: "status",
     image: "image",
   });
-  const id = c.req.param("id");
   for (const [field, column] of [
     ["specifications", "specifications"],
     ["designGuidelines", "design_guidelines"],
@@ -84,6 +89,6 @@ newCollectionRoutes.patch("/:id", async (c) => {
 });
 
 newCollectionRoutes.delete("/:id", async (c) => {
-  await deleteById("new_collection_products", c.req.param("id"));
+  await deleteByIdWithImageCleanup("new_collection_products", c.req.param("id"));
   return c.json({ ok: true });
 });

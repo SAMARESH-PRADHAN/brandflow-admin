@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { query, queryOne, execute } from "../../db/pool.js";
 import { mapProduct } from "../../lib/mappers.js";
-import { deleteById, newId, parseJsonBody, patchById } from "../../lib/http.js";
+import { deleteByIdWithImageCleanup, cleanupRemovedImagesOnPatch, newId, parseJsonBody, patchById } from "../../lib/http.js";
 
 export const productRoutes = new Hono();
 
@@ -76,7 +76,13 @@ productRoutes.post("/", async (c) => {
 
 productRoutes.patch("/:id", async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
-  const row = await patchById("products", c.req.param("id"), body, {
+  const id = c.req.param("id");
+  const existing = await queryOne("SELECT * FROM products WHERE id = $1", [id]);
+  if (!existing) return c.json({ error: "Product not found" }, 404);
+
+  await cleanupRemovedImagesOnPatch(existing as Record<string, unknown>, body);
+
+  const row = await patchById("products", id, body, {
     code: "code",
     name: "name",
     category: "category",
@@ -103,39 +109,39 @@ productRoutes.patch("/:id", async (c) => {
   if (body.specifications !== undefined) {
     await execute("UPDATE products SET specifications = $1::jsonb WHERE id = $2", [
       JSON.stringify(body.specifications),
-      c.req.param("id"),
+      id,
     ]);
   }
   if (body.designGuidelines !== undefined) {
     await execute("UPDATE products SET design_guidelines = $1::jsonb WHERE id = $2", [
       JSON.stringify(body.designGuidelines),
-      c.req.param("id"),
+      id,
     ]);
   }
   if (body.washCare !== undefined) {
     await execute("UPDATE products SET wash_care = $1::jsonb WHERE id = $2", [
       JSON.stringify(body.washCare),
-      c.req.param("id"),
+      id,
     ]);
   }
   if (body.images !== undefined) {
     await execute("UPDATE products SET images = $1::jsonb WHERE id = $2", [
       JSON.stringify(body.images),
-      c.req.param("id"),
+      id,
     ]);
   }
   if (body.colors !== undefined) {
     await execute("UPDATE products SET colors = $1::jsonb WHERE id = $2", [
       JSON.stringify(body.colors),
-      c.req.param("id"),
+      id,
     ]);
   }
 
-  const updated = await queryOne("SELECT * FROM products WHERE id = $1", [c.req.param("id")]);
+  const updated = await queryOne("SELECT * FROM products WHERE id = $1", [id]);
   return c.json(mapProduct(updated ?? row!));
 });
 
 productRoutes.delete("/:id", async (c) => {
-  await deleteById("products", c.req.param("id"));
+  await deleteByIdWithImageCleanup("products", c.req.param("id"));
   return c.json({ ok: true });
 });

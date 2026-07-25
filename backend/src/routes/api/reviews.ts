@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { query, queryOne, execute } from "../../db/pool.js";
 import { mapReview } from "../../lib/mappers.js";
-import { deleteById, newId, parseJsonBody, patchById } from "../../lib/http.js";
+import { deleteByIdWithImageCleanup, cleanupRemovedImagesOnPatch, newId, parseJsonBody, patchById } from "../../lib/http.js";
 
 export const reviewRoutes = new Hono();
 
@@ -47,7 +47,13 @@ reviewRoutes.post("/", async (c) => {
 
 reviewRoutes.patch("/:id", async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
-  const row = await patchById("reviews", c.req.param("id"), body, {
+  const id = c.req.param("id");
+  const existing = await queryOne("SELECT * FROM reviews WHERE id = $1", [id]);
+  if (!existing) return c.json({ error: "Review not found" }, 404);
+
+  await cleanupRemovedImagesOnPatch(existing as Record<string, unknown>, body);
+
+  const row = await patchById("reviews", id, body, {
     customer: "customer",
     product: "product",
     productId: "product_id",
@@ -63,6 +69,8 @@ reviewRoutes.patch("/:id", async (c) => {
 });
 
 reviewRoutes.delete("/:id", async (c) => {
-  await deleteById("reviews", c.req.param("id"));
+  await deleteByIdWithImageCleanup("reviews", c.req.param("id"), {
+    includeImagesArray: false,
+  });
   return c.json({ ok: true });
 });

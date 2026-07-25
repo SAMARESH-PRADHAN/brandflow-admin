@@ -12,8 +12,11 @@ import { reviewRoutes } from "./reviews.js";
 import { agentVisitRoutes } from "./agent-visits.js";
 import { notificationRoutes } from "./notifications.js";
 import { settingsRoutes } from "./settings.js";
+import { uploadRoutes } from "./uploads.js";
 
 export const apiRoutes = new Hono();
+
+apiRoutes.route("/uploads", uploadRoutes);
 
 apiRoutes.use("*", requireDb);
 
@@ -33,6 +36,7 @@ apiRoutes.get("/", (c) =>
       "reviews",
       "notifications",
       "settings",
+      "uploads",
     ],
   }),
 );

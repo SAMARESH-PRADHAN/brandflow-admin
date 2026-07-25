@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { query, queryOne, execute } from "../../db/pool.js";
 import { mapOrder } from "../../lib/mappers.js";
-import { deleteById, newId, parseJsonBody, patchById } from "../../lib/http.js";
+import { deleteByIdWithImageCleanup, cleanupRemovedImagesOnPatch, newId, parseJsonBody, patchById } from "../../lib/http.js";
 
 function buildOrderFilters(c: Context, isSample: boolean) {
   const type = c.req.query("type");
@@ -111,6 +111,13 @@ orderRoutes.post("/", async (c) => {
 orderRoutes.patch("/:id", async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
   const id = c.req.param("id");
+  const existing = await queryOne("SELECT * FROM orders WHERE id = $1", [id]);
+  if (!existing) return c.json({ error: "Order not found" }, 404);
+
+  await cleanupRemovedImagesOnPatch(existing as Record<string, unknown>, body, {
+    imageBodyKey: "uploadedLogo",
+    imageDbColumn: "uploaded_logo",
+  });
 
   await patchById("orders", id, body, {
     customerId: "customer_id",
@@ -152,7 +159,10 @@ orderRoutes.patch("/:id", async (c) => {
 });
 
 orderRoutes.delete("/:id", async (c) => {
-  await deleteById("orders", c.req.param("id"));
+  await deleteByIdWithImageCleanup("orders", c.req.param("id"), {
+    imageDbColumn: "uploaded_logo",
+    includeImagesArray: false,
+  });
   return c.json({ ok: true });
 });
 

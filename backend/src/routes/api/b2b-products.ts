@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { query, queryOne, execute } from "../../db/pool.js";
 import { mapB2BProduct } from "../../lib/mappers.js";
-import { deleteById, newId, parseJsonBody, patchById } from "../../lib/http.js";
+import { deleteByIdWithImageCleanup, cleanupRemovedImagesOnPatch, newId, parseJsonBody, patchById } from "../../lib/http.js";
 
 export const b2bProductRoutes = new Hono();
 
@@ -56,7 +56,13 @@ b2bProductRoutes.post("/", async (c) => {
 
 b2bProductRoutes.patch("/:id", async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
-  await patchById("b2b_products", c.req.param("id"), body, {
+  const id = c.req.param("id");
+  const existing = await queryOne("SELECT * FROM b2b_products WHERE id = $1", [id]);
+  if (!existing) return c.json({ error: "B2B product not found" }, 404);
+
+  await cleanupRemovedImagesOnPatch(existing as Record<string, unknown>, body);
+
+  await patchById("b2b_products", id, body, {
     code: "code",
     name: "name",
     subCategory: "sub_category",
@@ -68,7 +74,6 @@ b2bProductRoutes.patch("/:id", async (c) => {
     status: "status",
     image: "image",
   });
-  const id = c.req.param("id");
   for (const [field, column] of [
     ["specifications", "specifications"],
     ["designGuidelines", "design_guidelines"],
@@ -87,6 +92,6 @@ b2bProductRoutes.patch("/:id", async (c) => {
 });
 
 b2bProductRoutes.delete("/:id", async (c) => {
-  await deleteById("b2b_products", c.req.param("id"));
+  await deleteByIdWithImageCleanup("b2b_products", c.req.param("id"));
   return c.json({ ok: true });
 });
