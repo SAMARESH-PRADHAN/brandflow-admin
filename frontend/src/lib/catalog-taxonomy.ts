@@ -1,0 +1,130 @@
+// frontend/src/lib/catalog-taxonomy.ts
+// Mirrors src/data/catalog.ts category/subcategory names exactly.
+// Keep in sync manually, or better: move catalog.ts to a shared package later.
+
+export type Tier = "Regular" | "Premium";
+
+export type TaxCategory = {
+  name: string;
+  hasTiers: boolean;
+  regular?: string[];
+  premium?: string[];
+  items?: string[]; // used when hasTiers = false
+};
+
+export const CATALOG_TAXONOMY: TaxCategory[] = [
+  {
+    name: "Oversized T-Shirts",
+    hasTiers: true,
+    regular: ["Polycotton Oversized T-Shirts"],
+    premium: ["Cotton Oversized T-Shirts", "Terry / Loopnet Oversized T-Shirts"],
+  },
+  {
+    name: "Hoodies",
+    hasTiers: true,
+    regular: ["Spun Fleece Hoodies"],
+    premium: ["Polycotton Hoodies", "American Fleece Hoodies", "Cotton Hoodies"],
+  },
+  {
+    name: "Jersey",
+    hasTiers: true,
+    regular: ["All Over Printed Jersey", "Front Printed Jersey", "Front & Back Printed Jersey"],
+    premium: ["All Over Printed Jersey", "Front Printed Jersey", "Front & Back Printed Jersey"],
+  },
+  {
+    name: "Custom Premium Polo T-Shirt",
+    hasTiers: true,
+    regular: [
+      "Spun Matty 240 GSM", "Spun Matty 220 GSM", "Dotnet Polyester 180 GSM",
+      "Dotnet Polyester 160 GSM", "Dotnet Polyester 120 GSM",
+      "Nirmal Net Polyester 120 GSM", "Kohili Net Polyester 120 GSM",
+    ],
+    premium: [
+      "240 GSM Cotton Polo T-Shirt", "240 GSM Polycotton Polo T-Shirt", "240 GSM CP Polo T-Shirt",
+      "240 GSM Spun Polo T-Shirt (Polyester)", "240 GSM Honeycomb Polo T-Shirt (Polyester)",
+      "180 GSM SAP Matty Polo T-Shirt (Premium Polyester)", "180 GSM Dotnet Polo T-Shirt (Polyester)",
+      "170 GSM Nirmal Net Polo T-Shirt (Polyester)",
+    ],
+  },
+  {
+    name: "Corporate Wear",
+    hasTiers: true,
+    regular: [
+      "Spun Collar Neck T-Shirt", "Cut & Sew Collar Neck T-Shirts", "Corporate Economy Collar Neck T-Shirt",
+      "Reunions Collar Neck T-Shirts", "Marketing Collar Neck T-Shirts", "Petrol Pump Collar Neck T-Shirts",
+      "Conference Collar Neck T-Shirts", "Gym Collar Neck T-Shirts", "Garage Collar Neck T-Shirts",
+      "NGO Collar Neck T-Shirts", "Dotnet White Collar Neck T-Shirt", "Festival Group Collar Neck T-Shirts",
+      "Ranglan Collar Neck T-Shirt",
+    ],
+    premium: [
+      "Cotton Collar Neck T-Shirts", "Blended Collar Neck T-Shirts", "Drifit SAP Matty Collar Neck T-Shirts",
+      "Reunions Collar Neck T-Shirts", "Marketing Collar Neck T-Shirts", "Petrol Pump Collar Neck T-Shirts",
+      "Conference Collar Neck T-Shirts", "Gym Collar Neck T-Shirts", "Garage Collar Neck T-Shirts",
+      "NGO Collar Neck T-Shirts", "SAP Matty White Collar Neck T-Shirt", "Cut & Sew Collar Neck T-Shirts",
+      "Festival Group Collar Neck T-Shirts", "SAP Matty Ranglan Collar Neck T-Shirt",
+    ],
+  },
+  {
+    name: "Custom Round Neck T-Shirts",
+    hasTiers: true,
+    regular: [
+      "Spun Round Neck T-Shirt", "Corporate Polyester Round Neck T-Shirt",
+      "Dotnet White Round Neck T-Shirt", "Gym Round Neck T-Shirt",
+    ],
+    premium: [
+      "Cotton Round Neck T-Shirt", "Polycotton Round Neck T-Shirt",
+      "Corporate SAP Matty Round Neck T-Shirt", "SAP Matty White Round Neck T-Shirt",
+      "Cotton Gym Round Neck T-Shirt",
+    ],
+  },
+  {
+    name: "Aprons",
+    hasTiers: true,
+    regular: ["University Apron", "Nurse Apron", "Medical Apron"],
+    premium: ["University Apron", "Nurse Apron", "Medical Apron"],
+  },
+  {
+    name: "Customize School Uniform",
+    hasTiers: false,
+    items: [
+      "Spun Matty 220 GSM", "PC Matty 220 GSM",
+      "Track Pant Spun Poly Polyester", "Track Pant Cotton PC Loop Knit",
+    ],
+  },
+  {
+    name: "Custom Accessories",
+    hasTiers: false,
+    items: [
+      "Canvas Tote", "Mug", "Safety Goggle", "Cap", "Premium Backpack",
+      "Umbrella", "Pen", "Badge", "Event Lanyard", "Bottle",
+    ],
+  },
+  {
+    name: "Corporate Welcome Kit",
+    hasTiers: false,
+    items: ["Classic Welcome Kit"],
+  },
+  {
+    name: "ARRHENIUX T-Shirts",
+    hasTiers: false,
+    items: [
+      "ARRHENIUX Cotton Round Neck T-Shirt", "ARRHENIUX Cotton Collar Neck T-Shirt",
+      "ARRHENIUX Blend Collar Neck T-Shirt", "ARRHENIUX Dryfit Collar Neck T-Shirt",
+      "ARRHENIUX Oversized T-Shirt", "ARRHENIUX Hoodie", "ARRHENIUX Polo T-Shirt",
+    ],
+  },
+];
+
+export const CATEGORY_NAMES = CATALOG_TAXONOMY.map((c) => c.name);
+
+export function findTaxCategory(name: string) {
+  return CATALOG_TAXONOMY.find((c) => c.name === name);
+}
+
+/** Sub-category options for a given category + tier ("Regular"/"Premium"/undefined). */
+export function getSubOptions(categoryName: string, tier?: Tier): string[] {
+  const cat = findTaxCategory(categoryName);
+  if (!cat) return [];
+  if (!cat.hasTiers) return cat.items ?? [];
+  return (tier === "Premium" ? cat.premium : cat.regular) ?? [];
+}
