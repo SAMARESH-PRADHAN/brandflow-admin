@@ -39,7 +39,7 @@ function SamplesPage() {
     { key: "date", header: "Date", render: (o) => <span className="text-xs text-muted-foreground">{o.date}</span> },
     { key: "amount", header: "Amount", render: (o) => <span className="num text-sm font-semibold">{inrFull(o.qty * o.unitPrice)}</span>, className: "text-right" },
     { key: "status", header: "Status", render: (o) => <StatusBadge value={o.status} /> },
-    { key: "logo", header: "Artwork", render: (o) => o.uploadedLogo ? <img src={o.uploadedLogo} alt="artwork" className="h-8 w-12 rounded border border-border object-cover" /> : <span className="text-[10px] text-muted-foreground">—</span> },
+    { key: "logo", header: "Artwork", render: (o) => o.uploadedLogo ? <img loading="lazy" src={o.uploadedLogo} alt="artwork" className="h-8 w-12 rounded border border-border object-cover" /> : <span className="text-[10px] text-muted-foreground">—</span> },
     { key: "actions", header: "", render: (o) => (
       <Button asChild size="sm" variant="outline"><Link to={`/orders/${o.id}`}><Eye className="mr-1 h-3.5 w-3.5" /> View</Link></Button>
     ), className: "text-right" },

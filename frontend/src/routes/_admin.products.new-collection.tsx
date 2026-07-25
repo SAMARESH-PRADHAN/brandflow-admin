@@ -15,6 +15,7 @@ import { useCollection, inrFull, type NewCollectionProduct } from "@/lib/store";
 import { ImageUploader } from "@/components/admin/image-uploader";
 import { BulletListInput } from "@/components/admin/bullet-list-input";
 import { ProductViewDialog } from "@/components/admin/product-view-dialog";
+import { mutationError } from "@/lib/mutation-error";
 import { toast } from "sonner";
 
 function NewColl() {
@@ -37,7 +38,7 @@ function NewColl() {
     { key: "name", header: "Name", render: (p) => (
       <div className="flex items-center gap-3">
         {(p.images?.[0] || p.image) && (
-          <img src={p.images?.[0] || p.image} alt={p.name} className="h-10 w-10 rounded-lg border border-border object-cover" />
+          <img loading="lazy" src={p.images?.[0] || p.image} alt={p.name} className="h-10 w-10 rounded-lg border border-border object-cover" />
         )}
         <span className="text-sm font-semibold">{p.name}</span>
       </div>
@@ -51,7 +52,14 @@ function NewColl() {
         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setViewing(p)}><Eye className="h-4 w-4" /></Button>
         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
         <ConfirmButton trigger={<Button size="icon" variant="ghost" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>}
-          onConfirm={() => { remove(p.id); toast.success("Deleted"); }} />
+          onConfirm={async () => {
+            try {
+              await remove(p.id);
+              toast.success("Deleted");
+            } catch (err) {
+              mutationError(err, "Failed to delete item");
+            }
+          }} />
       </div>
     ), className: "text-right" },
   ];
@@ -79,7 +87,7 @@ function NewColl() {
             <F label="Original Price"><Input type="number" value={f.originalPrice} onChange={(e) => setF({ ...f, originalPrice: +e.target.value })} /></F>
           </div>
           <F label="Product Images (up to 6)">
-            <ImageUploader images={f.images ?? []} max={4} onChange={(imgs) => setF({ ...f, images: imgs, image: imgs[0] ?? "" })} />
+            <ImageUploader images={f.images ?? []} max={4} folder="new-collection" onChange={(imgs) => setF({ ...f, images: imgs, image: imgs[0] ?? "" })} />
           </F>
           <F label="Product Overview"><Textarea rows={2} value={f.overview} onChange={(e) => setF({ ...f, overview: e.target.value })} placeholder="Short marketing summary" /></F>
           <F label="Description"><Textarea rows={3} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></F>
@@ -103,10 +111,19 @@ function NewColl() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={() => {
-              if (editing) { update(editing.id, f); toast.success("Updated"); }
-              else { add({ ...f, createdAt: new Date().toISOString().slice(0, 10) } as any); toast.success("Added"); }
-              setOpen(false);
+            <Button onClick={async () => {
+              try {
+                if (editing) {
+                  await update(editing.id, f);
+                  toast.success("Updated");
+                } else {
+                  await add({ ...f, createdAt: new Date().toISOString().slice(0, 10) } as any);
+                  toast.success("Added");
+                }
+                setOpen(false);
+              } catch (err) {
+                mutationError(err, editing ? "Failed to update item" : "Failed to add item");
+              }
             }}>{editing ? "Save" : "Add"}</Button>
           </DialogFooter>
         </DialogContent>

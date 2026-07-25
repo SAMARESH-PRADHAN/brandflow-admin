@@ -13,11 +13,11 @@ export type Column<T> = {
 
 export function DataTable<T extends { id: string }>({
   rows, columns, pageSize = 10, searchable = true, searchKeys, emptyText = "No results",
-  onExport,
+  onExport, loading = false, skeletonRows = 8,
 }: {
   rows: T[]; columns: Column<T>[]; pageSize?: number;
   searchable?: boolean; searchKeys?: (keyof T)[]; emptyText?: string;
-  onExport?: () => void;
+  onExport?: () => void; loading?: boolean; skeletonRows?: number;
 }) {
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
@@ -49,6 +49,7 @@ export function DataTable<T extends { id: string }>({
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const p = Math.min(page, totalPages);
   const paged = filtered.slice((p - 1) * pageSize, p * pageSize);
+  const skelCount = skeletonRows ?? pageSize;
 
   return (
     <div className="space-y-3">
@@ -89,7 +90,17 @@ export function DataTable<T extends { id: string }>({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paged.length === 0 ? (
+            {loading ? (
+              Array.from({ length: skelCount }).map((_, i) => (
+                <TableRow key={`skel-${i}`}>
+                  {columns.map((c) => (
+                    <TableCell key={c.key} className={c.className}>
+                      <div className="skeleton h-4 w-full max-w-[120px] rounded-md" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : paged.length === 0 ? (
               <TableRow><TableCell colSpan={columns.length} className="py-12 text-center text-sm text-muted-foreground">{emptyText}</TableCell></TableRow>
             ) : paged.map((row) => (
               <TableRow key={row.id} className="group">

@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCollection, type Agent } from "@/lib/store";
+import { mutationError } from "@/lib/mutation-error";
 import { toast } from "sonner";
 
 
@@ -41,7 +42,14 @@ function AgentsPage() {
         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setViewing(a)}><Eye className="h-4 w-4" /></Button>
         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(a)}><Pencil className="h-4 w-4" /></Button>
         <ConfirmButton trigger={<Button size="icon" variant="ghost" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>}
-          onConfirm={() => { remove(a.id); toast.success("Deleted"); }} />
+          onConfirm={async () => {
+            try {
+              await remove(a.id);
+              toast.success("Deleted");
+            } catch (err) {
+              mutationError(err, "Failed to delete agent");
+            }
+          }} />
       </div>
     ), className: "text-right" },
   ];
@@ -71,12 +79,21 @@ function AgentsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={() => {
+            <Button onClick={async () => {
               if (!f.name) { toast.error("Name required"); return; }
               if (!f.code) { toast.error("Agent code required"); return; }
-              if (editing) { update(editing.id, f); toast.success("Updated"); }
-              else { add(f); toast.success("Added"); }
-              setOpen(false);
+              try {
+                if (editing) {
+                  await update(editing.id, f);
+                  toast.success("Updated");
+                } else {
+                  await add(f);
+                  toast.success("Added");
+                }
+                setOpen(false);
+              } catch (err) {
+                mutationError(err, editing ? "Failed to update agent" : "Failed to add agent");
+              }
             }}>{editing ? "Save" : "Add"}</Button>
           </DialogFooter>
         </DialogContent>

@@ -54,3 +54,19 @@ export async function deleteItem(key: string, id: string): Promise<void> {
 export async function markAllNotificationsRead<T>(): Promise<T[]> {
   return request<T[]>("notifications/read-all", { method: "PATCH" });
 }
+
+export async function uploadImage(
+  image: string,
+  folder = "uploads",
+  options?: { id?: string; index?: number },
+): Promise<{ url: string; key: string }> {
+  return request("uploads", {
+    method: "POST",
+    body: JSON.stringify({ image, folder, ...options }),
+  });
+}
+
+export async function deleteUploadedImage(urlOrKey: string): Promise<void> {
+  const body = urlOrKey.includes("://") ? { url: urlOrKey } : { key: urlOrKey };
+  await request("uploads", { method: "DELETE", body: JSON.stringify(body) });
+}
