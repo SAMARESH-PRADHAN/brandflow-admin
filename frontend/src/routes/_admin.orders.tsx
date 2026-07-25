@@ -15,7 +15,7 @@ import { toast } from "sonner";
 const STATUSES: (OrderStatus | "All")[] = ["All", "Placed", "Confirmed", "In Production", "Shipped", "Delivered"];
 
 function OrdersPage() {
-  const { data } = useCollection<Order>("orders");
+  const { data, loading } = useCollection<Order>("orders");
   const [tab, setTab] = useState<"All" | Order["type"]>("All");
   const [range, setRange] = useState<DateRange>({ from: "", to: "" });
   const [status, setStatus] = useState<"All" | OrderStatus>("All");
@@ -36,7 +36,7 @@ function OrdersPage() {
     { key: "amount", header: "Amount", render: (o) => <span className="num text-sm font-semibold">{inrFull(o.qty * o.unitPrice)}</span>, sortable: true, getValue: (o) => o.qty * o.unitPrice, className: "text-right" },
     { key: "payment", header: "Payment", render: (o) => <StatusBadge value={o.paymentStatus} /> },
     { key: "status", header: "Status", render: (o) => <StatusBadge value={o.status} /> },
-    { key: "logo", header: "Artwork", render: (o) => o.uploadedLogo ? <img src={o.uploadedLogo} alt="artwork" className="h-8 w-12 rounded border border-border object-cover" /> : <span className="text-[10px] text-muted-foreground">—</span> },
+    { key: "logo", header: "Artwork", render: (o) => o.uploadedLogo ? <img loading="lazy" src={o.uploadedLogo} alt="artwork" className="h-8 w-12 rounded border border-border object-cover" /> : <span className="text-[10px] text-muted-foreground">—</span> },
     { key: "actions", header: "", render: (o) => (
       <Button asChild size="sm" variant="outline"><Link to={`/orders/${o.id}`}><Eye className="mr-1 h-3.5 w-3.5" /> Details</Link></Button>
     ), className: "text-right" },
@@ -69,7 +69,7 @@ function OrdersPage() {
       </div>
 
       <div className="mt-4">
-        <DataTable rows={filtered} columns={cols} pageSize={10}
+        <DataTable rows={filtered} columns={cols} pageSize={10} loading={loading}
           searchKeys={["id", "customer", "phone", "productName"]}
           onExport={() => {
             exportCsv(`arreniux-orders-${tab.toLowerCase()}.csv`,

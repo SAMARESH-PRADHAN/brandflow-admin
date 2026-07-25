@@ -237,24 +237,57 @@ export function useCollection<T extends { id: string }>(key: string) {
 
   const addMutation = useMutation({
     mutationFn: (v: Omit<T, "id"> & { id?: string }) => createItem<T>(key, v),
-    onSuccess: (item) => {
-      queryClient.setQueryData<T[]>(queryKey, (prev = []) => [item, ...prev]);
+    onMutate: async (v) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<T[]>(queryKey);
+      const optimistic = { ...v, id: v.id ?? `optimistic-${Date.now()}` } as T;
+      queryClient.setQueryData<T[]>(queryKey, (prev = []) => [optimistic, ...prev]);
+      return { previous };
+    },
+    onError: (_err, _v, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData(queryKey, context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: Partial<T> }) => updateItem<T>(key, id, patch),
-    onSuccess: (item, { id }) => {
-      queryClient.setQueryData<T[]>(queryKey, (prev = []) => prev.map((x) => (x.id === id ? item : x)));
+    onMutate: async ({ id, patch }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<T[]>(queryKey);
+      queryClient.setQueryData<T[]>(queryKey, (prev = []) =>
+        prev.map((x) => (x.id === id ? { ...x, ...patch } : x)),
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData(queryKey, context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
     },
   });
 
   const removeMutation = useMutation({
     mutationFn: (id: string) => deleteItem(key, id),
-    onSuccess: (_void, id) => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<T[]>(queryKey);
       queryClient.setQueryData<T[]>(queryKey, (prev = []) => prev.filter((x) => x.id !== id));
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData(queryKey, context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
     },
   });

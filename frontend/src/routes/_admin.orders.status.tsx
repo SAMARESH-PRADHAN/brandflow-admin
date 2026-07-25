@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCollection, inrFull, type Order, type OrderStatus } from "@/lib/store";
+import { mutationError } from "@/lib/mutation-error";
 import { toast } from "sonner";
 
 const STATUSES: OrderStatus[] = ["Placed", "Confirmed", "In Production", "Shipped", "Delivered"];
@@ -28,15 +29,19 @@ function KanbanPage() {
     return m;
   }, [data]);
 
-  const advance = (o: Order) => {
+  const advance = async (o: Order) => {
     const idx = STATUSES.indexOf(o.status);
     if (idx >= STATUSES.length - 1) { toast("Already Delivered"); return; }
     const next = STATUSES[idx + 1]!;
-    update(o.id, {
-      status: next,
-      timeline: [...o.timeline, { status: next, at: new Date().toISOString().slice(0, 10) }],
-    });
-    toast.success(`${o.id} → ${next}`);
+    try {
+      await update(o.id, {
+        status: next,
+        timeline: [...o.timeline, { status: next, at: new Date().toISOString().slice(0, 10) }],
+      });
+      toast.success(`${o.id} → ${next}`);
+    } catch (err) {
+      mutationError(err, "Failed to update order status");
+    }
   };
 
   return (

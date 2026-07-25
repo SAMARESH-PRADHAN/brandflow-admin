@@ -16,6 +16,7 @@ import { useCollection, inrFull, type Product, type ProductVisibility } from "@/
 import { ImageUploader } from "@/components/admin/image-uploader";
 import { BulletListInput } from "@/components/admin/bullet-list-input";
 import { ProductViewDialog } from "@/components/admin/product-view-dialog";
+import { mutationError } from "@/lib/mutation-error";
 import { toast } from "sonner";
 
 const CATEGORIES = ["Corporate Shirts", "Polo T-Shirts", "Formal Trousers", "Blazers", "Hoodies", "Caps", "Aprons", "Bags"];
@@ -24,7 +25,7 @@ const TYPES = ["Regular", "Premium", "Others"] as const;
 const VISIBILITIES: ProductVisibility[] = ["Category", "Bulk", "Both"];
 
 function ProductsPage() {
-  const { data, add, update, remove } = useCollection<Product>("products");
+  const { data, add, update, remove, loading } = useCollection<Product>("products");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [viewing, setViewing] = useState<Product | null>(null);
@@ -49,7 +50,7 @@ function ProductsPage() {
     { key: "name", header: "Product", render: (p) => (
       <div className="flex items-center gap-3">
         {(p.images?.[0] || p.image) && (
-          <img src={p.images?.[0] || p.image} alt={p.name} className="h-10 w-10 rounded-lg border border-border object-cover" />
+          <img loading="lazy" src={p.images?.[0] || p.image} alt={p.name} className="h-10 w-10 rounded-lg border border-border object-cover" />
         )}
         <div>
           <div className="text-sm font-semibold">{p.name}</div>
@@ -73,7 +74,14 @@ function ProductsPage() {
         <ConfirmButton
           trigger={<Button size="icon" variant="ghost" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>}
           title="Delete product?" description={`This will permanently delete ${p.name}.`}
-          onConfirm={() => { remove(p.id); toast.success("Product deleted"); }}
+          onConfirm={async () => {
+            try {
+              await remove(p.id);
+              toast.success("Product deleted");
+            } catch (err) {
+              mutationError(err, "Failed to delete product");
+            }
+          }}
         />
       </div>
     ), className: "text-right" },
@@ -96,7 +104,7 @@ function ProductsPage() {
       </div>
 
       <DataTable
-        rows={filtered} columns={cols} pageSize={10}
+        rows={filtered} columns={cols} pageSize={10} loading={loading}
         searchKeys={["code", "name", "category", "subCategory", "material"]}
         onExport={() => {
           exportCsv("arreniux-products.csv", filtered.map(({ colors, images, ...rest }) => ({
@@ -108,10 +116,19 @@ function ProductsPage() {
 
       <ProductDialog
         open={open} onOpenChange={setOpen} editing={editing}
-        onSubmit={(v) => {
-          if (editing) { update(editing.id, v); toast.success("Product updated"); }
-          else { add({ ...v, stock: 100, orders: 0, rating: 4.5, colors: [], createdAt: new Date().toISOString().slice(0, 10) } as any); toast.success("Product added"); }
-          setOpen(false);
+        onSubmit={async (v) => {
+          try {
+            if (editing) {
+              await update(editing.id, v);
+              toast.success("Product updated");
+            } else {
+              await add({ ...v, stock: 100, orders: 0, rating: 4.5, colors: [], createdAt: new Date().toISOString().slice(0, 10) } as any);
+              toast.success("Product added");
+            }
+            setOpen(false);
+          } catch (err) {
+            mutationError(err, editing ? "Failed to update product" : "Failed to add product");
+          }
         }}
       />
 
@@ -136,7 +153,7 @@ function ProductDialog({
   open, onOpenChange, editing, onSubmit,
 }: {
   open: boolean; onOpenChange: (v: boolean) => void; editing: Product | null;
-  onSubmit: (v: Partial<Product>) => void;
+  onSubmit: (v: Partial<Product>) => void | Promise<void>;
 }) {
   const empty = {
     code: "", name: "", category: CATEGORIES[0]!, type: "Regular" as const,
@@ -229,6 +246,7 @@ function ProductDialog({
               <ImageUploader
                 images={f.images ?? []}
                 max={4}
+                folder="products"
                 onChange={(imgs) => setF((s: any) => ({ ...s, images: imgs, image: imgs[0] ?? "" }))}
               />
             </Field>

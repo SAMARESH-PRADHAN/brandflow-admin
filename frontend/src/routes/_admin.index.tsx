@@ -16,12 +16,13 @@ import type { Order, Product, Customer, Review, Payment } from "@/lib/store";
 
 
 function DashboardPage() {
-  const { data: products } = useCollection<Product>("products");
-  const { data: orders } = useCollection<Order>("orders");
+  const { data: products, loading: loadingProducts } = useCollection<Product>("products");
+  const { data: orders, loading: loadingOrders } = useCollection<Order>("orders");
   const { data: samples } = useCollection<Order>("sampleOrders");
   const { data: customers } = useCollection<Customer>("customers");
   const { data: reviews } = useCollection<Review>("reviews");
   const { data: payments } = useCollection<Payment>("payments");
+  const loading = loadingProducts || loadingOrders;
 
   const stats = useMemo(() => {
     const revenue = orders.reduce((a, o) => a + o.qty * o.unitPrice, 0);
@@ -87,6 +88,15 @@ function DashboardPage() {
   return (
     <PageShell title="Dashboard" subtitle="Real-time overview of your Arreniux business">
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        {loading ? (
+          Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border border-border bg-card p-4">
+              <div className="skeleton mb-3 h-3 w-20 rounded-md" />
+              <div className="skeleton h-8 w-24 rounded-md" />
+            </div>
+          ))
+        ) : (
+          <>
         <KpiCard label="Total Revenue" value={inr(stats.revenue)} delta={12.4} icon={IndianRupee} tone="primary" index={0} />
         <KpiCard label="Total Orders" value={stats.totalOrders} delta={8.2} icon={ShoppingCart} tone="info" index={1} />
         <KpiCard label="Pending Orders" value={stats.pending} delta={-3.1} icon={Clock} tone="warning" index={2} />
@@ -95,8 +105,21 @@ function DashboardPage() {
         <KpiCard label="Total Customers" value={stats.customers} delta={4.3} icon={Users} tone="info" index={5} />
         <KpiCard label="Total Products" value={stats.products} icon={Boxes} tone="primary" index={6} />
         <KpiCard label="Total Reviews" value={stats.reviews} icon={Star} tone="warning" index={7} />
+          </>
+        )}
       </div>
 
+      {loading ? (
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="skeleton h-72 rounded-2xl lg:col-span-2" />
+          <div className="skeleton h-72 rounded-2xl" />
+          <div className="skeleton h-64 rounded-2xl" />
+          <div className="skeleton h-64 rounded-2xl" />
+          <div className="skeleton h-64 rounded-2xl lg:col-span-2" />
+          <div className="skeleton h-64 rounded-2xl" />
+        </div>
+      ) : (
+      <>
       <div className="grid gap-4 lg:grid-cols-3">
         <SectionCard title="Monthly Revenue" subtitle="Last 8 months" className="lg:col-span-2">
           <div className="h-72">
@@ -194,6 +217,8 @@ function DashboardPage() {
           </div>
         </SectionCard>
       </div>
+      </>
+      )}
 
     </PageShell>
   );

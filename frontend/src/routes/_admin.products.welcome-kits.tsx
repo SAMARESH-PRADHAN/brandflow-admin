@@ -11,11 +11,12 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCollection, inrFull, type WelcomeKitItem } from "@/lib/store";
 import { ImageUploader } from "@/components/admin/image-uploader";
+import { mutationError } from "@/lib/mutation-error";
 import { toast } from "sonner";
 
 
 function KitsPage() {
-  const { data, add, update, remove } = useCollection<WelcomeKitItem>("welcomeKits");
+  const { data, add, update, remove, loading } = useCollection<WelcomeKitItem>("welcomeKits");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<WelcomeKitItem | null>(null);
   const [f, setF] = useState<any>({ name: "", price: 199, enabled: true, description: "", image: "", images: [] });
@@ -31,11 +32,19 @@ function KitsPage() {
       <SectionCard title="Kit Items" subtitle={`${filtered.length} items in the Welcome Kit category`}
         actions={<Input placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} className="w-52" />}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((k) => (
+          {loading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="rounded-2xl border border-border bg-card p-4">
+                <div className="skeleton mb-3 aspect-video rounded-xl" />
+                <div className="skeleton mb-2 h-4 w-2/3 rounded-md" />
+                <div className="skeleton h-6 w-1/3 rounded-md" />
+              </div>
+            ))
+          ) : filtered.map((k) => (
             <div key={k.id} className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-pop)]">
               <div className="mb-3 aspect-video overflow-hidden rounded-xl bg-secondary text-primary">
                 {(k.images?.[0] || k.image) ? (
-                  <img src={k.images?.[0] || k.image} alt={k.name} className="h-full w-full object-cover" />
+                  <img loading="lazy" src={k.images?.[0] || k.image} alt={k.name} className="h-full w-full object-cover" />
                 ) : (
                   <div className="grid h-full w-full place-items-center"><Gift className="h-10 w-10" /></div>
                 )}
@@ -45,7 +54,14 @@ function KitsPage() {
                   <div className="truncate text-sm font-semibold">{k.name}</div>
                   <div className="mt-0.5 num text-xl font-display">{inrFull(k.price)}</div>
                 </div>
-                <Switch checked={k.enabled} onCheckedChange={(v) => { update(k.id, { enabled: v }); toast(v ? "Enabled" : "Disabled"); }} />
+                <Switch checked={k.enabled} onCheckedChange={async (v) => {
+                  try {
+                    await update(k.id, { enabled: v });
+                    toast(v ? "Enabled" : "Disabled");
+                  } catch (err) {
+                    mutationError(err, "Failed to update item");
+                  }
+                }} />
               </div>
               <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{k.description}</p>
               <div className="mt-3 flex gap-1">
@@ -53,7 +69,14 @@ function KitsPage() {
                   <Pencil className="mr-1 h-3 w-3" /> Edit
                 </Button>
                 <ConfirmButton trigger={<Button size="sm" variant="outline" className="text-destructive"><Trash2 className="h-3 w-3" /></Button>}
-                  onConfirm={() => { remove(k.id); toast.success("Removed"); }} />
+                  onConfirm={async () => {
+                    try {
+                      await remove(k.id);
+                      toast.success("Removed");
+                    } catch (err) {
+                      mutationError(err, "Failed to remove item");
+                    }
+                  }} />
               </div>
             </div>
           ))}
@@ -72,6 +95,7 @@ function KitsPage() {
               <ImageUploader
                 images={f.images ?? []}
                 max={1}
+                folder="welcome-kits"
                 onChange={(imgs) => setF({ ...f, images: imgs, image: imgs[0] ?? "" })}
               />
             </div>
@@ -82,10 +106,19 @@ function KitsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={() => {
-              if (editing) { update(editing.id, f); toast.success("Updated"); }
-              else { add(f); toast.success("Added"); }
-              setOpen(false);
+            <Button onClick={async () => {
+              try {
+                if (editing) {
+                  await update(editing.id, f);
+                  toast.success("Updated");
+                } else {
+                  await add(f);
+                  toast.success("Added");
+                }
+                setOpen(false);
+              } catch (err) {
+                mutationError(err, editing ? "Failed to update item" : "Failed to add item");
+              }
             }}>{editing ? "Save" : "Add"}</Button>
           </DialogFooter>
         </DialogContent>
