@@ -16,7 +16,9 @@ import { ProductViewDialog } from "@/components/admin/product-view-dialog";
 import { mutationError } from "@/lib/mutation-error";
 import { toast } from "sonner";
 
-const SUBS = ["Hospitality", "Corporate", "Healthcare", "Education", "Retail"];
+// With:
+import { B2B_SUBCATEGORY_NAMES } from "@/lib/catalog-taxonomy";
+const SUBS = B2B_SUBCATEGORY_NAMES;
 
 function B2BPage() {
   const { data, add, update, remove } = useCollection<B2BProduct>("b2bProducts");
