@@ -11,7 +11,14 @@ export type TaxCategory = {
   premium?: string[];
   items?: string[]; // used when hasTiers = false
 };
-
+// Exact B2B subName values the storefront filters against (src/data/catalog.ts → B2B_SUBCATEGORIES)
+export const B2B_SUBCATEGORY_NAMES = [
+  "Cotton Oversized T-Shirts",
+  "Drifit SAP Matty Collar Neck T-Shirts",
+  "American Fleece Hoodies",
+  "Spun Collar Neck T-Shirt",
+  "Spun Round Neck T-Shirt",
+] as const;
 export const CATALOG_TAXONOMY: TaxCategory[] = [
   {
     name: "Oversized T-Shirts",
