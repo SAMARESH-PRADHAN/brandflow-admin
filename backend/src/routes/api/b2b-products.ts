@@ -7,7 +7,8 @@ export const b2bProductRoutes = new Hono();
 
 b2bProductRoutes.get("/", async (c) => {
   const rows = await query(
-    `SELECT id, code, name, sub_category, material, description,
+    `SELECT id, code, name, sub_category, material, description,overview,
+            specifications, design_guidelines, wash_care,
             sample_price, original_price, status, image, images, created_at
      FROM b2b_products ORDER BY created_at DESC`,
   );

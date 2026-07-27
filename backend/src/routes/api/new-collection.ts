@@ -7,7 +7,8 @@ export const newCollectionRoutes = new Hono();
 
 newCollectionRoutes.get("/", async (c) => {
   const rows = await query(
-    `SELECT id, code, name, material, description,
+    `SELECT id, code, name, material, description,overview,
+            specifications, design_guidelines, wash_care,
             sample_price, original_price, status, image, images, created_at
      FROM new_collection_products ORDER BY created_at DESC`,
   );
