@@ -89,16 +89,21 @@ function OrderDetail() {
           )}
         </SectionCard>
 
-        <SectionCard title="Size breakdown" className="lg:col-span-2">
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-            {["S", "M", "L", "XL", "XXL"].map((s) => (
-              <div key={s} className="rounded-xl border border-border p-3 text-center">
-                <div className="text-[11px] font-semibold uppercase text-muted-foreground">{s}</div>
-                <div className="font-display text-xl num">{order.sizes?.[s] ?? 0}</div>
-              </div>
-            ))}
-          </div>
-        </SectionCard>
+       <SectionCard title="Size breakdown" className="lg:col-span-2">
+  <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+    {Object.entries(order.sizes ?? {})
+      .filter(([, qty]) => qty > 0)
+      .map(([s, qty]) => (
+        <div key={s} className="rounded-xl border border-border p-3 text-center">
+          <div className="text-[11px] font-semibold uppercase text-muted-foreground">{s}</div>
+          <div className="font-display text-xl num">{qty}</div>
+        </div>
+      ))}
+    {Object.values(order.sizes ?? {}).every((q) => !q) && (
+      <div className="col-span-full text-center text-xs text-muted-foreground py-4">No size breakdown for this order</div>
+    )}
+  </div>
+</SectionCard>
 
         <SectionCard title="Invoice">
           <div className="space-y-2 text-sm">
