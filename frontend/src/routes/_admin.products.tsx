@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState ,useEffect } from "react";
 import { Plus, Pencil, Trash2, Eye, Filter } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
 import { DataTable, exportCsv, type Column } from "@/components/admin/data-table";
@@ -205,6 +205,17 @@ function ProductDialog({
   };
 
   const [f, setF] = useState<any>(editing ? normalizeProduct(editing) : empty);
+
+  // Re-sync the form whenever the dialog opens or the target product changes.
+  // (useState's initializer only runs once, so without this effect the form
+  // would keep showing stale data after the first open.)
+  useEffect(() => {
+    if (open) {
+      setF(editing ? normalizeProduct(editing) : empty);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editing]);
+
   const set = (k: string, v: any) => setF((s: any) => ({ ...s, [k]: v }));
 
   const activeCat = findTaxCategory(f.category);
@@ -225,13 +236,7 @@ function ProductDialog({
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        onOpenChange(v);
-        if (v) setF(editing ? normalizeProduct(editing) : empty);
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader><DialogTitle>{editing ? "Edit Product" : "Add Product"}</DialogTitle></DialogHeader>
 

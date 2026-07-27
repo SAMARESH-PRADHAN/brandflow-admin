@@ -16,7 +16,8 @@ productRoutes.get("/", async (c) => {
 
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
   const rows = await query(
-    `SELECT id, code, name, category, type, sub_category, material, description,
+    `SELECT id, code, name, category, type, sub_category, material, description,overview,
+            specifications, design_guidelines, wash_care,
             sample_price, original_price, status, image, images, stock, orders_count,
             rating, visibility, colors, created_at
      FROM products ${where} ORDER BY created_at DESC`,
