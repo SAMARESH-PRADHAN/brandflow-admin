@@ -13,9 +13,25 @@ const STATUS_FLOW: OrderStatus[] = ["Placed", "Confirmed", "In Production", "Shi
 
 function OrderDetail() {
   const { id } = useParams();
-  const { data: orders } = useCollection<Order>("orders");
-  const { data: samples } = useCollection<Order>("sampleOrders");
+  const { data: orders, loading: loadingOrders } = useCollection<Order>("orders");
+  const { data: samples, loading: loadingSamples } = useCollection<Order>("sampleOrders");
+  const loading = loadingOrders || loadingSamples;
   const order = useMemo(() => [...orders, ...samples].find((o) => o.id === id), [orders, samples, id]);
+
+  if (loading) {
+    return (
+      <PageShell title="Loading order…">
+        <SectionCard>
+          <div className="space-y-3 py-4">
+            <div className="skeleton h-5 w-1/3 rounded-md" />
+            <div className="skeleton h-4 w-1/2 rounded-md" />
+            <div className="skeleton h-4 w-2/3 rounded-md" />
+            <div className="skeleton h-40 w-full rounded-xl" />
+          </div>
+        </SectionCard>
+      </PageShell>
+    );
+  }
 
   if (!order) {
     return (
