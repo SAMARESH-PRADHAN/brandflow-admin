@@ -179,3 +179,20 @@ sampleOrderRoutes.post("/", async (c) => {
   const row = await insertOrder(body, true);
   return c.json(mapOrder(row!), 201);
 });
+sampleOrderRoutes.patch("/:id", async (c) => {
+  const body = await parseJsonBody<Record<string, unknown>>(c);
+  const id = c.req.param("id");
+  const existing = await queryOne("SELECT * FROM orders WHERE id = $1 AND is_sample = true", [id]);
+  if (!existing) return c.json({ error: "Sample order not found" }, 404);
+
+  await patchById("orders", id, body, {
+    status: "status",
+    paymentStatus: "payment_status",
+    // add other fields as needed
+  });
+  if (body.timeline !== undefined) {
+    await execute("UPDATE orders SET timeline = $1::jsonb WHERE id = $2", [JSON.stringify(body.timeline), id]);
+  }
+  const row = await queryOne("SELECT * FROM orders WHERE id = $1", [id]);
+  return c.json(mapOrder(row!));
+});

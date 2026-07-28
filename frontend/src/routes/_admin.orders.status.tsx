@@ -20,8 +20,15 @@ const COLORS: Record<OrderStatus, string> = {
 };
 
 function KanbanPage() {
-  const { data, update } = useCollection<Order>("orders");
+  // Normal/bulk/B2B/new-collection orders
+  const { data: normalOrders, update: updateNormal } = useCollection<Order>("orders");
+  // Sample orders (separate table/endpoint, is_sample = true)
+  const { data: sampleOrders, update: updateSample } = useCollection<Order>("sampleOrders");
+
   const [preview, setPreview] = useState<Order | null>(null);
+
+  // Merge both collections so sample orders also appear on the board.
+  const data = useMemo(() => [...normalOrders, ...sampleOrders], [normalOrders, sampleOrders]);
 
   const grouped = useMemo(() => {
     const m: Record<OrderStatus, Order[]> = { Placed: [], Confirmed: [], "In Production": [], Shipped: [], Delivered: [] };
@@ -33,8 +40,10 @@ function KanbanPage() {
     const idx = STATUSES.indexOf(o.status);
     if (idx >= STATUSES.length - 1) { toast("Already Delivered"); return; }
     const next = STATUSES[idx + 1]!;
+    // Route the update to whichever collection this order actually belongs to.
+    const updateFn = o.isSample ? updateSample : updateNormal;
     try {
-      await update(o.id, {
+      await updateFn(o.id, {
         status: next,
         timeline: [...o.timeline, { status: next, at: new Date().toISOString().slice(0, 10) }],
       });
@@ -63,7 +72,14 @@ function KanbanPage() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <div className="truncate text-xs font-mono text-muted-foreground">{o.id}</div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="truncate text-xs font-mono text-muted-foreground">{o.id}</div>
+                        {o.isSample && (
+                          <span className="shrink-0 rounded-full bg-warning/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-warning">
+                            Sample
+                          </span>
+                        )}
+                      </div>
                       <div className="truncate text-sm font-semibold">{o.customer}</div>
                     </div>
                     <span className="num text-xs font-semibold">{inrFull(o.qty * o.unitPrice)}</span>
@@ -98,6 +114,7 @@ function KanbanPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               {preview?.id}
+              {preview?.isSample && <StatusBadge value="Sample" />}
               {preview && <StatusBadge value={preview.status} />}
               {preview && <StatusBadge value={preview.paymentStatus} />}
             </DialogTitle>
@@ -114,7 +131,7 @@ function KanbanPage() {
                 </div>
                 <div className="rounded-xl border border-border p-3">
                   <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Order Info</div>
-                  <Info k="Type" v={preview.type} />
+                  <Info k="Type" v={preview.isSample ? `${preview.type} (Sample)` : preview.type} />
                   <Info k="Date" v={preview.date} />
                   <Info k="Payment" v={`${preview.paymentStatus} • ${preview.paymentMethod}`} />
                   <Info k="Amount" v={inrFull(preview.qty * preview.unitPrice)} />
