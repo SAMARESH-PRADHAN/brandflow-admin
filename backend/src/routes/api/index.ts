@@ -13,6 +13,8 @@ import { agentVisitRoutes } from "./agent-visits.js";
 import { notificationRoutes } from "./notifications.js";
 import { settingsRoutes } from "./settings.js";
 import { uploadRoutes } from "./uploads.js";
+import { razorpayRoutes } from "./razorpay.js";
+
 
 export const apiRoutes = new Hono();
 
@@ -54,3 +56,4 @@ apiRoutes.route("/payments", paymentRoutes);
 apiRoutes.route("/reviews", reviewRoutes);
 apiRoutes.route("/notifications", notificationRoutes);
 apiRoutes.route("/settings", settingsRoutes);
+apiRoutes.route("/razorpay", razorpayRoutes);
