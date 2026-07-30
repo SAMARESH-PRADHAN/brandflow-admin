@@ -1,14 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
-import { Bell, Moon, Sun, ShoppingCart, CreditCard, Star, Package, Briefcase, Info, CheckCheck } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+// import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useTheme } from "@/hooks/use-theme";
 import {
   Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Fragment } from "react";
-import { useCollection, type Notification } from "@/lib/store";
+// import { useCollection, type Notification } from "@/lib/store";
 
 const routeLabels: Record<string, string> = {
   "": "Dashboard", products: "Products", "new-collection": "New Collection",
@@ -19,17 +19,17 @@ const routeLabels: Record<string, string> = {
   analytics: "Analytics", settings: "Settings",
 };
 
-const ICONS: Record<Notification["type"], any> = {
-  order: ShoppingCart, payment: CreditCard, review: Star, stock: Package, agent: Briefcase, system: Info,
-};
+// const ICONS: Record<Notification["type"], any> = {
+//   order: ShoppingCart, payment: CreditCard, review: Star, stock: Package, agent: Briefcase, system: Info,
+// };
 
 export function Topbar() {
   const { theme, toggle } = useTheme();
   const pathname = useLocation().pathname;
-  const { data: notifs, setAll, update } = useCollection<Notification>("notifications");
+  // const { data: notifs, setAll, update } = useCollection<Notification>("notifications");
 
-  const unread = notifs.filter((n) => !n.read).length;
-  const markAllRead = () => setAll(notifs.map((n) => ({ ...n, read: true })));
+  // const unread = notifs.filter((n) => !n.read).length;
+  // const markAllRead = () => setAll(notifs.map((n) => ({ ...n, read: true })));
 
   const parts = pathname.split("/").filter(Boolean);
   const crumbs = parts.length === 0 ? [{ label: "Dashboard", href: "/" }] : parts.map((p, i) => ({
@@ -66,7 +66,7 @@ export function Topbar() {
         {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
       </Button>
 
-      <Popover>
+      {/* <Popover>
         <PopoverTrigger asChild>
           <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
             <Bell className="h-4 w-4" />
@@ -116,7 +116,7 @@ export function Topbar() {
             })}
           </div>
         </PopoverContent>
-      </Popover>
+      </Popover> */}
 
     </header>
   );

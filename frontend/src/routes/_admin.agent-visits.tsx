@@ -102,9 +102,9 @@ export default function AgentVisitsPage() {
           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setViewing(v)}>
             <Eye className="h-4 w-4" />
           </Button>
-          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(v)}>
+          {/* <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(v)}>
             <Pencil className="h-4 w-4" />
-          </Button>
+          </Button> */}
           <ConfirmButton
             trigger={
               <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive">
@@ -130,11 +130,11 @@ export default function AgentVisitsPage() {
     <PageShell
       title="Agent Visited Customer Details"
       subtitle="Track every B2B agent visit"
-      actions={
-        <Button onClick={openNew}>
-          <Plus className="mr-1 h-4 w-4" /> Log Visit
-        </Button>
-      }
+      // actions={
+      //   <Button onClick={openNew}>
+      //     <Plus className="mr-1 h-4 w-4" /> Log Visit
+      //   </Button>
+      // }
     >
       <div className="space-y-4">
         <DateRangeFilter value={range} onChange={setRange} label="Visit Date" />

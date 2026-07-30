@@ -41,13 +41,13 @@ async function insertOrder(body: Record<string, unknown>, isSample: boolean) {
       id, customer_id, customer_name, phone, email, address,
       product_id, product_code, product_name, category, product_type, sub_category,
       material, description, print_type, print_location, uploaded_logo,
-      sizes, qty, unit_price, gst_pct, shipping,
+      sizes, qty, unit_price,  printing_price, gst_pct, shipping,
       discount_pct, discount_amt, total_amount, paid_amount,
       type, status, payment_status, payment_method, is_sample, order_date, timeline
     ) VALUES (
       $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,
       $22,$23,$24,$25,
-      $26,$27,$28,$29,$30,$31,$32,$33
+      $26,$27,$28,$29,$30,$31,$32,$33,$34
     )`,
     [
       id,
@@ -70,6 +70,7 @@ async function insertOrder(body: Record<string, unknown>, isSample: boolean) {
       JSON.stringify(body.sizes ?? {}),
       body.qty ?? 1,
       body.unitPrice ?? 0,
+      body.printingPrice ?? 0,
       body.gstPct ?? 5,
       body.shipping ?? 0,
       body.discountPct ?? 0,
@@ -93,7 +94,7 @@ const ORDER_LIST_COLUMNS = `
   id, customer_id, customer_name, phone, email, address,
   product_id, product_code, product_name, category, product_type, sub_category,
   material, description, print_type, print_location, uploaded_logo,
-  sizes, qty, unit_price, gst_pct, shipping,
+  sizes, qty, unit_price, printing_price, gst_pct, shipping,
   discount_pct, discount_amt, total_amount, paid_amount,
   type, status, payment_status, payment_method, is_sample, order_date, timeline
 `;
@@ -145,6 +146,7 @@ orderRoutes.patch("/:id", async (c) => {
     uploadedLogo: "uploaded_logo",
     qty: "qty",
     unitPrice: "unit_price",
+    printingPrice: "printing_price",
     gstPct: "gst_pct",
     shipping: "shipping",
     discountPct: "discount_pct",

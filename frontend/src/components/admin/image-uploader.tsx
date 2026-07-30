@@ -1,9 +1,9 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, ImagePlus, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { deleteUploadedImage, uploadImage } from "@/lib/api";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB pre-compression
+const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB pre-compression
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"];
 const MAX_DIM = 1600;
 const QUALITY = 0.82;
@@ -51,16 +51,19 @@ function isDeletableUrl(url: string): boolean {
 
 type UploadingItem = { key: string; preview: string };
 
+
 export function ImageUploader({
   images,
   onChange,
-  max = 6,
+  max = 4,
   folder = "uploads",
+  onUploadingChange,
 }: {
   images: string[];
   onChange: (imgs: string[]) => void;
   max?: number;
   folder?: string;
+   onUploadingChange?: (uploading: boolean) => void; // NEW
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploadingItems, setUploadingItems] = useState<UploadingItem[]>([]);
@@ -81,7 +84,7 @@ export function ImageUploader({
         continue;
       }
       if (f.size > MAX_FILE_SIZE) {
-        toast.error(`${f.name}: exceeds 5MB limit`);
+        toast.error(`${f.name}: please upload an image under 1 MB`);
         continue;
       }
       valid.push(f);
@@ -164,6 +167,9 @@ export function ImageUploader({
     setDragOver(false);
     void handleFiles(e.dataTransfer.files);
   };
+useEffect(() => {
+  onUploadingChange?.(uploadingItems.length > 0);
+}, [uploadingItems, onUploadingChange]);
 
   const atCapacity = images.length + uploadingItems.length >= max;
 
@@ -250,7 +256,7 @@ export function ImageUploader({
       />
       <div className="flex items-center justify-between text-[11px] text-muted-foreground">
         <span>
-          {images.length} / {max} • Recommended: square images, 1000×1000px or larger. Max 5MB — automatically optimized after upload.
+          {images.length} / {max} • Recommended: square images, 1000×1000px or larger. Max 1MB — automatically optimized after upload.
         </span>
       </div>
     </div>
