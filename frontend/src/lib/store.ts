@@ -109,6 +109,10 @@ export type Order = {
   paymentMethod: "UPI" | "Credit Card" | "Net Banking" | "COD" | "Wallet";
   isSample: boolean;
   date: string;
+   discountPct: number;
+  discountAmt: number;
+  totalAmount: number;
+  paidAmount: number;
   timeline: { status: OrderStatus; at: string }[];
 };
 export type Customer = {

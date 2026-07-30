@@ -44,9 +44,10 @@ function OrderDetail() {
     );
   }
 
-  const subtotal = order.qty * order.unitPrice;
-  const gst = subtotal * (order.gstPct / 100);
-  const grand = subtotal + gst + order.shipping;
+ const subtotal = order.qty * order.unitPrice;
+const discountAmt = order.discountAmt ?? 0;
+const gst = (subtotal - discountAmt + order.shipping) * (order.gstPct / 100);
+const grand = order.totalAmount > 0 ? order.totalAmount : subtotal - discountAmt + order.shipping + gst;
 
   return (
     <PageShell
@@ -121,22 +122,29 @@ function OrderDetail() {
   </div>
 </SectionCard>
 
-        <SectionCard title="Invoice">
-          <div className="space-y-2 text-sm">
-            <Line k="Quantity" v={order.qty.toString()} />
-            <Line k="Unit Price" v={inrFull(order.unitPrice)} />
-            <Line k="Subtotal" v={inrFull(subtotal)} />
-            <Line k={`GST (${order.gstPct}%)`} v={inrFull(gst)} />
-            <Line k="Shipping" v={inrFull(order.shipping)} />
-            <div className="mt-2 border-t border-border pt-2">
-              <Line k="Grand Total" v={inrFull(grand)} bold />
-            </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <StatusBadge value={order.paymentStatus} />
-              <StatusBadge value={order.status} />
-            </div>
-          </div>
-        </SectionCard>
+       <SectionCard title="Invoice">
+  <div className="space-y-2 text-sm">
+    <Line k="Quantity" v={order.qty.toString()} />
+    <Line k="Unit Price" v={inrFull(order.unitPrice)} />
+    <Line k="Subtotal" v={inrFull(subtotal)} />
+    {discountAmt > 0 && (
+      <Line k={`Discount (${order.discountPct}%)`} v={`−${inrFull(discountAmt)}`} />
+    )}
+    <Line k={`GST (${order.gstPct}%)`} v={inrFull(gst)} />
+    <Line k="Shipping" v={inrFull(order.shipping)} />
+    <div className="mt-2 border-t border-border pt-2">
+      <Line k="Grand Total" v={inrFull(grand)} bold />
+    </div>
+    <Line k="Amount Paid" v={inrFull(order.paidAmount > 0 ? order.paidAmount : grand)} />
+    {order.paidAmount > 0 && order.paidAmount < grand && (
+      <Line k="Balance Due" v={inrFull(grand - order.paidAmount)} />
+    )}
+    <div className="mt-2 flex flex-wrap gap-2">
+      <StatusBadge value={order.paymentStatus} />
+      <StatusBadge value={order.status} />
+    </div>
+  </div>
+</SectionCard>
 
         <SectionCard title="Timeline" className="lg:col-span-3">
           <div className="grid gap-3 md:grid-cols-5">
