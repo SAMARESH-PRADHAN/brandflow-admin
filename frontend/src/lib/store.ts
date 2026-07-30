@@ -101,6 +101,7 @@ export type Order = {
   sizes: Record<string, number>;
   qty: number;
   unitPrice: number;
+  printingPrice: number;
   gstPct: number;
   shipping: number;
   type: OrderType;

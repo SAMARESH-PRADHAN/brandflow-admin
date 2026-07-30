@@ -1,5 +1,5 @@
 import { useMemo, useState ,useEffect } from "react";
-import { Plus, Pencil, Trash2, Eye, Filter } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, Filter, Loader2 } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
 import { DataTable, exportCsv, type Column } from "@/components/admin/data-table";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -205,6 +205,8 @@ function ProductDialog({
   };
 
   const [f, setF] = useState<any>(editing ? normalizeProduct(editing) : empty);
+  const [imagesUploading, setImagesUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   // Re-sync the form whenever the dialog opens or the target product changes.
   // (useState's initializer only runs once, so without this effect the form
@@ -212,6 +214,8 @@ function ProductDialog({
   useEffect(() => {
     if (open) {
       setF(editing ? normalizeProduct(editing) : empty);
+      setImagesUploading(false);
+    setSubmitting(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editing]);
@@ -317,6 +321,7 @@ function ProductDialog({
                 max={4}
                 folder="products"
                 onChange={(imgs) => setF((s: any) => ({ ...s, images: imgs, image: imgs[0] ?? "" }))}
+                onUploadingChange={setImagesUploading}
               />
             </Field>
           </div>
@@ -342,10 +347,24 @@ function ProductDialog({
           </TabsContent>
         </Tabs>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={() => onSubmit(f)}>{editing ? "Save changes" : "Add product"}</Button>
-        </DialogFooter>
+       <DialogFooter>
+  <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>Cancel</Button>
+  <Button
+    disabled={imagesUploading || submitting}
+    onClick={async () => {
+      setSubmitting(true);
+      try {
+        await onSubmit(f);
+      } finally {
+        setSubmitting(false);
+      }
+    }}
+  >
+    {submitting ? (
+      <><Loader2 className="mr-1 h-4 w-4 animate-spin" />{editing ? "Saving..." : "Adding..."}</>
+    ) : imagesUploading ? "Uploading image..." : editing ? "Save changes" : "Add product"}
+  </Button>
+</DialogFooter>
       </DialogContent>
     </Dialog>
   );

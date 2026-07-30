@@ -170,6 +170,7 @@ export function mapOrder(row: Record<string, unknown>) {
     sizes: jsonObject<Record<string, number>>(row.sizes, {}),
     qty: num(row.qty),
     unitPrice: num(row.unit_price),
+    printingPrice: num(row.printing_price),   // <-- add this line
     gstPct: num(row.gst_pct),
     shipping: num(row.shipping),
     discountPct: num(row.discount_pct),

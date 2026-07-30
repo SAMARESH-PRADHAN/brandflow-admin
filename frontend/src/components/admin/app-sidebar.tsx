@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, BarChart3, Package, PackagePlus, Boxes, Gift,
   ShoppingCart, ClipboardList, GitBranch, Users, Briefcase, MapPin,
-  CreditCard, Star, Sparkles,
+  CreditCard, Star,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -47,9 +47,9 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-3 px-2 py-3">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/40">
-            <Sparkles className="h-5 w-5" />
-          </div>
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white shadow-lg overflow-hidden">
+  <img src="/logo.png" alt="Arreniux" className="h-full w-full object-contain p-1" />
+</div>
           {!collapsed && (
             <div className="min-w-0">
               <div className="font-display text-lg text-sidebar-foreground">ARRENIUX</div>
@@ -95,7 +95,7 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border">
+      {/* <SidebarFooter className="border-t border-sidebar-border">
         {!collapsed ? (
           <div className="rounded-xl border border-sidebar-border/60 bg-sidebar-accent/40 p-3">
             <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-sidebar-foreground/60">
@@ -114,7 +114,7 @@ export function AppSidebar() {
             <span className="h-2 w-2 rounded-full bg-primary" />
           </div>
         )}
-      </SidebarFooter>
+      </SidebarFooter> */}
     </Sidebar>
   );
 }

@@ -99,44 +99,44 @@ function CustomersPage() {
       header: "Join Date",
       render: (c) => <span className="text-xs text-muted-foreground">{c.joinDate}</span>,
     },
-    {
-      key: "actions",
-      header: "",
-      render: (c) => (
-        <div className="flex justify-end gap-1">
-          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(c)}>
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <ConfirmButton
-            trigger={
-              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive">
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            }
-            onConfirm={async () => {
-              try {
-                await remove(c.id);
-                toast.success("Deleted");
-              } catch (err) {
-                mutationError(err, "Failed to delete customer");
-              }
-            }}
-          />
-        </div>
-      ),
-      className: "text-right",
-    },
+    // {
+    //   key: "actions",
+    //   header: "",
+    //   render: (c) => (
+    //     <div className="flex justify-end gap-1">
+    //       <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(c)}>
+    //         <Pencil className="h-4 w-4" />
+    //       </Button>
+    //       <ConfirmButton
+    //         trigger={
+    //           <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive">
+    //             <Trash2 className="h-4 w-4" />
+    //           </Button>
+    //         }
+    //         onConfirm={async () => {
+    //           try {
+    //             await remove(c.id);
+    //             toast.success("Deleted");
+    //           } catch (err) {
+    //             mutationError(err, "Failed to delete customer");
+    //           }
+    //         }}
+    //       />
+    //     </div>
+    //   ),
+    //   className: "text-right",
+    // },
   ];
 
   return (
     <PageShell
       title="Customers"
       subtitle="Retail buyer directory"
-      actions={
-        <Button onClick={openNew}>
-          <Plus className="mr-1 h-4 w-4" /> Add Customer
-        </Button>
-      }
+      // actions={
+      //   <Button onClick={openNew}>
+      //     <Plus className="mr-1 h-4 w-4" /> Add Customer
+      //   </Button>
+      // }
     >
       <div className="space-y-3">
         <DateRangeFilter value={range} onChange={setRange} label="Join date" />
