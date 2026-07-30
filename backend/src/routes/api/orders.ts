@@ -94,6 +94,7 @@ const ORDER_LIST_COLUMNS = `
   product_id, product_code, product_name, category, product_type, sub_category,
   material, description, print_type, print_location, uploaded_logo,
   sizes, qty, unit_price, gst_pct, shipping,
+  discount_pct, discount_amt, total_amount, paid_amount,
   type, status, payment_status, payment_method, is_sample, order_date, timeline
 `;
 orderRoutes.get("/", async (c) => {
