@@ -34,7 +34,16 @@ function OrdersPage() {
     { key: "type", header: "Type", render: (o) => <StatusBadge value={o.type} /> },
     { key: "date", header: "Date", render: (o) => <span className="text-xs text-muted-foreground">{o.date}</span>, sortable: true, getValue: (o) => o.date },
     { key: "amount", header: "Amount", render: (o) => <span className="num text-sm font-semibold">{inrFull(o.totalAmount > 0 ? o.totalAmount : o.qty * o.unitPrice)}</span>, sortable: true, getValue: (o) => (o.totalAmount > 0 ? o.totalAmount : o.qty * o.unitPrice), className: "text-right" },
+    { key: "paid", header: "Paid", render: (o) => (
+  <span className="num text-sm">{inrFull(o.paidAmount)}</span>
+), className: "text-right" },
+{ key: "due", header: "Due", render: (o) => (
+  <span className="num text-sm text-destructive">
+    {inrFull(Math.max(0, (o.totalAmount || o.qty * o.unitPrice) - o.paidAmount))}
+  </span>
+), className: "text-right" },
     { key: "payment", header: "Payment", render: (o) => <StatusBadge value={o.paymentStatus} /> },
+    
     { key: "status", header: "Status", render: (o) => <StatusBadge value={o.status} /> },
     { key: "logo", header: "Artwork", render: (o) => o.uploadedLogo ? <img loading="lazy" src={o.uploadedLogo} alt="artwork" className="h-8 w-12 rounded border border-border object-cover" /> : <span className="text-[10px] text-muted-foreground">—</span> },
     { key: "actions", header: "", render: (o) => (
