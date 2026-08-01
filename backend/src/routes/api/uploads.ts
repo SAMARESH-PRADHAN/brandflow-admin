@@ -36,9 +36,10 @@ function normalizeFolder(folder: string | undefined): string {
   return value;
 }
 
+import { rateLimit } from "../../middleware/rate-limit.js";
 export const uploadRoutes = new Hono();
 
-uploadRoutes.post("/", async (c) => {
+uploadRoutes.post("/", rateLimit(10, 60000), async (c) => {
   requireR2();
 
   const contentType = c.req.header("content-type") ?? "";

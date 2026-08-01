@@ -8,6 +8,7 @@ export const settingsRoutes = new Hono();
 settingsRoutes.get("/", async (c) => {
   const row = await queryOne("SELECT * FROM settings WHERE id = 1");
   if (!row) return c.json({ error: "Settings not found" }, 404);
+  c.header("Cache-Control", "public, max-age=60");
   return c.json(mapSettings(row));
 });
 

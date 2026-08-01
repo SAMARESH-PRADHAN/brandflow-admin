@@ -24,15 +24,24 @@ const TYPES = ["Regular", "Premium"] as const;
 const VISIBILITIES: ProductVisibility[] = ["Category", "Bulk", "Both"];
 
 function ProductsPage() {
-  const { data, add, update, remove, loading } = useCollection<Product>("products");
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Product | null>(null);
-  const [viewing, setViewing] = useState<Product | null>(null);
-
+  const [page, setPage] = useState(1);
   const [fCat, setFCat] = useState("All");
   const [fType, setFType] = useState("All");
   const [fSub, setFSub] = useState("All");
   const [fVis, setFVis] = useState("All");
+
+  const { data, pagination, add, update, remove, loading } = useCollection<Product>("products", {
+    page,
+    limit: 10,
+    category: fCat === "All" ? undefined : fCat,
+    type: fType === "All" ? undefined : fType,
+    subCategory: fSub === "All" ? undefined : fSub,
+    visibility: fVis === "All" ? undefined : fVis,
+  });
+
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Product | null>(null);
+  const [viewing, setViewing] = useState<Product | null>(null);
 
   // Sub-category filter options depend on the selected category filter.
   const filterSubOptions = useMemo(() => {
@@ -57,12 +66,15 @@ function ProductsPage() {
     return [...new Set([...(cat.regular ?? []), ...(cat.premium ?? [])])];
   }, [fCat]);
 
-  const filtered = useMemo(() => data.filter((p) =>
-    (fCat === "All" || p.category === fCat) &&
-    (fType === "All" || p.type === fType) &&
-    (fSub === "All" || p.subCategory === fSub) &&
-    (fVis === "All" || (p.visibility ?? "Both") === fVis)
-  ), [data, fCat, fType, fSub, fVis]);
+  const filtered = useMemo(() => {
+    if (pagination) return data;
+    return data.filter((p) =>
+      (fCat === "All" || p.category === fCat) &&
+      (fType === "All" || p.type === fType) &&
+      (fSub === "All" || p.subCategory === fSub) &&
+      (fVis === "All" || (p.visibility ?? "Both") === fVis)
+    );
+  }, [data, fCat, fType, fSub, fVis, pagination]);
 
   const openNew = () => { setEditing(null); setOpen(true); };
   const openEdit = (p: Product) => { setEditing(p); setOpen(true); };
@@ -133,6 +145,10 @@ function ProductsPage() {
       <DataTable
         rows={filtered} columns={cols} pageSize={10} loading={loading}
         searchKeys={["code", "name", "category", "subCategory", "material"]}
+        serverSide={!!pagination}
+        serverTotalPages={pagination ? Math.ceil(pagination.total / pagination.limit) : 1}
+        currentPage={page}
+        onPageChange={setPage}
         onExport={() => {
           exportCsv("arreniux-products.csv", filtered.map(({ colors, images, ...rest }) => ({
             ...rest, visibility: rest.visibility ?? "Both",

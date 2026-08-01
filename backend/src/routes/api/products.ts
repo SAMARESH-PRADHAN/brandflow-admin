@@ -14,21 +14,32 @@ productRoutes.get("/", async (c) => {
   if (category) { params.push(category); conditions.push(`category = $${params.length}`); }
   if (type) { params.push(type); conditions.push(`type = $${params.length}`); }
 
+  const p = Math.max(1, parseInt(c.req.query("page") ?? "1") || 1);
+  const l = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "50") || 50));
+  const offset = (p - 1) * l;
+  params.push(l, offset);
+
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
   const rows = await query(
     `SELECT id, code, name, category, type, sub_category, material, description,overview,
             specifications, design_guidelines, wash_care,
             sample_price, original_price, status, image, images, stock, orders_count,
-            rating, visibility, colors, created_at
-     FROM products ${where} ORDER BY created_at DESC`,
+            rating, visibility, colors, created_at, count(*) OVER() as _total_count
+     FROM products ${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params,
   );
-  return c.json(rows.map(mapProduct));
+  const totalCount = parseInt(String((rows[0] as any)?._total_count ?? "0"));
+  c.header("Cache-Control", "public, max-age=60");
+  return c.json({
+    data: rows.map(mapProduct),
+    pagination: { page: p, limit: l, total: totalCount }
+  });
 });
 
 productRoutes.get("/:id", async (c) => {
   const row = await queryOne("SELECT * FROM products WHERE id = $1", [c.req.param("id")]);
   if (!row) return c.json({ error: "Product not found" }, 404);
+  c.header("Cache-Control", "public, max-age=60");
   return c.json(mapProduct(row));
 });
 
@@ -77,8 +88,14 @@ productRoutes.post("/", async (c) => {
 
 productRoutes.patch("/:id", async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
+  if (body.specifications !== undefined) body.specifications = JSON.stringify(body.specifications);
+  if (body.designGuidelines !== undefined) body.designGuidelines = JSON.stringify(body.designGuidelines);
+  if (body.washCare !== undefined) body.washCare = JSON.stringify(body.washCare);
+  if (body.images !== undefined) body.images = JSON.stringify(body.images);
+  if (body.colors !== undefined) body.colors = JSON.stringify(body.colors);
+  
   const id = c.req.param("id");
-  const existing = await queryOne("SELECT * FROM products WHERE id = $1", [id]);
+  const existing = await queryOne("SELECT id, image, images FROM products WHERE id = $1", [id]);
   if (!existing) return c.json({ error: "Product not found" }, 404);
 
   await cleanupRemovedImagesOnPatch(existing as Record<string, unknown>, body);
@@ -92,54 +109,22 @@ productRoutes.patch("/:id", async (c) => {
     material: "material",
     description: "description",
     overview: "overview",
-    // specifications: "specifications",
-    // designGuidelines: "design_guidelines",
-    // washCare: "wash_care",
+    specifications: "specifications",
+    designGuidelines: "design_guidelines",
+    washCare: "wash_care",
     samplePrice: "sample_price",
     originalPrice: "original_price",
     status: "status",
     image: "image",
-    // images: "images",
+    images: "images",
     stock: "stock",
     orders: "orders_count",
     rating: "rating",
     visibility: "visibility",
-    // colors: "colors",
+    colors: "colors",
   });
 
-  if (body.specifications !== undefined) {
-    await execute("UPDATE products SET specifications = $1::jsonb WHERE id = $2", [
-      JSON.stringify(body.specifications),
-      id,
-    ]);
-  }
-  if (body.designGuidelines !== undefined) {
-    await execute("UPDATE products SET design_guidelines = $1::jsonb WHERE id = $2", [
-      JSON.stringify(body.designGuidelines),
-      id,
-    ]);
-  }
-  if (body.washCare !== undefined) {
-    await execute("UPDATE products SET wash_care = $1::jsonb WHERE id = $2", [
-      JSON.stringify(body.washCare),
-      id,
-    ]);
-  }
-  if (body.images !== undefined) {
-    await execute("UPDATE products SET images = $1::jsonb WHERE id = $2", [
-      JSON.stringify(body.images),
-      id,
-    ]);
-  }
-  if (body.colors !== undefined) {
-    await execute("UPDATE products SET colors = $1::jsonb WHERE id = $2", [
-      JSON.stringify(body.colors),
-      id,
-    ]);
-  }
-
-  const updated = await queryOne("SELECT * FROM products WHERE id = $1", [id]);
-  return c.json(mapProduct(updated ?? row!));
+  return c.json(mapProduct(row!));
 });
 
 productRoutes.delete("/:id", async (c) => {

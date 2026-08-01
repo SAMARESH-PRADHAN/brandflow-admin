@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { compress } from "hono/compress";
 import { corsOrigins, env } from "./config/env.js";
 import { errorHandler, logger, notFound } from "./middleware/index.js";
 import { healthRoutes } from "./routes/health.js";
@@ -9,6 +10,7 @@ export function createApp() {
   const app = new Hono();
 
   app.use("*", logger);
+  app.use("*", compress());
   app.use(
     "*",
     cors({

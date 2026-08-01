@@ -35,8 +35,17 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export async function listCollection<T>(key: string): Promise<T[]> {
-  return request<T[]>(pathFor(key));
+export async function listCollection<T>(key: string, queryParams?: Record<string, any>): Promise<{ data: T[]; pagination?: { page: number; limit: number; total: number } }> {
+  let qs = "";
+  if (queryParams) {
+    const cleaned = Object.entries(queryParams).filter(([_, v]) => v !== undefined);
+    if (cleaned.length > 0) {
+      qs = "?" + new URLSearchParams(cleaned as any).toString();
+    }
+  }
+  const res = await request<T[] | { data: T[]; pagination?: any }>(pathFor(key) + qs);
+  if (Array.isArray(res)) return { data: res };
+  return res as any;
 }
 
 export async function createItem<T>(key: string, body: unknown): Promise<T> {

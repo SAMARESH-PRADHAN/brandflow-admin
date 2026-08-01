@@ -6,11 +6,20 @@ import { deleteById, newId, parseJsonBody, patchById } from "../../lib/http.js";
 export const agentRoutes = new Hono();
 
 agentRoutes.get("/", async (c) => {
+  const p = Math.max(1, parseInt(c.req.query("page") ?? "1") || 1);
+  const l = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "50") || 50));
+  const offset = (p - 1) * l;
+
   const rows = await query(
-    `SELECT id, code, name, phone, email, address, status, join_date
-     FROM agents ORDER BY join_date DESC`,
+    `SELECT id, code, name, phone, email, address, status, join_date, count(*) OVER() as _total_count
+     FROM agents ORDER BY join_date DESC LIMIT $1 OFFSET $2`, [l, offset]
   );
-  return c.json(rows.map(mapAgent));
+  
+  const totalCount = parseInt(String((rows[0] as any)?._total_count ?? "0"));
+  return c.json({
+    data: rows.map(mapAgent),
+    pagination: { page: p, limit: l, total: totalCount }
+  });
 });
 
 agentRoutes.get("/:id", async (c) => {
@@ -19,7 +28,9 @@ agentRoutes.get("/:id", async (c) => {
   return c.json(mapAgent(row));
 });
 
-agentRoutes.post("/", async (c) => {
+import { rateLimit } from "../../middleware/rate-limit.js";
+
+agentRoutes.post("/", rateLimit(5, 60000), async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
   const id = (body.id as string) ?? newId("AGT");
 

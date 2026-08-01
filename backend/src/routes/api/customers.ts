@@ -7,11 +7,20 @@ export const customerRoutes = new Hono();
 
 customerRoutes.get("/", async (c) => {
   const { status } = c.req.query();
-  const cols = `id, name, phone, email, address, total_orders, total_spend, join_date, status`;
+  const p = Math.max(1, parseInt(c.req.query("page") ?? "1") || 1);
+  const l = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "50") || 50));
+  const offset = (p - 1) * l;
+
+  const cols = `id, name, phone, email, address, total_orders, total_spend, join_date, status, count(*) OVER() as _total_count`;
   const rows = status
-    ? await query(`SELECT ${cols} FROM customers WHERE status = $1 ORDER BY join_date DESC`, [status])
-    : await query(`SELECT ${cols} FROM customers ORDER BY join_date DESC`);
-  return c.json(rows.map(mapCustomer));
+    ? await query(`SELECT ${cols} FROM customers WHERE status = $1 ORDER BY join_date DESC LIMIT $2 OFFSET $3`, [status, l, offset])
+    : await query(`SELECT ${cols} FROM customers ORDER BY join_date DESC LIMIT $1 OFFSET $2`, [l, offset]);
+    
+  const totalCount = parseInt(String((rows[0] as any)?._total_count ?? "0"));
+  return c.json({
+    data: rows.map(mapCustomer),
+    pagination: { page: p, limit: l, total: totalCount }
+  });
 });
 
 customerRoutes.get("/:id", async (c) => {
