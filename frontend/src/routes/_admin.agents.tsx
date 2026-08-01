@@ -16,7 +16,8 @@ import { toast } from "sonner";
 
 
 function AgentsPage() {
-  const { data, add, update, remove } = useCollection<Agent>("agents");
+  const [page, setPage] = useState(1);
+  const { data, pagination, loading, add, update, remove } = useCollection<Agent>("agents", { page, limit: 10 });
   const [open, setOpen] = useState(false);
   const [viewing, setViewing] = useState<Agent | null>(null);
   const [editing, setEditing] = useState<Agent | null>(null);
@@ -58,6 +59,11 @@ function AgentsPage() {
     <PageShell title="B2B Agents" subtitle="Field agents responsible for on-ground B2B outreach"
       actions={<Button onClick={openNew}><Plus className="mr-1 h-4 w-4" /> Add Agent</Button>}>
       <DataTable rows={data} columns={cols} searchKeys={["name", "address", "email", "phone"]}
+        loading={loading}
+        serverSide={!!pagination}
+        serverTotalPages={pagination ? Math.ceil(pagination.total / pagination.limit) : 1}
+        currentPage={page}
+        onPageChange={setPage}
         onExport={() => { exportCsv("arreniux-agents.csv", data.map(({ company, commissionPct, assignedCustomers, ...rest }) => rest)); toast.success("Exported"); }} />
 
       <Dialog open={open} onOpenChange={setOpen}>

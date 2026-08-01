@@ -16,18 +16,31 @@ const SAMPLE_TYPES = ["All", "Normal", "B2B"] as const;
 const STATUSES: (OrderStatus | "All")[] = ["All", "Placed", "Confirmed", "In Production", "Shipped", "Delivered"];
 
 function SamplesPage() {
-  const { data } = useCollection<Order>("sampleOrders");
-  // Only Normal and B2B samples supported now
-  const scoped = useMemo(() => data.filter((o) => o.type === "Normal" || o.type === "B2B"), [data]);
+  const [page, setPage] = useState(1);
   const [tab, setTab] = useState<(typeof SAMPLE_TYPES)[number]>("All");
   const [range, setRange] = useState<DateRange>({ from: "", to: "" });
   const [status, setStatus] = useState<"All" | OrderStatus>("All");
 
-  const filtered = useMemo(() => scoped.filter((o) =>
-    (tab === "All" || o.type === tab) &&
-    (status === "All" || o.status === status) &&
-    inRange(o.date, range)
-  ), [scoped, tab, range, status]);
+  const { data, pagination, loading } = useCollection<Order>("sampleOrders", {
+    page,
+    limit: 10,
+    type: tab === "All" ? undefined : tab,
+    status: status === "All" ? undefined : status,
+    from: range.from || undefined,
+    to: range.to || undefined,
+  });
+
+  // Only Normal and B2B samples supported now
+  const scoped = useMemo(() => data.filter((o) => o.type === "Normal" || o.type === "B2B"), [data]);
+
+  const filtered = useMemo(() => {
+    if (pagination) return scoped;
+    return scoped.filter((o) =>
+      (tab === "All" || o.type === tab) &&
+      (status === "All" || o.status === status) &&
+      inRange(o.date, range)
+    );
+  }, [scoped, tab, range, status, pagination]);
 
   const cols: Column<Order>[] = [
     { key: "id", header: "Sample ID", render: (o) => <span className="font-mono text-xs">{o.id}</span> },
@@ -68,6 +81,11 @@ function SamplesPage() {
             </div>
           </div>
           <DataTable rows={filtered} columns={cols} pageSize={10} searchKeys={["id", "customer", "productName"]}
+            loading={loading}
+            serverSide={!!pagination}
+            serverTotalPages={pagination ? Math.ceil(pagination.total / pagination.limit) : 1}
+            currentPage={page}
+            onPageChange={setPage}
             onExport={() => { exportCsv("arreniux-samples.csv", filtered.map((o) => ({ id: o.id, customer: o.customer, product: o.productName, type: o.type, date: o.date, amount: o.qty * o.unitPrice, status: o.status }))); toast.success("Exported filtered rows"); }}
           />
         </TabsContent>

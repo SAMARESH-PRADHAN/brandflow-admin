@@ -218,44 +218,56 @@ export const KEYS = {
 // ============ Hook ============
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-export function useCollection<T extends { id: string }>(key: string) {
+export function useCollection<T extends { id: string }>(key: string, queryParams?: Record<string, any>) {
   const queryClient = useQueryClient();
-  const queryKey = ["collection", key] as const;
+  const queryKey = queryParams ? ["collection", key, queryParams] : ["collection", key];
 
-  const { data = [], isLoading, error, refetch } = useQuery<T[]>({
+  const { data: result, isLoading, error, refetch } = useQuery({
     queryKey,
-    queryFn: () => listCollection<T>(key),
+    queryFn: () => listCollection<T>(key, queryParams),
   });
+
+  const data = result?.data ?? [];
+  const pagination = result?.pagination;
 
   const setAll = useCallback(
     (v: T[]) => {
       if (key === KEYS.notifications && v.every((item) => (item as unknown as Notification).read)) {
         markAllNotificationsRead<T>()
-          .then((items) => queryClient.setQueryData(queryKey, items))
+          .then((items) => queryClient.setQueryData(queryKey, { data: items }))
           .catch((err) => console.error(err));
         return;
       }
-      queryClient.setQueryData(queryKey, v);
+      queryClient.setQueryData(queryKey, { data: v });
     },
-    [key, queryClient],
+    [key, queryClient, queryKey],
   );
 
   const addMutation = useMutation({
     mutationFn: (v: Omit<T, "id"> & { id?: string }) => createItem<T>(key, v),
     onMutate: async (v) => {
       await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData<T[]>(queryKey);
+      const previous = queryClient.getQueryData<any>(queryKey);
       const optimistic = { ...v, id: v.id ?? `optimistic-${Date.now()}` } as T;
-      queryClient.setQueryData<T[]>(queryKey, (prev = []) => [optimistic, ...prev]);
-      return { previous };
+      queryClient.setQueryData<any>(queryKey, (prev: any) => {
+        if (!prev) return { data: [optimistic] };
+        if (Array.isArray(prev)) return [optimistic, ...prev];
+        return { ...prev, data: [optimistic, ...(prev.data || [])] };
+      });
+      return { previous, optimisticId: optimistic.id };
+    },
+    onSuccess: (newItem, _vars, context) => {
+      queryClient.setQueryData<any>(queryKey, (prev: any) => {
+        if (!prev) return prev;
+        if (Array.isArray(prev)) return prev.map((x) => (x.id === context?.optimisticId ? newItem : x));
+        if (prev.data) return { ...prev, data: prev.data.map((x: any) => (x.id === context?.optimisticId ? newItem : x)) };
+        return prev;
+      });
     },
     onError: (_err, _v, context) => {
       if (context?.previous !== undefined) {
         queryClient.setQueryData(queryKey, context.previous);
       }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
     },
   });
 
@@ -263,19 +275,27 @@ export function useCollection<T extends { id: string }>(key: string) {
     mutationFn: ({ id, patch }: { id: string; patch: Partial<T> }) => updateItem<T>(key, id, patch),
     onMutate: async ({ id, patch }) => {
       await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData<T[]>(queryKey);
-      queryClient.setQueryData<T[]>(queryKey, (prev = []) =>
-        prev.map((x) => (x.id === id ? { ...x, ...patch } : x)),
-      );
+      const previous = queryClient.getQueryData<any>(queryKey);
+      queryClient.setQueryData<any>(queryKey, (prev: any) => {
+        if (!prev) return prev;
+        if (Array.isArray(prev)) return prev.map((x) => (x.id === id ? { ...x, ...patch } : x));
+        if (prev.data) return { ...prev, data: prev.data.map((x: any) => (x.id === id ? { ...x, ...patch } : x)) };
+        return prev;
+      });
       return { previous };
+    },
+    onSuccess: (updatedItem) => {
+      queryClient.setQueryData<any>(queryKey, (prev: any) => {
+        if (!prev) return prev;
+        if (Array.isArray(prev)) return prev.map((x) => (x.id === updatedItem.id ? updatedItem : x));
+        if (prev.data) return { ...prev, data: prev.data.map((x: any) => (x.id === updatedItem.id ? updatedItem : x)) };
+        return prev;
+      });
     },
     onError: (_err, _vars, context) => {
       if (context?.previous !== undefined) {
         queryClient.setQueryData(queryKey, context.previous);
       }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
     },
   });
 
@@ -283,17 +303,19 @@ export function useCollection<T extends { id: string }>(key: string) {
     mutationFn: (id: string) => deleteItem(key, id),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData<T[]>(queryKey);
-      queryClient.setQueryData<T[]>(queryKey, (prev = []) => prev.filter((x) => x.id !== id));
+      const previous = queryClient.getQueryData<any>(queryKey);
+      queryClient.setQueryData<any>(queryKey, (prev: any) => {
+        if (!prev) return prev;
+        if (Array.isArray(prev)) return prev.filter((x) => x.id !== id);
+        if (prev.data) return { ...prev, data: prev.data.filter((x: any) => x.id !== id) };
+        return prev;
+      });
       return { previous };
     },
     onError: (_err, _id, context) => {
       if (context?.previous !== undefined) {
         queryClient.setQueryData(queryKey, context.previous);
       }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
     },
   });
 
@@ -306,6 +328,7 @@ export function useCollection<T extends { id: string }>(key: string) {
 
   return {
     data,
+    pagination,
     loading: isLoading,
     error: error ? (error instanceof Error ? error.message : "Failed to load data") : null,
     reload: async () => { await refetch(); },

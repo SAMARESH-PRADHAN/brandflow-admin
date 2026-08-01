@@ -100,8 +100,22 @@ const ORDER_LIST_COLUMNS = `
 `;
 orderRoutes.get("/", async (c) => {
   const { where, params } = buildOrderFilters(c, false);
-  const rows = await query(`SELECT ${ORDER_LIST_COLUMNS} FROM orders ${where} ORDER BY order_date DESC`, params);
-  return c.json(rows.map(mapOrder));
+  const p = Math.max(1, parseInt(c.req.query("page") ?? "1") || 1);
+  const l = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "50") || 50));
+  const offset = (p - 1) * l;
+  params.push(l, offset);
+
+  const rows = await query(
+    `SELECT ${ORDER_LIST_COLUMNS}, count(*) OVER() as _total_count 
+     FROM orders ${where} ORDER BY order_date DESC LIMIT $${params.length - 1} OFFSET $${params.length}`, 
+    params
+  );
+  
+  const totalCount = parseInt(String((rows[0] as any)?._total_count ?? "0"));
+  return c.json({
+    data: rows.map(mapOrder),
+    pagination: { page: p, limit: l, total: totalCount }
+  });
 });
 
 orderRoutes.get("/:id", async (c) => {
@@ -118,8 +132,10 @@ orderRoutes.post("/", async (c) => {
 
 orderRoutes.patch("/:id", async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
+  if (body.sizes !== undefined) body.sizes = JSON.stringify(body.sizes);
+  if (body.timeline !== undefined) body.timeline = JSON.stringify(body.timeline);
   const id = c.req.param("id");
-  const existing = await queryOne("SELECT * FROM orders WHERE id = $1", [id]);
+  const existing = await queryOne("SELECT id, uploaded_logo FROM orders WHERE id = $1", [id]);
   if (!existing) return c.json({ error: "Order not found" }, 404);
 
   await cleanupRemovedImagesOnPatch(existing as Record<string, unknown>, body, {
@@ -127,7 +143,7 @@ orderRoutes.patch("/:id", async (c) => {
     imageDbColumn: "uploaded_logo",
   });
 
-  await patchById("orders", id, body, {
+  const row = await patchById("orders", id, body, {
     customerId: "customer_id",
     customer: "customer_name",
     phone: "phone",
@@ -158,16 +174,10 @@ orderRoutes.patch("/:id", async (c) => {
     paymentStatus: "payment_status",
     paymentMethod: "payment_method",
     date: "order_date",
+    sizes: "sizes",
+    timeline: "timeline",
   });
 
-  if (body.sizes !== undefined) {
-    await execute("UPDATE orders SET sizes = $1::jsonb WHERE id = $2", [JSON.stringify(body.sizes), id]);
-  }
-  if (body.timeline !== undefined) {
-    await execute("UPDATE orders SET timeline = $1::jsonb WHERE id = $2", [JSON.stringify(body.timeline), id]);
-  }
-
-  const row = await queryOne("SELECT * FROM orders WHERE id = $1", [id]);
   return c.json(mapOrder(row!));
 });
 
@@ -183,8 +193,22 @@ export const sampleOrderRoutes = new Hono();
 
 sampleOrderRoutes.get("/", async (c) => {
   const { where, params } = buildOrderFilters(c, true);
-  const rows = await query(`SELECT ${ORDER_LIST_COLUMNS} FROM orders ${where} ORDER BY order_date DESC`, params);
-  return c.json(rows.map(mapOrder));
+  const p = Math.max(1, parseInt(c.req.query("page") ?? "1") || 1);
+  const l = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "50") || 50));
+  const offset = (p - 1) * l;
+  params.push(l, offset);
+
+  const rows = await query(
+    `SELECT ${ORDER_LIST_COLUMNS}, count(*) OVER() as _total_count 
+     FROM orders ${where} ORDER BY order_date DESC LIMIT $${params.length - 1} OFFSET $${params.length}`, 
+    params
+  );
+  
+  const totalCount = parseInt(String((rows[0] as any)?._total_count ?? "0"));
+  return c.json({
+    data: rows.map(mapOrder),
+    pagination: { page: p, limit: l, total: totalCount }
+  });
 });
 
 sampleOrderRoutes.post("/", async (c) => {
@@ -194,18 +218,16 @@ sampleOrderRoutes.post("/", async (c) => {
 });
 sampleOrderRoutes.patch("/:id", async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
+  if (body.timeline !== undefined) body.timeline = JSON.stringify(body.timeline);
   const id = c.req.param("id");
-  const existing = await queryOne("SELECT * FROM orders WHERE id = $1 AND is_sample = true", [id]);
+  const existing = await queryOne("SELECT id FROM orders WHERE id = $1 AND is_sample = true", [id]);
   if (!existing) return c.json({ error: "Sample order not found" }, 404);
 
-  await patchById("orders", id, body, {
+  const row = await patchById("orders", id, body, {
     status: "status",
     paymentStatus: "payment_status",
     // add other fields as needed
+    timeline: "timeline",
   });
-  if (body.timeline !== undefined) {
-    await execute("UPDATE orders SET timeline = $1::jsonb WHERE id = $2", [JSON.stringify(body.timeline), id]);
-  }
-  const row = await queryOne("SELECT * FROM orders WHERE id = $1", [id]);
   return c.json(mapOrder(row!));
 });

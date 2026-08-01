@@ -7,11 +7,20 @@ export const paymentRoutes = new Hono();
 
 paymentRoutes.get("/", async (c) => {
   const { status } = c.req.query();
-  const cols = `id, order_id, customer, amount, method, status, paid_date`;
+  const p = Math.max(1, parseInt(c.req.query("page") ?? "1") || 1);
+  const l = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "50") || 50));
+  const offset = (p - 1) * l;
+
+  const cols = `id, order_id, customer, amount, method, status, paid_date, count(*) OVER() as _total_count`;
   const rows = status
-    ? await query(`SELECT ${cols} FROM payments WHERE status = $1 ORDER BY paid_date DESC`, [status])
-    : await query(`SELECT ${cols} FROM payments ORDER BY paid_date DESC`);
-  return c.json(rows.map(mapPayment));
+    ? await query(`SELECT ${cols} FROM payments WHERE status = $1 ORDER BY paid_date DESC LIMIT $2 OFFSET $3`, [status, l, offset])
+    : await query(`SELECT ${cols} FROM payments ORDER BY paid_date DESC LIMIT $1 OFFSET $2`, [l, offset]);
+    
+  const totalCount = parseInt(String((rows[0] as any)?._total_count ?? "0"));
+  return c.json({
+    data: rows.map(mapPayment),
+    pagination: { page: p, limit: l, total: totalCount }
+  });
 });
 
 paymentRoutes.get("/:id", async (c) => {

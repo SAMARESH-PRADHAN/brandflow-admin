@@ -54,10 +54,10 @@ export async function deleteByIdWithImageCleanup(
   if (!row) notFoundEntity(table);
 
   const urls = extractImageUrlsFromRow(row as Record<string, unknown>, options);
-  await deleteR2UrlsSafely(urls);
-
   const count = await execute(`DELETE FROM ${table} WHERE id = $1`, [id]);
   if (count === 0) notFoundEntity(table);
+
+  deleteR2UrlsSafely(urls).catch(err => console.error(`Background R2 cleanup failed for ${table} ${id}:`, err));
 }
 
 type ImagePatchCleanupOptions = {
@@ -101,7 +101,7 @@ export async function cleanupRemovedImagesOnPatch(
     }
   }
 
-  await deleteR2UrlsSafely(toDelete);
+  deleteR2UrlsSafely(toDelete).catch(err => console.error("Background R2 cleanup failed on patch:", err));
 }
 
 type FieldMap = Record<string, string>;
@@ -129,7 +129,7 @@ export async function patchById(
   }
 
   values.push(id);
-  const count = await execute(`UPDATE ${table} SET ${sets.join(", ")} WHERE id = $${index}`, values);
-  if (count === 0) notFoundEntity(table);
-  return queryOne(`SELECT * FROM ${table} WHERE id = $1`, [id]);
+  const updatedRow = await queryOne(`UPDATE ${table} SET ${sets.join(", ")} WHERE id = $${index} RETURNING *`, values);
+  if (!updatedRow) notFoundEntity(table);
+  return updatedRow;
 }

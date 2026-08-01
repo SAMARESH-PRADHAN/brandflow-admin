@@ -15,16 +15,28 @@ import { toast } from "sonner";
 const STATUSES: (OrderStatus | "All")[] = ["All", "Placed", "Confirmed", "In Production", "Shipped", "Delivered"];
 
 function OrdersPage() {
-  const { data, loading } = useCollection<Order>("orders");
+  const [page, setPage] = useState(1);
   const [tab, setTab] = useState<"All" | Order["type"]>("All");
   const [range, setRange] = useState<DateRange>({ from: "", to: "" });
   const [status, setStatus] = useState<"All" | OrderStatus>("All");
 
-  const filtered = useMemo(() => data.filter((o) =>
-    (tab === "All" || o.type === tab) &&
-    (status === "All" || o.status === status) &&
-    inRange(o.date, range)
-  ), [data, tab, range, status]);
+  const { data, loading, pagination } = useCollection<Order>("orders", {
+    page,
+    limit: 10,
+    type: tab === "All" ? undefined : tab,
+    status: status === "All" ? undefined : status,
+    from: range.from || undefined,
+    to: range.to || undefined,
+  });
+
+  const filtered = useMemo(() => {
+    if (pagination) return data; // if paginated, filtering is done server-side
+    return data.filter((o) =>
+      (tab === "All" || o.type === tab) &&
+      (status === "All" || o.status === status) &&
+      inRange(o.date, range)
+    );
+  }, [data, tab, range, status, pagination]);
 
   const cols: Column<Order>[] = [
     { key: "id", header: "Order ID", render: (o) => <span className="font-mono text-xs">{o.id}</span>, sortable: true, getValue: (o) => o.id },
@@ -80,6 +92,10 @@ function OrdersPage() {
       <div className="mt-4">
         <DataTable rows={filtered} columns={cols} pageSize={10} loading={loading}
           searchKeys={["id", "customer", "phone", "productName"]}
+          serverSide={!!pagination}
+          serverTotalPages={pagination ? Math.ceil(pagination.total / pagination.limit) : 1}
+          currentPage={page}
+          onPageChange={setPage}
           onExport={() => {
             exportCsv(`arreniux-orders-${tab.toLowerCase()}.csv`,
               filtered.map((o) => ({ id: o.id, customer: o.customer, phone: o.phone, type: o.type, date: o.date, qty: o.qty, amount: o.qty * o.unitPrice, payment: o.paymentStatus, status: o.status })));

@@ -14,16 +14,17 @@ import { mutationError } from "@/lib/mutation-error";
 import { toast } from "sonner";
 
 function CustomersPage() {
-  const { data, add, update, remove } = useCollection<Customer>("customers");
+  const [page, setPage] = useState(1);
+  const { data, pagination, add, update, remove, loading } = useCollection<Customer>("customers", { page, limit: 10 });
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
   const [f, setF] = useState<any>({});
   const [range, setRange] = useState<DateRange>({ from: "", to: "" });
 
-  const filtered = useMemo(
-    () => data.filter((c) => inRange(c.joinDate, range)),
-    [data, range],
-  );
+  const filtered = useMemo(() => {
+    if (pagination) return data; // if paginated, range filtering needs backend support
+    return data.filter((c) => inRange(c.joinDate, range));
+  }, [data, range, pagination]);
 
   const openNew = () => {
     setEditing(null);
@@ -143,7 +144,12 @@ function CustomersPage() {
         <DataTable
           rows={filtered}
           columns={cols}
+          loading={loading}
           searchKeys={["name", "email", "phone", "address"]}
+          serverSide={!!pagination}
+          serverTotalPages={pagination ? Math.ceil(pagination.total / pagination.limit) : 1}
+          currentPage={page}
+          onPageChange={setPage}
           onExport={() => {
             exportCsv("arreniux-customers.csv", filtered);
             toast.success("Exported filtered rows");

@@ -28,7 +28,9 @@ agentVisitRoutes.get("/:id", async (c) => {
   return c.json(mapAgentVisit(row));
 });
 
-agentVisitRoutes.post("/", async (c) => {
+import { rateLimit } from "../../middleware/rate-limit.js";
+
+agentVisitRoutes.post("/", rateLimit(5, 60000), async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
   const id = (body.id as string) ?? newId("VIS");
 
