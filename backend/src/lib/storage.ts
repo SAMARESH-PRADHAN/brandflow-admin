@@ -188,14 +188,35 @@ export function extractImageUrlsFromRow(
 }
 
 export async function deleteR2UrlSafely(url: string): Promise<void> {
-  if (!url.trim() || !isR2StoredUrl(url) || !isR2Configured()) return;
+  const trimmed = url.trim();
+  if (!trimmed) return;
+
+  if (!isR2Configured()) {
+    console.warn(
+      `[storage] Skipped R2 delete for "${trimmed}" — R2 is not configured. ` +
+        `Check R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_URL in process.env.`,
+    );
+    return;
+  }
+
+  if (!isR2StoredUrl(trimmed)) {
+    console.warn(
+      `[storage] Skipped R2 delete for "${trimmed}" — does not resolve to an object key under R2_PUBLIC_URL (${env.R2_PUBLIC_URL}).`,
+    );
+    return;
+  }
+
   try {
-    await deleteFromR2(url);
+    await deleteFromR2(trimmed);
+    console.log(`[storage] Deleted R2 object for "${trimmed}"`);
   } catch (err) {
-    console.error("[storage] R2 delete failed:", url, err);
+    console.error("[storage] R2 delete failed:", trimmed, err);
   }
 }
 
 export async function deleteR2UrlsSafely(urls: string[]): Promise<void> {
-  await Promise.all([...new Set(urls)].map((url) => deleteR2UrlSafely(url)));
+  const unique = [...new Set(urls)].filter((u) => u.trim());
+  if (unique.length === 0) return;
+  console.log(`[storage] Cleaning up ${unique.length} R2 object(s):`, unique);
+  await Promise.all(unique.map((url) => deleteR2UrlSafely(url)));
 }
