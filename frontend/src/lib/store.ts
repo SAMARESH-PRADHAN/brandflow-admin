@@ -32,6 +32,7 @@ export type Product = {
   rating: number;
   visibility: ProductVisibility;
   colors: { name: string; hex: string; showInCategory: boolean; showInBulk: boolean }[];
+   kitItems?: { name: string; price: number }[]; // NEW
   createdAt: string;
 };
 export type B2BProduct = {
