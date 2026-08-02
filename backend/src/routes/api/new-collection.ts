@@ -57,16 +57,18 @@ newCollectionRoutes.post("/", async (c) => {
 
 newCollectionRoutes.patch("/:id", async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
-  if (body.specifications !== undefined) body.specifications = JSON.stringify(body.specifications);
-  if (body.designGuidelines !== undefined) body.designGuidelines = JSON.stringify(body.designGuidelines);
-  if (body.washCare !== undefined) body.washCare = JSON.stringify(body.washCare);
-  if (body.images !== undefined) body.images = JSON.stringify(body.images);
 
   const id = c.req.param("id");
   const existing = await queryOne("SELECT id, image, images FROM new_collection_products WHERE id = $1", [id]);
   if (!existing) return c.json({ error: "Product not found" }, 404);
 
+  // Cleanup must run before body.images is stringified — see products.ts for why.
   await cleanupRemovedImagesOnPatch(existing as Record<string, unknown>, body);
+
+  if (body.specifications !== undefined) body.specifications = JSON.stringify(body.specifications);
+  if (body.designGuidelines !== undefined) body.designGuidelines = JSON.stringify(body.designGuidelines);
+  if (body.washCare !== undefined) body.washCare = JSON.stringify(body.washCare);
+  if (body.images !== undefined) body.images = JSON.stringify(body.images);
 
   const row = await patchById("new_collection_products", id, body, {
     code: "code",
@@ -83,7 +85,7 @@ newCollectionRoutes.patch("/:id", async (c) => {
     washCare: "wash_care",
     images: "images",
   });
-  
+
   return c.json(mapNewCollectionProduct(row!));
 });
 

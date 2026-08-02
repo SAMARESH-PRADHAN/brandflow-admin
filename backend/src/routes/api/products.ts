@@ -88,17 +88,22 @@ productRoutes.post("/", async (c) => {
 
 productRoutes.patch("/:id", async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
+
+  const id = c.req.param("id");
+  const existing = await queryOne("SELECT id, image, images FROM products WHERE id = $1", [id]);
+  if (!existing) return c.json({ error: "Product not found" }, 404);
+
+  // IMPORTANT: run cleanup BEFORE stringifying body.images/body.colors/etc.
+  // cleanupRemovedImagesOnPatch needs body.images as a real array to diff
+  // correctly against the existing row — stringifying it first makes every
+  // image look "removed" and wipes the whole R2 folder for this product.
+  await cleanupRemovedImagesOnPatch(existing as Record<string, unknown>, body);
+
   if (body.specifications !== undefined) body.specifications = JSON.stringify(body.specifications);
   if (body.designGuidelines !== undefined) body.designGuidelines = JSON.stringify(body.designGuidelines);
   if (body.washCare !== undefined) body.washCare = JSON.stringify(body.washCare);
   if (body.images !== undefined) body.images = JSON.stringify(body.images);
   if (body.colors !== undefined) body.colors = JSON.stringify(body.colors);
-  
-  const id = c.req.param("id");
-  const existing = await queryOne("SELECT id, image, images FROM products WHERE id = $1", [id]);
-  if (!existing) return c.json({ error: "Product not found" }, 404);
-
-  await cleanupRemovedImagesOnPatch(existing as Record<string, unknown>, body);
 
   const row = await patchById("products", id, body, {
     code: "code",
