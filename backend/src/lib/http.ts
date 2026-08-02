@@ -57,7 +57,14 @@ export async function deleteByIdWithImageCleanup(
   const count = await execute(`DELETE FROM ${table} WHERE id = $1`, [id]);
   if (count === 0) notFoundEntity(table);
 
-  deleteR2UrlsSafely(urls).catch(err => console.error(`Background R2 cleanup failed for ${table} ${id}:`, err));
+  // Awaited on purpose: a fire-and-forget promise can be dropped if the
+  // process/instance is recycled right after the HTTP response is sent.
+  // A cleanup failure is logged but does not fail the delete request itself.
+  try {
+    await deleteR2UrlsSafely(urls);
+  } catch (err) {
+    console.error(`[storage] R2 cleanup failed for ${table} ${id}:`, err);
+  }
 }
 
 type ImagePatchCleanupOptions = {
@@ -101,7 +108,12 @@ export async function cleanupRemovedImagesOnPatch(
     }
   }
 
-  deleteR2UrlsSafely(toDelete).catch(err => console.error("Background R2 cleanup failed on patch:", err));
+  // Awaited for the same reason as deleteByIdWithImageCleanup above.
+  try {
+    await deleteR2UrlsSafely(toDelete);
+  } catch (err) {
+    console.error("[storage] R2 cleanup failed on patch:", err);
+  }
 }
 
 type FieldMap = Record<string, string>;
