@@ -19,6 +19,7 @@ import { ProductViewDialog } from "@/components/admin/product-view-dialog";
 import { mutationError } from "@/lib/mutation-error";
 import { toast } from "sonner";
 import { CATEGORY_NAMES, findTaxCategory, getSubOptions, type Tier } from "@/lib/catalog-taxonomy";
+import { KitItemsInput } from "@/components/admin/kit-items-input";
 
 const TYPES = ["Regular", "Premium"] as const;
 const VISIBILITIES: ProductVisibility[] = ["Category", "Bulk", "Both"];
@@ -200,12 +201,14 @@ function normalizeProduct(p: Product) {
     specifications: p.specifications ?? [],
     designGuidelines: p.designGuidelines ?? [],
     washCare: p.washCare ?? [],
+      kitItems: p.kitItems ?? [], 
     visibility: (p.visibility ?? "Both") as ProductVisibility,
   };
 }
 
 function ProductDialog({
   open, onOpenChange, editing, onSubmit,
+  
 }: {
   open: boolean; onOpenChange: (v: boolean) => void; editing: Product | null;
   onSubmit: (v: Partial<Product>) => void | Promise<void>;
@@ -218,6 +221,10 @@ function ProductDialog({
     overview: "", specifications: [] as string[], designGuidelines: [] as string[], washCare: [] as string[],
     samplePrice: 499, originalPrice: 1999, status: "Active" as const, image: "", images: [] as string[],
     visibility: "Both" as ProductVisibility,
+     kitItems:
+    firstCategory === "Corporate Welcome Kit"
+      ? [{ name: "T-Shirt", price: 0 }]
+      : ([] as { name: string; price: number }[]),
   };
 
   const [f, setF] = useState<any>(editing ? normalizeProduct(editing) : empty);
@@ -242,14 +249,30 @@ function ProductDialog({
   const catHasTiers = activeCat?.hasTiers ?? false;
   const subOptions = getSubOptions(f.category, f.type as Tier);
 
+  // const onCategoryChange = (name: string) => {
+  //   const cat = findTaxCategory(name);
+  //   const nextSub = cat?.hasTiers
+  //     ? (cat.regular?.[0] ?? "")
+  //     : (cat?.items?.[0] ?? "");
+  //   setF((s: any) => ({ ...s, category: name, type: "Regular", subCategory: nextSub }));
+  // };
   const onCategoryChange = (name: string) => {
-    const cat = findTaxCategory(name);
-    const nextSub = cat?.hasTiers
-      ? (cat.regular?.[0] ?? "")
-      : (cat?.items?.[0] ?? "");
-    setF((s: any) => ({ ...s, category: name, type: "Regular", subCategory: nextSub }));
-  };
-
+  const cat = findTaxCategory(name);
+  const nextSub = cat?.hasTiers
+    ? (cat.regular?.[0] ?? "")
+    : (cat?.items?.[0] ?? "");
+  setF((s: any) => ({
+    ...s,
+    category: name,
+    type: "Regular",
+    subCategory: nextSub,
+    kitItems:
+      name === "Corporate Welcome Kit" && (!s.kitItems || s.kitItems.length === 0)
+        ? [{ name: "T-Shirt", price: 0 }]
+        : s.kitItems,
+  }));
+};
+const isWelcomeKit = f.category === "Corporate Welcome Kit";
   const onTypeChange = (type: "Regular" | "Premium") => {
     const nextSub = getSubOptions(f.category, type)[0] ?? "";
     setF((s: any) => ({ ...s, type, subCategory: nextSub }));
@@ -292,10 +315,14 @@ function ProductDialog({
             </Select>
           </Field>
 
-          <Field label="Material"><Input value={f.material} onChange={(e) => set("material", e.target.value)} /></Field>
-          <Field label="Sample Price"><Input type="number" value={f.samplePrice} onChange={(e) => set("samplePrice", Number(e.target.value))} /></Field>
-          <Field label="Original Price"><Input type="number" value={f.originalPrice} onChange={(e) => set("originalPrice", Number(e.target.value))} /></Field>
-          <Field label="Status">
+         {!isWelcomeKit && (
+  <>
+    <Field label="Material"><Input value={f.material} onChange={(e) => set("material", e.target.value)} /></Field>
+    <Field label="Sample Price"><Input type="number" value={f.samplePrice} onChange={(e) => set("samplePrice", Number(e.target.value))} /></Field>
+    <Field label="Original Price"><Input type="number" value={f.originalPrice} onChange={(e) => set("originalPrice", Number(e.target.value))} /></Field>
+  </>
+)}
+<Field label="Status">
             <Select value={f.status} onValueChange={(v) => set("status", v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent><SelectItem value="Active">Active</SelectItem><SelectItem value="Inactive">Inactive</SelectItem></SelectContent>
@@ -333,12 +360,12 @@ function ProductDialog({
           <div className="md:col-span-2">
             <Field label="Product Images (up to 4)">
               <ImageUploader
-                images={f.images ?? []}
-                max={4}
-                folder="products"
-                onChange={(imgs) => setF((s: any) => ({ ...s, images: imgs, image: imgs[0] ?? "" }))}
-                onUploadingChange={setImagesUploading}
-              />
+  images={f.images ?? []}
+  max={isWelcomeKit ? 7 : 4}
+  folder="products"
+  onChange={(imgs) => setF((s: any) => ({ ...s, images: imgs, image: imgs[0] ?? "" }))}
+  onUploadingChange={setImagesUploading}
+/>
             </Field>
           </div>
         </div>
@@ -346,22 +373,33 @@ function ProductDialog({
         <Field label="Product Overview"><Textarea rows={2} value={f.overview} onChange={(e) => set("overview", e.target.value)} placeholder="Short marketing overview shown on the product page" /></Field>
         <Field label="Description"><Textarea rows={3} value={f.description} onChange={(e) => set("description", e.target.value)} /></Field>
 
-        <Tabs defaultValue="spec" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="spec">Specifications</TabsTrigger>
-            <TabsTrigger value="guide">Design Guidelines</TabsTrigger>
-            <TabsTrigger value="wash">Wash Care</TabsTrigger>
-          </TabsList>
-          <TabsContent value="spec" className="mt-3">
-            <BulletListInput items={f.specifications} onChange={(v) => set("specifications", v)} placeholder="e.g., Fabric weight — 180 GSM" />
-          </TabsContent>
-          <TabsContent value="guide" className="mt-3">
-            <BulletListInput items={f.designGuidelines} onChange={(v) => set("designGuidelines", v)} placeholder="e.g., Logo max 4in on left chest" />
-          </TabsContent>
-          <TabsContent value="wash" className="mt-3">
-            <BulletListInput items={f.washCare} onChange={(v) => set("washCare", v)} placeholder="e.g., Machine wash cold, gentle cycle" />
-          </TabsContent>
-        </Tabs>
+        {isWelcomeKit ? (
+  <>
+    <Field label="Specifications">
+      <BulletListInput items={f.specifications} onChange={(v) => set("specifications", v)} placeholder="e.g., 220 GSM heavyweight fleece" />
+    </Field>
+    <Field label="Kit Items (name + price)">
+      <KitItemsInput items={f.kitItems ?? []} onChange={(v) => set("kitItems", v)} />
+    </Field>
+  </>
+) : (
+  <Tabs defaultValue="spec" className="w-full">
+    <TabsList className="grid w-full grid-cols-3">
+      <TabsTrigger value="spec">Specifications</TabsTrigger>
+      <TabsTrigger value="guide">Design Guidelines</TabsTrigger>
+      <TabsTrigger value="wash">Wash Care</TabsTrigger>
+    </TabsList>
+    <TabsContent value="spec" className="mt-3">
+      <BulletListInput items={f.specifications} onChange={(v) => set("specifications", v)} placeholder="e.g., Fabric weight — 180 GSM" />
+    </TabsContent>
+    <TabsContent value="guide" className="mt-3">
+      <BulletListInput items={f.designGuidelines} onChange={(v) => set("designGuidelines", v)} placeholder="e.g., Logo max 4in on left chest" />
+    </TabsContent>
+    <TabsContent value="wash" className="mt-3">
+      <BulletListInput items={f.washCare} onChange={(v) => set("washCare", v)} placeholder="e.g., Machine wash cold, gentle cycle" />
+    </TabsContent>
+  </Tabs>
+)}
 
        <DialogFooter>
   <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>Cancel</Button>
