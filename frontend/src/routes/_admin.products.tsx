@@ -215,17 +215,17 @@ function ProductDialog({
 }) {
   const firstCategory = CATEGORY_NAMES[0]!;
   const empty = {
-    code: "", name: "", category: firstCategory, type: "Regular" as const,
-    subCategory: getSubOptions(firstCategory, "Regular")[0] ?? "",
-    material: "100% Cotton", description: "",
-    overview: "", specifications: [] as string[], designGuidelines: [] as string[], washCare: [] as string[],
-    samplePrice: 499, originalPrice: 1999, status: "Active" as const, image: "", images: [] as string[],
-    visibility: "Both" as ProductVisibility,
-     kitItems:
+  code: "", name: "", category: firstCategory, type: "Regular" as const,
+  subCategory: getSubOptions(firstCategory, "Regular")[0] ?? "",
+  material: "", description: "",
+  overview: "", specifications: [] as string[], designGuidelines: [] as string[], washCare: [] as string[],
+  samplePrice: 0, originalPrice: 0, status: "Active" as const, image: "", images: [] as string[],
+  visibility: "Both" as ProductVisibility,
+  kitItems:
     firstCategory === "Corporate Welcome Kit"
       ? [{ name: "T-Shirt", price: 0 }]
       : ([] as { name: string; price: number }[]),
-  };
+};
 
   const [f, setF] = useState<any>(editing ? normalizeProduct(editing) : empty);
   const [imagesUploading, setImagesUploading] = useState(false);

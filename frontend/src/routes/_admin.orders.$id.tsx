@@ -68,6 +68,7 @@ function OrderDetail() {
   const gst = (subtotal + printingTotal - discountAmt + order.shipping) * (order.gstPct / 100);
   const grand =
     order.totalAmount > 0 ? order.totalAmount : subtotal - discountAmt + order.shipping + gst;
+  const printperunit = order.printingPrice / order.qty
 
   return (
     <PageShell
@@ -134,7 +135,7 @@ function OrderDetail() {
             <Row label="Material" value={order.material} />
             <Row label="Print Type" value={order.printType} />
             {/* <Row label="Print Location" value={order.printLocation} /> */}
-            <Row label="Printing Price (per unit)" value={inrFull(order.printingPrice ?? 0)} />
+            <Row label="Printing Price (per unit)" value={inrFull(printperunit ?? 0)} />
           </div>
           <div className="mt-3 rounded-lg bg-secondary/40 p-3 text-xs">{order.description}</div>
         </SectionCard>
