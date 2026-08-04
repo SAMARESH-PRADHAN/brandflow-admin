@@ -65,6 +65,7 @@ export function mapProduct(row: Record<string, unknown>) {
     visibility: row.visibility as "Category" | "Bulk" | "Both",
     colors: jsonArray(row.colors),
     createdAt: formatDate(row.created_at),
+    kitItems: jsonArray<{ name: string; price: number }>(row.kit_items), // NEW
   };
 }
 

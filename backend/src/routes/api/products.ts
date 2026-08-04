@@ -24,7 +24,7 @@ productRoutes.get("/", async (c) => {
     `SELECT id, code, name, category, type, sub_category, material, description,overview,
             specifications, design_guidelines, wash_care,
             sample_price, original_price, status, image, images, stock, orders_count,
-            rating, visibility, colors, created_at, count(*) OVER() as _total_count
+            rating, visibility, colors, kit_items, created_at, count(*) OVER() as _total_count
      FROM products ${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params,
   );
@@ -51,9 +51,9 @@ productRoutes.post("/", async (c) => {
     `INSERT INTO products (
       id, code, name, category, type, sub_category, material, description, overview,
       specifications, design_guidelines, wash_care, sample_price, original_price, status,
-      image, images, stock, orders_count, rating, visibility, colors, created_at
+      image, images, stock, orders_count, rating, visibility, colors, kit_items, created_at
     ) VALUES (
-      $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23
+      $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24
     )`,
     [
       id,
@@ -78,6 +78,7 @@ productRoutes.post("/", async (c) => {
       body.rating ?? 0,
       body.visibility ?? "Both",
       JSON.stringify(body.colors ?? []),
+      JSON.stringify(body.kitItems ?? []), // NEW
       body.createdAt ? `${body.createdAt}T00:00:00.000Z` : new Date().toISOString(),
     ],
   );
@@ -93,10 +94,6 @@ productRoutes.patch("/:id", async (c) => {
   const existing = await queryOne("SELECT id, image, images FROM products WHERE id = $1", [id]);
   if (!existing) return c.json({ error: "Product not found" }, 404);
 
-  // IMPORTANT: run cleanup BEFORE stringifying body.images/body.colors/etc.
-  // cleanupRemovedImagesOnPatch needs body.images as a real array to diff
-  // correctly against the existing row — stringifying it first makes every
-  // image look "removed" and wipes the whole R2 folder for this product.
   await cleanupRemovedImagesOnPatch(existing as Record<string, unknown>, body);
 
   if (body.specifications !== undefined) body.specifications = JSON.stringify(body.specifications);
@@ -104,6 +101,7 @@ productRoutes.patch("/:id", async (c) => {
   if (body.washCare !== undefined) body.washCare = JSON.stringify(body.washCare);
   if (body.images !== undefined) body.images = JSON.stringify(body.images);
   if (body.colors !== undefined) body.colors = JSON.stringify(body.colors);
+  if (body.kitItems !== undefined) body.kitItems = JSON.stringify(body.kitItems); // NEW
 
   const row = await patchById("products", id, body, {
     code: "code",
@@ -127,6 +125,7 @@ productRoutes.patch("/:id", async (c) => {
     rating: "rating",
     visibility: "visibility",
     colors: "colors",
+    kitItems: "kit_items", // NEW
   });
 
   return c.json(mapProduct(row!));
