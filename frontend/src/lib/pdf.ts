@@ -119,6 +119,16 @@ y = Math.max(
   doc.setFontSize(10);
   doc.text(`${order.productCode} — ${order.productName}`, 40, y);
   y += 14;
+   if (order.description && order.description.trim()) {
+    const safeDescription = order.description.replace(/₹/g, "Rs.");
+    const descLines = doc.splitTextToSize(safeDescription, W - 80);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    doc.setTextColor(90);
+    doc.text(descLines, 40, y);
+    doc.setTextColor(20, 20, 20);
+    y += descLines.length * 12 + 4;
+  }
   doc.text(`${order.category} • ${order.subCategory} • ${order.material}`, 40, y);
   y += 14;
   const sizesLine = Object.entries(order.sizes || {})
