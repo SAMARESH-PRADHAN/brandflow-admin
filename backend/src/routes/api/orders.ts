@@ -92,12 +92,12 @@ async function insertOrder(body: Record<string, unknown>, isSample: boolean) {
 export const orderRoutes = new Hono();
 /** List only — detail page still uses SELECT * on GET /:id */
 const ORDER_LIST_COLUMNS = `
-  id, customer_id, customer_name, phone, email,
-  product_id, product_code, product_name, category, product_type,
-  print_type, uploaded_logo,
-  qty, unit_price, printing_price, gst_pct, shipping,
+  id, customer_id, customer_name, phone, email, address,
+  product_id, product_code, product_name, category, product_type, sub_category,
+  material, description, print_type, print_location, uploaded_logo,
+  sizes, qty, unit_price, printing_price, gst_pct, shipping,
   discount_pct, discount_amt, total_amount, paid_amount,
-  type, status, payment_status, payment_method, is_sample, order_date
+  type, status, payment_status, payment_method, is_sample, order_date, timeline
 `;
 orderRoutes.get("/", async (c) => {
   const { where, params } = buildOrderFilters(c, false);
