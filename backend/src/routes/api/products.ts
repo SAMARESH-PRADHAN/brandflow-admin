@@ -5,14 +5,23 @@ import { deleteByIdWithImageCleanup, cleanupRemovedImagesOnPatch, newId, parseJs
 
 export const productRoutes = new Hono();
 
+/** List only — skip overview / specs / guidelines / wash_care (detail keeps them). */
+const LIST_COLS = `
+  id, code, name, category, type, sub_category, material, description,
+  sample_price, original_price, status, image, images, stock, orders_count,
+  rating, visibility, colors, kit_items, created_at
+`;
+
 productRoutes.get("/", async (c) => {
-  const { status, category, type } = c.req.query();
+  const { status, category, type, subCategory, visibility } = c.req.query();
   const conditions: string[] = [];
   const params: unknown[] = [];
 
   if (status) { params.push(status); conditions.push(`status = $${params.length}`); }
   if (category) { params.push(category); conditions.push(`category = $${params.length}`); }
   if (type) { params.push(type); conditions.push(`type = $${params.length}`); }
+  if (subCategory) { params.push(subCategory); conditions.push(`sub_category = $${params.length}`); }
+  if (visibility) { params.push(visibility); conditions.push(`visibility = $${params.length}`); }
 
   const p = Math.max(1, parseInt(c.req.query("page") ?? "1") || 1);
   const l = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "50") || 50));
@@ -21,10 +30,7 @@ productRoutes.get("/", async (c) => {
 
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
   const rows = await query(
-    `SELECT id, code, name, category, type, sub_category, material, description,overview,
-            specifications, design_guidelines, wash_care,
-            sample_price, original_price, status, image, images, stock, orders_count,
-            rating, visibility, colors, kit_items, created_at, count(*) OVER() as _total_count
+    `SELECT ${LIST_COLS}, count(*) OVER() as _total_count
      FROM products ${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params,
   );
@@ -32,7 +38,7 @@ productRoutes.get("/", async (c) => {
   c.header("Cache-Control", "public, max-age=60");
   return c.json({
     data: rows.map(mapProduct),
-    pagination: { page: p, limit: l, total: totalCount }
+    pagination: { page: p, limit: l, total: totalCount },
   });
 });
 
@@ -78,7 +84,7 @@ productRoutes.post("/", async (c) => {
       body.rating ?? 0,
       body.visibility ?? "Both",
       JSON.stringify(body.colors ?? []),
-      JSON.stringify(body.kitItems ?? []), // NEW
+      JSON.stringify(body.kitItems ?? []),
       body.createdAt ? `${body.createdAt}T00:00:00.000Z` : new Date().toISOString(),
     ],
   );
@@ -101,7 +107,7 @@ productRoutes.patch("/:id", async (c) => {
   if (body.washCare !== undefined) body.washCare = JSON.stringify(body.washCare);
   if (body.images !== undefined) body.images = JSON.stringify(body.images);
   if (body.colors !== undefined) body.colors = JSON.stringify(body.colors);
-  if (body.kitItems !== undefined) body.kitItems = JSON.stringify(body.kitItems); // NEW
+  if (body.kitItems !== undefined) body.kitItems = JSON.stringify(body.kitItems);
 
   const row = await patchById("products", id, body, {
     code: "code",
@@ -125,7 +131,7 @@ productRoutes.patch("/:id", async (c) => {
     rating: "rating",
     visibility: "visibility",
     colors: "colors",
-    kitItems: "kit_items", // NEW
+    kitItems: "kit_items",
   });
 
   return c.json(mapProduct(row!));
