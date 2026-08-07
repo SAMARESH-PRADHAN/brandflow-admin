@@ -14,6 +14,7 @@ import { notificationRoutes } from "./notifications.js";
 import { settingsRoutes } from "./settings.js";
 import { uploadRoutes } from "./uploads.js";
 import { razorpayRoutes } from "./razorpay.js";
+import { dashboardRoutes } from "./dashboard.js";
 
 
 export const apiRoutes = new Hono();
@@ -25,6 +26,7 @@ apiRoutes.use("*", requireDb);
 apiRoutes.get("/", (c) =>
   c.json({
     resources: [
+      "dashboard",   // ② ADD (optional)
       "products",
       "b2b-products",
       "new-collection",
@@ -42,7 +44,7 @@ apiRoutes.get("/", (c) =>
     ],
   }),
 );
-
+apiRoutes.route("/dashboard", dashboardRoutes);   // ③ ADD
 apiRoutes.route("/products", productRoutes);
 apiRoutes.route("/b2b-products", b2bProductRoutes);
 apiRoutes.route("/new-collection", newCollectionRoutes);
