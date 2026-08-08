@@ -160,7 +160,12 @@ function ProductsPage() {
 
       <ProductDialog
         open={open} onOpenChange={setOpen} editing={editing}
+        existingProducts={data}   // ← add
         onSubmit={async (v) => {
+          if (!v.code?.trim() || !v.name?.trim() || v.samplePrice == null || v.originalPrice == null) {
+    toast.error("Code, Name, Sample Price and Original Price are required");
+    return;
+  }
           try {
             if (editing) {
               await update(editing.id, v);
@@ -207,12 +212,12 @@ function normalizeProduct(p: Product) {
 }
 
 function ProductDialog({
-  open, onOpenChange, editing, onSubmit,
-  
+  open, onOpenChange, editing, onSubmit, existingProducts,
 }: {
   open: boolean; onOpenChange: (v: boolean) => void; editing: Product | null;
   onSubmit: (v: Partial<Product>) => void | Promise<void>;
-}) {
+  existingProducts: Product[];
+}) { 
   const firstCategory = CATEGORY_NAMES[0]!;
   const empty = {
   code: "", name: "", category: firstCategory, type: "Regular" as const,
@@ -230,6 +235,7 @@ function ProductDialog({
   const [f, setF] = useState<any>(editing ? normalizeProduct(editing) : empty);
   const [imagesUploading, setImagesUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [codeDuplicate, setCodeDuplicate] = useState(false); // ← add
 
   // Re-sync the form whenever the dialog opens or the target product changes.
   // (useState's initializer only runs once, so without this effect the form
@@ -244,7 +250,14 @@ function ProductDialog({
   }, [open, editing]);
 
   const set = (k: string, v: any) => setF((s: any) => ({ ...s, [k]: v }));
-
+const checkCodeDuplicate = () => {
+  const code = (f.code ?? "").trim().toLowerCase();
+  if (!code) { setCodeDuplicate(false); return; }
+  const dup = existingProducts.some(
+    (p) => p.code.trim().toLowerCase() === code && p.id !== editing?.id
+  );
+  setCodeDuplicate(dup);
+};
   const activeCat = findTaxCategory(f.category);
   const catHasTiers = activeCat?.hasTiers ?? false;
   const subOptions = getSubOptions(f.category, f.type as Tier);
@@ -284,8 +297,19 @@ const isWelcomeKit = f.category === "Corporate Welcome Kit";
         <DialogHeader><DialogTitle>{editing ? "Edit Product" : "Add Product"}</DialogTitle></DialogHeader>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Product Code"><Input value={f.code} onChange={(e) => set("code", e.target.value)} placeholder="ARX-0001" /></Field>
-          <Field label="Product Name"><Input value={f.name} onChange={(e) => set("name", e.target.value)} /></Field>
+         <Field label="Product Code *">
+  <Input
+    value={f.code}
+    onChange={(e) => { set("code", e.target.value); setCodeDuplicate(false); }}
+    onBlur={checkCodeDuplicate}
+    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); checkCodeDuplicate(); } }}
+    placeholder="ARX-0001"
+  />
+  {codeDuplicate && (
+    <p className="mt-1 text-xs" style={{ color: "red" }}>This product code already exists.</p>
+  )}
+</Field>
+<Field label="Product Name *"><Input value={f.name} onChange={(e) => set("name", e.target.value)} /></Field>
 
           <Field label="Category">
             <Select value={f.category} onValueChange={onCategoryChange}>
@@ -318,8 +342,8 @@ const isWelcomeKit = f.category === "Corporate Welcome Kit";
          {!isWelcomeKit && (
   <>
     <Field label="Material"><Input value={f.material} onChange={(e) => set("material", e.target.value)} /></Field>
-    <Field label="Sample Price"><Input type="number" value={f.samplePrice} onChange={(e) => set("samplePrice", Number(e.target.value))} /></Field>
-    <Field label="Original Price"><Input type="number" value={f.originalPrice} onChange={(e) => set("originalPrice", Number(e.target.value))} /></Field>
+    <Field label="Sample Price *"><Input type="number" value={f.samplePrice} onChange={(e) => set("samplePrice", Number(e.target.value))} /></Field>
+    <Field label="Original Price *"><Input type="number" value={f.originalPrice} onChange={(e) => set("originalPrice", Number(e.target.value))} /></Field>
   </>
 )}
 <Field label="Status">
@@ -425,7 +449,17 @@ const isWelcomeKit = f.category === "Corporate Welcome Kit";
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="space-y-1.5"><Label className="text-xs">{label}</Label>{children}</div>;
+  const isRequired = label.endsWith("*");
+  const clean = isRequired ? label.slice(0, -1).trim() : label;
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs">
+        {clean}
+        {isRequired && <span className="text-destructive"> *</span>}
+      </Label>
+      {children}
+    </div>
+  );
 }
 
 export default ProductsPage;
