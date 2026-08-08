@@ -187,13 +187,7 @@ const openEdit = (p: NewCollectionProduct) => {
                 </SelectContent>
               </Select>
             </F>
-            <F label="Sample Price">
-              <Input
-                type="number"
-                value={f.samplePrice}
-                onChange={(e) => setF({ ...f, samplePrice: +e.target.value })}
-              />
-            </F>
+            
             <F label="Original Price">
               <Input
                 type="number"
