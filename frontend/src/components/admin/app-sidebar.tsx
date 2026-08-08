@@ -19,7 +19,7 @@ const nav = [
     { title: "Products", url: "/products", icon: Package },
     { title: "New Collection", url: "/products/new-collection", icon: PackagePlus },
     { title: "B2B Shop Products", url: "/products/b2b", icon: Boxes },
-    { title: "Welcome Kits", url: "/products/welcome-kits", icon: Gift },
+    // { title: "Welcome Kits", url: "/products/welcome-kits", icon: Gift },
   ]},
   { label: "Orders", items: [
     { title: "All Orders", url: "/orders", icon: ShoppingCart },

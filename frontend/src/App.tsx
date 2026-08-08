@@ -10,7 +10,7 @@ const AnalyticsPage = lazy(() => import("./routes/_admin.analytics"));
 const ProductsPage = lazy(() => import("./routes/_admin.products"));
 const B2BPage = lazy(() => import("./routes/_admin.products.b2b"));
 const NewColl = lazy(() => import("./routes/_admin.products.new-collection"));
-const KitsPage = lazy(() => import("./routes/_admin.products.welcome-kits"));
+// const KitsPage = lazy(() => import("./routes/_admin.products.welcome-kits"));
 const OrdersPage = lazy(() => import("./routes/_admin.orders"));
 const SamplesPage = lazy(() => import("./routes/_admin.orders.samples"));
 const KanbanPage = lazy(() => import("./routes/_admin.orders.status"));
@@ -65,7 +65,7 @@ export default function App() {
             <Route path="products" element={<ProductsPage />} />
             <Route path="products/b2b" element={<B2BPage />} />
             <Route path="products/new-collection" element={<NewColl />} />
-            <Route path="products/welcome-kits" element={<KitsPage />} />
+            {/* <Route path="products/welcome-kits" element={<KitsPage />} /> */}
             <Route path="orders" element={<OrdersPage />} />
             <Route path="orders/samples" element={<SamplesPage />} />
             <Route path="orders/status" element={<KanbanPage />} />
