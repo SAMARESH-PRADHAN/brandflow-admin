@@ -422,6 +422,11 @@ const isWelcomeKit = f.category === "Corporate Welcome Kit";
     </Field>
     <Field label="Kit Items (name + price)">
       <KitItemsInput items={f.kitItems ?? []} onChange={(v) => set("kitItems", v)} />
+        {isWelcomeKit && (f.kitItems?.length ?? 0) < 3 && (
+    <p className="mt-1 text-xs text-destructive">
+      Add at least {3 - (f.kitItems?.length ?? 0)} more item(s) — minimum 3 required.
+    </p>
+  )}
     </Field>
   </>
 ) : (
@@ -448,6 +453,10 @@ const isWelcomeKit = f.category === "Corporate Welcome Kit";
   <Button
     disabled={imagesUploading || submitting}
     onClick={async () => {
+      if (isWelcomeKit && (f.kitItems?.length ?? 0) < 3) {
+        toast.error("Please add at least 3 kit items for a Welcome Kit product");
+        return;
+      }
       setSubmitting(true);
       try {
         await onSubmit(f);
