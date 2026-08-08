@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { query, queryOne, execute } from "../../db/pool.js";
 import { mapProduct } from "../../lib/mappers.js";
 import { deleteByIdWithImageCleanup, cleanupRemovedImagesOnPatch, newId, parseJsonBody, patchById } from "../../lib/http.js";
-
+import { HTTPException } from "hono/http-exception";
 export const productRoutes = new Hono();
 
 /** List only — skip overview / specs / guidelines / wash_care (detail keeps them). */
@@ -53,41 +53,48 @@ productRoutes.post("/", async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
   const id = (body.id as string) ?? newId("PRD");
 
-  await execute(
-    `INSERT INTO products (
-      id, code, name, category, type, sub_category, material, description, overview,
-      specifications, design_guidelines, wash_care, sample_price, original_price, status,
-      image, images, stock, orders_count, rating, visibility, colors, kit_items, created_at
-    ) VALUES (
-      $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24
-    )`,
-    [
-      id,
-      body.code ?? `ARX-${Date.now()}`,
-      body.name ?? "Untitled Product",
-      body.category ?? "Corporate Shirts",
-      body.type ?? "Regular",
-      body.subCategory ?? "",
-      body.material ?? "",
-      body.description ?? "",
-      body.overview ?? null,
-      JSON.stringify(body.specifications ?? []),
-      JSON.stringify(body.designGuidelines ?? []),
-      JSON.stringify(body.washCare ?? []),
-      body.samplePrice ?? 0,
-      body.originalPrice ?? 0,
-      body.status ?? "Active",
-      body.image ?? "",
-      JSON.stringify(body.images ?? []),
-      body.stock ?? 0,
-      body.orders ?? 0,
-      body.rating ?? 0,
-      body.visibility ?? "Both",
-      JSON.stringify(body.colors ?? []),
-      JSON.stringify(body.kitItems ?? []),
-      body.createdAt ? `${body.createdAt}T00:00:00.000Z` : new Date().toISOString(),
-    ],
-  );
+  try {
+    await execute(
+      `INSERT INTO products (
+        id, code, name, category, type, sub_category, material, description, overview,
+        specifications, design_guidelines, wash_care, sample_price, original_price, status,
+        image, images, stock, orders_count, rating, visibility, colors, kit_items, created_at
+      ) VALUES (
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24
+      )`,
+      [
+        id,
+        body.code ?? `ARX-${Date.now()}`,
+        body.name ?? "Untitled Product",
+        body.category ?? "Corporate Shirts",
+        body.type ?? "Regular",
+        body.subCategory ?? "",
+        body.material ?? "",
+        body.description ?? "",
+        body.overview ?? null,
+        JSON.stringify(body.specifications ?? []),
+        JSON.stringify(body.designGuidelines ?? []),
+        JSON.stringify(body.washCare ?? []),
+        body.samplePrice ?? 0,
+        body.originalPrice ?? 0,
+        body.status ?? "Active",
+        body.image ?? "",
+        JSON.stringify(body.images ?? []),
+        body.stock ?? 0,
+        body.orders ?? 0,
+        body.rating ?? 0,
+        body.visibility ?? "Both",
+        JSON.stringify(body.colors ?? []),
+        JSON.stringify(body.kitItems ?? []),
+        body.createdAt ? `${body.createdAt}T00:00:00.000Z` : new Date().toISOString(),
+      ],
+    );
+  } catch (err: any) {
+    if (err?.code === "23505") {
+      throw new HTTPException(409, { message: "Product code already exists" });
+    }
+    throw err;
+  }
 
   const row = await queryOne("SELECT * FROM products WHERE id = $1", [id]);
   return c.json(mapProduct(row!), 201);
