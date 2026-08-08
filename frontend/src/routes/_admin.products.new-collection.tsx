@@ -38,6 +38,7 @@ function NewColl() {
   const [f, setF] = useState<any>({});
   const [imagesUploading, setImagesUploading] = useState(false); // NEW
   const [submitting, setSubmitting] = useState(false);
+  const [codeDuplicate, setCodeDuplicate] = useState(false); // ← add
 
   const empty = () => ({
     code: "",
@@ -61,6 +62,14 @@ const openEdit = (p: NewCollectionProduct) => {
   setImagesUploading(false);
   setSubmitting(false);
   setOpen(true);
+};
+const checkCodeDuplicate = () => {
+  const code = (f.code ?? "").trim().toLowerCase();
+  if (!code) { setCodeDuplicate(false); return; }
+  const dup = data.some(
+    (p) => p.code.trim().toLowerCase() === code && p.id !== editing?.id
+  );
+  setCodeDuplicate(dup);
 };
 
   const cols: Column<NewCollectionProduct>[] = [
@@ -165,8 +174,18 @@ const openEdit = (p: NewCollectionProduct) => {
           </DialogHeader>
           <div className="grid gap-4 md:grid-cols-2">
             <F label="Code *">
-              <Input value={f.code} onChange={(e) => setF({ ...f, code: e.target.value })} />
-            </F>
+  <Input
+    value={f.code}
+    onChange={(e) => { setF({ ...f, code: e.target.value }); setCodeDuplicate(false); }}
+    onBlur={checkCodeDuplicate}
+    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); checkCodeDuplicate(); } }}
+  />
+  {codeDuplicate && (
+    <p className="mt-1 text-xs" style={{ color: "red" }}>
+      This product code already exists.
+    </p>
+  )}
+</F>
             <F label="Name *">
               <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
             </F>
@@ -250,36 +269,42 @@ const openEdit = (p: NewCollectionProduct) => {
             </TabsContent>
           </Tabs>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
-              Cancel
-            </Button>
-            <Button
-              disabled={imagesUploading || submitting}
-              onClick={async () => {
-                if (!f.code?.trim() || !f.name?.trim() || !f.originalPrice) {
-    toast.error("Code, Name and Original Price are required");
-    return;
-  }
-
-                setSubmitting(true);
-                try {
-                  if (editing) {
-                    await update(editing.id, f);
-                    toast.success("Updated");
-                  } else {
-                    await add({ ...f, createdAt: new Date().toISOString().slice(0, 10) } as any);
-                    toast.success("Added");
-                  }
-                  setOpen(false);
-                } catch (err) {
-                  mutationError(err, editing ? "Failed to update item" : "Failed to add item");
-                } finally {
-                  setSubmitting(false);
-                }
-              }}
-            >
-              {submitting ? (
+         <DialogFooter>
+  <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
+    Cancel
+  </Button>
+  <Button
+    disabled={imagesUploading || submitting}
+    onClick={async () => {
+      if (!f.code?.trim() || !f.name?.trim() || !f.originalPrice) {
+        toast.error("Code, Name and Original Price are required");
+        return;
+      }
+      const dup = data.some(
+        (p) => p.code.trim().toLowerCase() === f.code.trim().toLowerCase() && p.id !== editing?.id
+      );
+      if (dup) {
+        toast.error("Product code already exists");
+        return;
+      }
+      setSubmitting(true);
+      try {
+        if (editing) {
+          await update(editing.id, f);
+          toast.success("Updated");
+        } else {
+          await add({ ...f, createdAt: new Date().toISOString().slice(0, 10) } as any);
+          toast.success("Added");
+        }
+        setOpen(false);
+      } catch (err) {
+        mutationError(err, editing ? "Failed to update item" : "Failed to add item");
+      } finally {
+        setSubmitting(false);
+      }
+    }}
+  >
+    {submitting ? (
       <>
         <Loader2 className="mr-1 h-4 w-4 animate-spin" />
         {editing ? "Saving..." : "Adding..."}
@@ -291,8 +316,8 @@ const openEdit = (p: NewCollectionProduct) => {
     ) : (
       "Add"
     )}
-            </Button>
-          </DialogFooter>
+  </Button>
+</DialogFooter>
         </DialogContent>
       </Dialog>
 

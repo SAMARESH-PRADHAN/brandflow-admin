@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { query, queryOne, execute } from "../../db/pool.js";
 import { mapB2BProduct } from "../../lib/mappers.js";
 import { deleteByIdWithImageCleanup, cleanupRemovedImagesOnPatch, newId, parseJsonBody, patchById } from "../../lib/http.js";
-
+import { HTTPException } from "hono/http-exception";
 export const b2bProductRoutes = new Hono();
 
 b2bProductRoutes.get("/", async (c) => {
@@ -27,31 +27,38 @@ b2bProductRoutes.post("/", async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
   const id = (body.id as string) ?? newId("B2B");
 
-  await execute(
-    `INSERT INTO b2b_products (
-      id, code, name, sub_category, material, description, overview,
-      specifications, design_guidelines, wash_care, sample_price, original_price,
-      status, image, images, created_at
-    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
-    [
-      id,
-      body.code ?? `ARXB-${Date.now()}`,
-      body.name ?? "Untitled B2B Product",
-      body.subCategory ?? "",
-      body.material ?? "",
-      body.description ?? "",
-      body.overview ?? null,
-      JSON.stringify(body.specifications ?? []),
-      JSON.stringify(body.designGuidelines ?? []),
-      JSON.stringify(body.washCare ?? []),
-      body.samplePrice ?? 0,
-      body.originalPrice ?? 0,
-      body.status ?? "Active",
-      body.image ?? "",
-      JSON.stringify(body.images ?? []),
-      body.createdAt ? `${body.createdAt}T00:00:00.000Z` : new Date().toISOString(),
-    ],
-  );
+  try {
+    await execute(
+      `INSERT INTO b2b_products (
+        id, code, name, sub_category, material, description, overview,
+        specifications, design_guidelines, wash_care, sample_price, original_price,
+        status, image, images, created_at
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
+      [
+        id,
+        body.code ?? `ARXB-${Date.now()}`,
+        body.name ?? "Untitled B2B Product",
+        body.subCategory ?? "",
+        body.material ?? "",
+        body.description ?? "",
+        body.overview ?? null,
+        JSON.stringify(body.specifications ?? []),
+        JSON.stringify(body.designGuidelines ?? []),
+        JSON.stringify(body.washCare ?? []),
+        body.samplePrice ?? 0,
+        body.originalPrice ?? 0,
+        body.status ?? "Active",
+        body.image ?? "",
+        JSON.stringify(body.images ?? []),
+        body.createdAt ? `${body.createdAt}T00:00:00.000Z` : new Date().toISOString(),
+      ],
+    );
+  } catch (err: any) {
+    if (err?.code === "23505") {
+      throw new HTTPException(409, { message: "Product code already exists" });
+    }
+    throw err;
+  }
 
   const row = await queryOne("SELECT * FROM b2b_products WHERE id = $1", [id]);
   return c.json(mapB2BProduct(row!), 201);

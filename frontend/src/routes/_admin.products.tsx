@@ -165,6 +165,13 @@ function ProductsPage() {
           if (!v.code?.trim() || !v.name?.trim() || v.samplePrice == null || v.originalPrice == null) {
     toast.error("Code, Name, Sample Price and Original Price are required");
     return;
+   const dup = data.some(
+    (p) => p.code.trim().toLowerCase() === v.code!.trim().toLowerCase() && p.id !== editing?.id
+  );
+  if (dup) {
+    toast.error("Product code already exists");
+    return;
+  } 
   }
           try {
             if (editing) {
@@ -302,7 +309,7 @@ const isWelcomeKit = f.category === "Corporate Welcome Kit";
     value={f.code}
     onChange={(e) => { set("code", e.target.value); setCodeDuplicate(false); }}
     onBlur={checkCodeDuplicate}
-    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); checkCodeDuplicate(); } }}
+    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); checkCodeDuplicate(); } }}
     placeholder="ARX-0001"
   />
   {codeDuplicate && (
