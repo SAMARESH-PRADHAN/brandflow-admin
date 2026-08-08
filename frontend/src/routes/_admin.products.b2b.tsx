@@ -171,10 +171,10 @@ function B2BPage() {
             <DialogTitle>{editing ? "Edit B2B Product" : "Add B2B Product"}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 md:grid-cols-2">
-            <F label="Code">
+            <F label="Code *">
               <Input value={f.code} onChange={(e) => setF({ ...f, code: e.target.value })} />
             </F>
-            <F label="Name">
+            <F label="Name *">
               <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
             </F>
             <F label="Sub Category">
@@ -197,14 +197,14 @@ function B2BPage() {
                 onChange={(e) => setF({ ...f, material: e.target.value })}
               />
             </F>
-            <F label="Sample Price">
+            <F label="Sample Price *">
               <Input
                 type="number"
                 value={f.samplePrice}
                 onChange={(e) => setF({ ...f, samplePrice: +e.target.value })}
               />
             </F>
-            <F label="Original Price">
+            <F label="Original Price *">
               <Input
                 type="number"
                 value={f.originalPrice}
@@ -246,6 +246,10 @@ function B2BPage() {
             <Button
               disabled={imagesUploading || submitting}
               onClick={async () => {
+                 if (!f.code?.trim() || !f.name?.trim() || !f.samplePrice || !f.originalPrice) {
+    toast.error("Code, Name, Sample Price and Original Price are required");
+    return;
+  }
                 setSubmitting(true);
                 try {
                   if (editing) {
@@ -289,9 +293,14 @@ function B2BPage() {
 }
 
 function F({ label, children }: { label: string; children: React.ReactNode }) {
+  const isRequired = label.endsWith("*");
+  const clean = isRequired ? label.slice(0, -1).trim() : label;
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs">{label}</Label>
+      <Label className="text-xs">
+        {clean}
+        {isRequired && <span className="text-destructive"> *</span>}
+      </Label>
       {children}
     </div>
   );

@@ -164,10 +164,10 @@ const openEdit = (p: NewCollectionProduct) => {
             <DialogTitle>{editing ? "Edit" : "Add"} New Collection Item</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 md:grid-cols-2">
-            <F label="Code">
+            <F label="Code *">
               <Input value={f.code} onChange={(e) => setF({ ...f, code: e.target.value })} />
             </F>
-            <F label="Name">
+            <F label="Name *">
               <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
             </F>
             <F label="Material">
@@ -188,7 +188,7 @@ const openEdit = (p: NewCollectionProduct) => {
               </Select>
             </F>
             
-            <F label="Original Price">
+            <F label="Original Price *">
               <Input
                 type="number"
                 value={f.originalPrice}
@@ -257,6 +257,11 @@ const openEdit = (p: NewCollectionProduct) => {
             <Button
               disabled={imagesUploading || submitting}
               onClick={async () => {
+                if (!f.code?.trim() || !f.name?.trim() || !f.originalPrice) {
+    toast.error("Code, Name and Original Price are required");
+    return;
+  }
+
                 setSubmitting(true);
                 try {
                   if (editing) {
@@ -297,9 +302,14 @@ const openEdit = (p: NewCollectionProduct) => {
 }
 
 function F({ label, children }: { label: string; children: React.ReactNode }) {
+  const isRequired = label.trim().endsWith("*");
+  const clean = isRequired ? label.trim().slice(0, -1).trim() : label;
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs">{label}</Label>
+      <Label className="text-xs">
+        {clean}
+        {isRequired && <span style={{ color: "red" }}> *</span>}
+      </Label>
       {children}
     </div>
   );
