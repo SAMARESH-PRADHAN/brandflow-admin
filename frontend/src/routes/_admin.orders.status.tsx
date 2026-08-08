@@ -82,7 +82,7 @@ function KanbanPage() {
                       </div>
                       <div className="truncate text-sm font-semibold">{o.customer}</div>
                     </div>
-                    <span className="num text-xs font-semibold">{inrFull(o.qty * o.unitPrice)}</span>
+                    <span className="num text-xs font-semibold">{inrFull(o.totalAmount > 0 ? o.totalAmount : o.qty * o.unitPrice)}</span>
                   </div>
                   <div className="mt-1 truncate text-[11px] text-muted-foreground">{o.productName}</div>
                   {s !== "Delivered" && (
@@ -134,7 +134,7 @@ function KanbanPage() {
                   <Info k="Type" v={preview.isSample ? `${preview.type} (Sample)` : preview.type} />
                   <Info k="Date" v={preview.date} />
                   <Info k="Payment" v={`${preview.paymentStatus} • ${preview.paymentMethod}`} />
-                  <Info k="Amount" v={inrFull(preview.qty * preview.unitPrice)} />
+                  <Info k="Amount" v={inrFull(preview.totalAmount > 0 ? preview.totalAmount : preview.qty * preview.unitPrice)} />
                 </div>
               </div>
               <div className="rounded-xl border border-border p-3">
@@ -143,6 +143,21 @@ function KanbanPage() {
                 <div className="text-xs text-muted-foreground">{preview.category} • {preview.subCategory} • {preview.material}</div>
                 <div className="mt-1 text-xs">Qty <b>{preview.qty}</b> • {preview.printType} @ {preview.printLocation}</div>
               </div>
+              {Object.values(preview.sizes ?? {}).some((q) => q > 0) && (
+  <div className="rounded-xl border border-border p-3">
+    <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Size Breakdown</div>
+    <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+      {Object.entries(preview.sizes ?? {})
+        .filter(([, qty]) => qty > 0)
+        .map(([s, qty]) => (
+          <div key={s} className="rounded-lg border border-border p-2 text-center">
+            <div className="text-[10px] font-semibold uppercase text-muted-foreground">{s}</div>
+            <div className="num text-sm font-bold">{qty}</div>
+          </div>
+        ))}
+    </div>
+  </div>
+)}
               {preview.uploadedLogo && (
                 <div className="rounded-xl border border-border p-3">
                   <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Customer Artwork</div>
