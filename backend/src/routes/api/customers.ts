@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { query, queryOne, execute } from "../../db/pool.js";
 import { mapCustomer } from "../../lib/mappers.js";
 import { deleteById, newId, parseJsonBody, patchById } from "../../lib/http.js";
+import { verifyGoogleIdToken } from "../../lib/google.js";
 
 export const customerRoutes = new Hono();
 
@@ -96,6 +97,55 @@ customerRoutes.post("/login", async (c) => {
   }
 
   return c.json(mapCustomer(row));
+});
+
+
+customerRoutes.post("/google-login", async (c) => {
+  const body = await parseJsonBody<{ idToken?: string }>(c);
+  if (!body.idToken) return c.json({ error: "Missing idToken" }, 400);
+
+  let profile;
+  try {
+    profile = await verifyGoogleIdToken(body.idToken);
+  } catch {
+    return c.json({ error: "Invalid Google token" }, 401);
+  }
+
+  // Existing Google user?
+  let row = await queryOne<Record<string, unknown>>(
+    "SELECT * FROM customers WHERE google_id = $1",
+    [profile.googleId],
+  );
+
+  if (!row) {
+    // Same email already registered via password signup? Link the account.
+    row = await queryOne<Record<string, unknown>>(
+      "SELECT * FROM customers WHERE email = $1",
+      [profile.email],
+    );
+
+    if (row) {
+      await execute(
+        "UPDATE customers SET google_id = $1, provider = 'google' WHERE id = $2",
+        [profile.googleId, row.id],
+      );
+      row = await queryOne("SELECT * FROM customers WHERE id = $1", [row.id]);
+    } else {
+      const id = newId("CUS");
+      await execute(
+        `INSERT INTO customers (id, name, phone, email, address, password, google_id, provider, total_orders, total_spend, join_date, status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'google',0,0,$8,'Active')`,
+        [id, profile.name, "", profile.email, "", "", profile.googleId, new Date().toISOString().slice(0, 10)],
+      );
+      row = await queryOne("SELECT * FROM customers WHERE id = $1", [id]);
+    }
+  }
+
+  if (row!.status !== "Active") {
+    return c.json({ error: "Account inactive" }, 403);
+  }
+
+  return c.json(mapCustomer(row!));
 });
 
 customerRoutes.patch("/:id", async (c) => {
