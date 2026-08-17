@@ -60,24 +60,24 @@ export const CATALOG_TAXONOMY: TaxCategory[] = [
     regular: [
       "Spun Collar Neck T-Shirt", "Cut & Sew Collar Neck T-Shirts", "Corporate Economy Collar Neck T-Shirt",
       "Reunions Collar Neck T-Shirts", "Marketing Collar Neck T-Shirts", "Petrol Pump Collar Neck T-Shirts",
-      "Conference Collar Neck T-Shirts", "Gym Collar Neck T-Shirts", "Garage Collar Neck T-Shirts",
+      "Conference Collar Neck T-Shirts", "Gym Collar Neck T-Shirts", "Hotel Collar Neck T-Shirts",
       "NGO Collar Neck T-Shirts", "Dotnet White Collar Neck T-Shirt", "Festival Group Collar Neck T-Shirts",
-      "Ranglan Collar Neck T-Shirt",
+      "Ranglan Collar Neck T-Shirt", "220 GSM Spun Matty Reflective Collar Neck T-shirt",
     ],
     premium: [
       "Cotton Collar Neck T-Shirts", "Blended Collar Neck T-Shirts", "Drifit SAP Matty Collar Neck T-Shirts",
       "Reunions Collar Neck T-Shirts", "Marketing Collar Neck T-Shirts", "Petrol Pump Collar Neck T-Shirts",
-      "Conference Collar Neck T-Shirts", "Gym Collar Neck T-Shirts", "Garage Collar Neck T-Shirts",
+      "Conference Collar Neck T-Shirts", "Gym Collar Neck T-Shirts", "Hotel Collar Neck T-Shirts",
       "NGO Collar Neck T-Shirts", "SAP Matty White Collar Neck T-Shirt", "Cut & Sew Collar Neck T-Shirts",
-      "Festival Group Collar Neck T-Shirts", "SAP Matty Ranglan Collar Neck T-Shirt",
+      "Festival Group Collar Neck T-Shirts", "SAP Matty Ranglan Collar Neck T-Shirt", "220 GSM PC Matty Reflective Collar Neck T-shirt",
     ],
   },
   {
     name: "Custom Round Neck T-Shirts",
     hasTiers: true,
     regular: [
-      "Spun Round Neck T-Shirt", "Corporate Polyester Round Neck T-Shirt",
-      "Dotnet White Round Neck T-Shirt", "Gym Round Neck T-Shirt",
+      "Spun Round Neck T-Shirt", "Corporate Polyester Round Neck T-Shirt (160 GSM)",
+      "Dotnet White Round Neck T-Shirt (120 GSM)", "Corporate Polyster Round Neck T-Shirt (120 GSM)",
     ],
     premium: [
       "Cotton Round Neck T-Shirt", "Polycotton Round Neck T-Shirt",
@@ -96,7 +96,8 @@ export const CATALOG_TAXONOMY: TaxCategory[] = [
     hasTiers: false,
     items: [
       "Spun Matty 220 GSM", "PC Matty 220 GSM",
-      "Track Pant Spun Poly Polyester", "Track Pant Cotton PC Loop Knit",
+      "Track Pant Super Poly Polyester", "Track Pant Cotton PC Loop Knit", "House T-shirt Spun Matty 220 GSM", "House T-shirt PC Matty 220 GSM",
+      "Hoodies Spun Fleece 300 GSM", "Hoodies PC Fleece 300 GSM"
     ],
   },
   {
