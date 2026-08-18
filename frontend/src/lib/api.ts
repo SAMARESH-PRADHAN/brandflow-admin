@@ -14,7 +14,30 @@ const PATHS: Record<string, string> = {
   reviews: "reviews",
   notifications: "notifications",
    moqSettings: "moq-settings",
+   discountTiers: "discount-tiers",
 };
+
+export type DiscountTier = {
+  id: string;
+  category: string;
+  subCategory: string | null;
+  minQty: number;
+  maxQty: number | null;
+  discountPct: number;
+  isBulk: boolean;
+};
+
+export async function fetchDiscountTiers(): Promise<DiscountTier[]> {
+  return request<DiscountTier[]>("discount-tiers");
+}
+
+export async function saveDiscountTiers(input: {
+  category: string;
+  subCategory?: string | null;
+  tiers: Array<{ minQty: number; maxQty: number | null; discountPct: number; isBulk?: boolean }>;
+}): Promise<DiscountTier[]> {
+  return request<DiscountTier[]>("discount-tiers", { method: "PUT", body: JSON.stringify(input) });
+}
 
 function pathFor(key: string) {
   const segment = PATHS[key];

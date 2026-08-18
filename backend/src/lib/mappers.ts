@@ -262,6 +262,19 @@ export function mapMoqSetting(row: Record<string, unknown>) {
     minQty: num(row.min_qty),
   };
 }
+
+export function mapDiscountTier(row: Record<string, unknown>) {
+  return {
+    id: row.id as string,
+    category: row.category as string,
+    subCategory: (row.sub_category as string | null) ?? null,
+    minQty: num(row.min_qty),
+    maxQty: row.max_qty == null ? null : num(row.max_qty),
+    discountPct: num(row.discount_pct),
+    isBulk: Boolean(row.is_bulk),
+  };
+}
+
 export function mapSettings(row: Record<string, unknown>) {
   return {
     brand: row.brand as string,
