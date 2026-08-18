@@ -16,6 +16,7 @@ import { uploadRoutes } from "./uploads.js";
 import { razorpayRoutes } from "./razorpay.js";
 import { dashboardRoutes } from "./dashboard.js";
 import { moqSettingsRoutes } from "./moq-settings.js";
+import { discountTierRoutes } from "./discount-tiers.js";
 
 
 export const apiRoutes = new Hono();
@@ -42,6 +43,7 @@ apiRoutes.get("/", (c) =>
       "notifications",
       "settings",
       "moq-settings",
+      "discount-tiers",
       "uploads",
     ],
   }),
@@ -62,3 +64,4 @@ apiRoutes.route("/notifications", notificationRoutes);
 apiRoutes.route("/settings", settingsRoutes);
 apiRoutes.route("/razorpay", razorpayRoutes);
 apiRoutes.route("/moq-settings", moqSettingsRoutes);
+apiRoutes.route("/discount-tiers", discountTierRoutes);
