@@ -15,6 +15,7 @@ import { settingsRoutes } from "./settings.js";
 import { uploadRoutes } from "./uploads.js";
 import { razorpayRoutes } from "./razorpay.js";
 import { dashboardRoutes } from "./dashboard.js";
+import { moqSettingsRoutes } from "./moq-settings.js";
 
 
 export const apiRoutes = new Hono();
@@ -40,6 +41,7 @@ apiRoutes.get("/", (c) =>
       "reviews",
       "notifications",
       "settings",
+      "moq-settings",
       "uploads",
     ],
   }),
@@ -59,3 +61,4 @@ apiRoutes.route("/reviews", reviewRoutes);
 apiRoutes.route("/notifications", notificationRoutes);
 apiRoutes.route("/settings", settingsRoutes);
 apiRoutes.route("/razorpay", razorpayRoutes);
+apiRoutes.route("/moq-settings", moqSettingsRoutes);

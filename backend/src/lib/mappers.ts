@@ -254,7 +254,14 @@ export function mapNotification(row: Record<string, unknown>) {
     createdAt: formatDateTime(row.created_at),
   };
 }
-
+export function mapMoqSetting(row: Record<string, unknown>) {
+  return {
+    id: row.id as string,
+    category: row.category as string,
+    subCategory: (row.sub_category as string | null) ?? null,
+    minQty: num(row.min_qty),
+  };
+}
 export function mapSettings(row: Record<string, unknown>) {
   return {
     brand: row.brand as string,

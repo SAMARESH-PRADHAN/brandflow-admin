@@ -13,6 +13,7 @@ const PATHS: Record<string, string> = {
   payments: "payments",
   reviews: "reviews",
   notifications: "notifications",
+   moqSettings: "moq-settings",
 };
 
 function pathFor(key: string) {
@@ -78,4 +79,25 @@ export async function uploadImage(
 export async function deleteUploadedImage(urlOrKey: string): Promise<void> {
   const body = urlOrKey.includes("://") ? { url: urlOrKey } : { key: urlOrKey };
   await request("uploads", { method: "DELETE", body: JSON.stringify(body) });
+}
+
+
+
+export type MoqSetting = {
+  id: string;
+  category: string;
+  subCategory: string | null;
+  minQty: number;
+};
+
+export async function fetchMoqSettings(): Promise<MoqSetting[]> {
+  return request<MoqSetting[]>("moq-settings");
+}
+
+export async function upsertMoqSetting(input: {
+  category: string;
+  subCategory?: string | null;
+  minQty: number;
+}): Promise<MoqSetting> {
+  return request<MoqSetting>("moq-settings", { method: "PUT", body: JSON.stringify(input) });
 }
