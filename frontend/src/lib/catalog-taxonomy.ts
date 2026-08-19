@@ -113,15 +113,15 @@ export const CATALOG_TAXONOMY: TaxCategory[] = [
     hasTiers: false,
     items: ["Classic Welcome Kit"],
   },
-  {
-    name: "ARRHENIUX T-Shirts",
-    hasTiers: false,
-    items: [
-      "ARRHENIUX Cotton Round Neck T-Shirt", "ARRHENIUX Cotton Collar Neck T-Shirt",
-      "ARRHENIUX Blend Collar Neck T-Shirt", "ARRHENIUX Dryfit Collar Neck T-Shirt",
-      "ARRHENIUX Oversized T-Shirt", "ARRHENIUX Hoodie", "ARRHENIUX Polo T-Shirt",
-    ],
-  },
+  // {
+  //   name: "ARRHENIUX T-Shirts",
+  //   hasTiers: false,
+  //   items: [
+  //     "ARRHENIUX Cotton Round Neck T-Shirt", "ARRHENIUX Cotton Collar Neck T-Shirt",
+  //     "ARRHENIUX Blend Collar Neck T-Shirt", "ARRHENIUX Dryfit Collar Neck T-Shirt",
+  //     "ARRHENIUX Oversized T-Shirt", "ARRHENIUX Hoodie", "ARRHENIUX Polo T-Shirt",
+  //   ],
+  // },
 ];
 
 export const CATEGORY_NAMES = CATALOG_TAXONOMY.map((c) => c.name);

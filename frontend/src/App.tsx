@@ -11,6 +11,7 @@ const ProductsPage = lazy(() => import("./routes/_admin.products"));
 const B2BPage = lazy(() => import("./routes/_admin.products.b2b"));
 const NewColl = lazy(() => import("./routes/_admin.products.new-collection"));
 const MinimumOrderQuantity = lazy(() => import("./routes/_admin.moq-settings"));
+const PrintSettingsPage = lazy(() => import("./routes/_admin.print-settings"));
 const OrdersPage = lazy(() => import("./routes/_admin.orders"));
 const SamplesPage = lazy(() => import("./routes/_admin.orders.samples"));
 const KanbanPage = lazy(() => import("./routes/_admin.orders.status"));
@@ -66,6 +67,7 @@ export default function App() {
             <Route path="products/b2b" element={<B2BPage />} />
             <Route path="products/new-collection" element={<NewColl />} />
             <Route path="moq-settings" element={<MinimumOrderQuantity />} />
+            <Route path="print-settings" element={<PrintSettingsPage />} />
             <Route path="orders" element={<OrdersPage />} />
             <Route path="orders/samples" element={<SamplesPage />} />
             <Route path="orders/status" element={<KanbanPage />} />

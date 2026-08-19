@@ -293,13 +293,13 @@ const checkCodeDuplicate = () => {
     // ARRHENIUX products aren't offered as samples or via Bulk Order on the
     // storefront, so force visibility back to "Category" whenever the admin
     // switches into this category (mirrors the storefront's own gating).
-    visibility: name === "ARRHENIUX T-Shirts" ? "Category" : s.visibility,
+    // visibility: name === "ARRHENIUX T-Shirts" ? "Category" : s.visibility,
   }));
 };
 const isWelcomeKit = f.category === "Corporate Welcome Kit";
   // ARRHENIUX T-Shirts: no Sample Price field, no "Show in Bulk Order" toggle —
   // matches the storefront where ARRHENIUX products skip samples/bulk entirely.
-  const isArrheniux = f.category === "ARRHENIUX T-Shirts";
+  // const isArrheniux = f.category === "ARRHENIUX T-Shirts";
   const onTypeChange = (type: "Regular" | "Premium") => {
     const nextSub = getSubOptions(f.category, type)[0] ?? "";
     setF((s: any) => ({ ...s, type, subCategory: nextSub }));
@@ -356,9 +356,7 @@ const isWelcomeKit = f.category === "Corporate Welcome Kit";
          {!isWelcomeKit && (
   <>
     <Field label="Material"><Input value={f.material} onChange={(e) => set("material", e.target.value)} /></Field>
-    {!isArrheniux && (
-      <Field label="Sample Price *"><Input type="number" value={f.samplePrice} onChange={(e) => set("samplePrice", Number(e.target.value))} /></Field>
-    )}
+    <Field label="Sample Price *"><Input type="number" value={f.samplePrice} onChange={(e) => set("samplePrice", Number(e.target.value))} /></Field>
     <Field label="Original Price *"><Input type="number" value={f.originalPrice} onChange={(e) => set("originalPrice", Number(e.target.value))} /></Field>
   </>
 )}
@@ -383,7 +381,7 @@ const isWelcomeKit = f.category === "Corporate Welcome Kit";
                 }}
               />
             </div>
-            {!isArrheniux && (
+            {/* {!isArrheniux && ( */}
               <div className="flex items-center justify-between rounded-lg border border-border p-3">
                 <div>
                   <Label className="text-xs">Show in Bulk Order section</Label>
@@ -397,7 +395,7 @@ const isWelcomeKit = f.category === "Corporate Welcome Kit";
                   }}
                 />
               </div>
-            )}
+        
           </div>
           <div className="md:col-span-2">
             <Field label="Product Images (up to 4)">

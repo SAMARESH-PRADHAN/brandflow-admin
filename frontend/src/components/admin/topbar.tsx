@@ -11,7 +11,7 @@ import { Fragment } from "react";
 // import { useCollection, type Notification } from "@/lib/store";
 
 const routeLabels: Record<string, string> = {
-  "": "Dashboard", products: "Products", "new-collection": "New Collection",
+  "": "Dashboard", products: "Products", "new-collection": "Arreheniux Top Wear",
   b2b: "B2B Shop", "welcome-kits": "Welcome Kits", orders: "Orders",
   samples: "Samples", status: "Order Updation", customers: "Customers",
   agents: "B2B Agents", "agent-visits": "Agent Visits",
