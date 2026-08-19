@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { query, queryOne, execute } from "../../db/pool.js";
+import { query, execute } from "../../db/pool.js";
 import { newId, parseJsonBody } from "../../lib/http.js";
 import { mapDiscountTier } from "../../lib/mappers.js";
 
