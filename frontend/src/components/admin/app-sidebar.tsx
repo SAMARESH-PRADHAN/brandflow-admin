@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, BarChart3, Package, PackagePlus, Boxes, Gift,
   ShoppingCart, ClipboardList, GitBranch, Users, Briefcase, MapPin,
-  CreditCard, Star, SlidersHorizontal,
+  CreditCard, Star, SlidersHorizontal, Printer,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -17,10 +17,11 @@ const nav = [
   ]},
   { label: "Product Management", items: [
     { title: "Products", url: "/products", icon: Package },
-    { title: "New Collection", url: "/products/new-collection", icon: PackagePlus },
+{ title: "Arreheniux Top Wear", url: "/products/new-collection", icon: PackagePlus },
     { title: "B2B Shop Products", url: "/products/b2b", icon: Boxes },
     // { title: "Welcome Kits", url: "/products/welcome-kits", icon: Gift },
     { title: "Minimum Order Qty", url: "/moq-settings", icon: SlidersHorizontal },
+    { title: "Print Settings", url: "/print-settings", icon: Printer },
   ]},
   { label: "Orders", items: [
     { title: "All Orders", url: "/orders", icon: ShoppingCart },
@@ -53,7 +54,7 @@ export function AppSidebar() {
 </div>
           {!collapsed && (
             <div className="min-w-0">
-              <div className="font-display text-lg text-sidebar-foreground">ARRENIUX</div>
+              <div className="font-display text-lg text-sidebar-foreground">ARRHENIUX</div>
               <div className="text-[10px] font-medium uppercase tracking-[0.2em] text-sidebar-foreground/60">
                 Admin Panel
               </div>

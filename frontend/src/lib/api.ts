@@ -15,6 +15,7 @@ const PATHS: Record<string, string> = {
   notifications: "notifications",
    moqSettings: "moq-settings",
    discountTiers: "discount-tiers",
+   printSettings: "print-settings",
 };
 
 export type DiscountTier = {
@@ -123,4 +124,45 @@ export async function upsertMoqSetting(input: {
   minQty: number;
 }): Promise<MoqSetting> {
   return request<MoqSetting>("moq-settings", { method: "PUT", body: JSON.stringify(input) });
+}
+
+
+export type PrintOptionDto = { id: string; label: string; pricePerPc: number };
+export type PrintMethodDto = {
+  id: string;
+  label: string;
+  note?: string;
+  options: PrintOptionDto[];
+};
+export type PrintConfigDto =
+  | { kind: "none" }
+  | { kind: "free"; label: string }
+  | { kind: "custom"; methods: PrintMethodDto[] };
+
+export type PrintSetting = {
+  id: string;
+  category: string;
+  productType: string | null; // "Regular" | "Premium" | null
+  subCategory: string | null;
+  config: PrintConfigDto;
+};
+
+export async function fetchPrintSettings(): Promise<PrintSetting[]> {
+  return request<PrintSetting[]>("print-settings");
+}
+
+export async function upsertPrintSetting(input: {
+  category: string;
+  productType?: string | null;
+  subCategory?: string | null;
+  config: PrintConfigDto;
+}): Promise<PrintSetting> {
+  return request<PrintSetting>("print-settings", {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deletePrintSetting(id: string): Promise<void> {
+  await request(`print-settings/${id}`, { method: "DELETE" });
 }

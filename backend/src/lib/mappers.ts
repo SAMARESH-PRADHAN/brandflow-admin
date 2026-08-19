@@ -275,6 +275,25 @@ export function mapDiscountTier(row: Record<string, unknown>) {
   };
 }
 
+export function mapPrintSetting(row: Record<string, unknown>) {
+  return {
+    id: row.id as string,
+    category: row.category as string,
+    productType: (row.product_type as string | null) ?? null,
+    subCategory: (row.sub_category as string | null) ?? null,
+    config: row.config as {
+      kind: "none" | "free" | "custom";
+      label?: string;
+      methods?: Array<{
+        id: string;
+        label: string;
+        note?: string;
+        options: Array<{ id: string; label: string; pricePerPc: number }>;
+      }>;
+    },
+  };
+}
+
 export function mapSettings(row: Record<string, unknown>) {
   return {
     brand: row.brand as string,

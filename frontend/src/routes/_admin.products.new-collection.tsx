@@ -148,9 +148,9 @@ const checkCodeDuplicate = () => {
   ];
 
   return (
-    <PageShell
-      title="New Collection"
-      subtitle="Seasonal drops & fresh launches"
+   <PageShell
+  title="Arreheniux Top Wear"
+  subtitle="Seasonal drops & fresh launches"
       actions={
         <Button onClick={openNew}>
           <Plus className="mr-1 h-4 w-4" /> Add Item
@@ -170,7 +170,7 @@ const checkCodeDuplicate = () => {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit" : "Add"} New Collection Item</DialogTitle>
+<DialogTitle>{editing ? "Edit" : "Add"} Arreheniux Top Wear Item</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 md:grid-cols-2">
             <F label="Code *">
