@@ -344,3 +344,261 @@ export function downloadOrderLogo(order: Order) {
   a.click();
   a.remove();
 }
+
+
+
+
+
+// Shipping label — mirrors a courier-style shipping slip (Ship To / package info /
+// Shipped By / product table), without a barcode, using our own brand logo.
+export async function generateShippingSlipPDF(
+  order: Order,
+  opts?: {
+    brand?: string;
+    brandAddressLines?: string[];
+    brandGSTIN?: string;
+    brandPhone?: string;
+    courierName?: string; // e.g. "Standard Surface Shipping"
+    download?: boolean;
+  },
+) {
+  const brand = opts?.brand ?? "ARRHENIUX";
+
+  // ⬇️ EDIT THIS: your real company return address, shown in "Shipped By".
+  const brandAddressLines = opts?.brandAddressLines ?? [
+    "Q.No F34/6, Near the Maa Mangala Flyash Bricks,",
+    "Tarini Vihar, Bhubaneswar",
+    "Bhubaneswar, Odisha, India",
+    "751031",
+  ];
+  // ⬇️ EDIT THIS: your real GSTIN.
+  const brandGSTIN = opts?.brandGSTIN ?? "21AHNPJ5720C1ZU";
+  // ⬇️ EDIT THIS: your real support/contact phone.
+  const brandPhone = opts?.brandPhone ?? "9937864993";
+
+  const courierName = opts?.courierName ?? "Standard Surface Shipping";
+
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const logo = await loadLogo();
+  const W = doc.internal.pageSize.getWidth();
+  const M = 25;
+
+  const subtotal = order.qty * order.unitPrice;
+  const printingTotal = order.printingPrice ?? 0;
+  const discountAmt = order.discountAmt ?? 0;
+  const gst = (subtotal + printingTotal - discountAmt + order.shipping) * (order.gstPct / 100);
+  const grand = order.totalAmount > 0 ? order.totalAmount : subtotal + printingTotal - discountAmt + order.shipping + gst;
+
+  const paymentLabel = order.paymentStatus === "Paid" ? "PREPAID" : order.paymentMethod === "COD" ? "COD" : order.paymentStatus.toUpperCase();
+
+  const sizesLine = Object.entries(order.sizes ?? {})
+    .filter(([, qty]) => qty > 0)
+    .map(([s, qty]) => `${s}:${qty}`)
+    .join("  ");
+
+  // Outer border
+  doc.setDrawColor(0);
+  doc.setLineWidth(1.2);
+  doc.rect(M, M, W - 2 * M, 1010);
+
+  let y = M;
+  const left = M + 12;
+  const right = W - M - 12;
+
+  // ---------- Section 1: Ship To ----------
+  const sec1H = 190;
+  doc.line(M, y + sec1H, W - M, y + sec1H);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.text("Ship To", left, y + 26);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  const shipLines = [
+    order.customer,
+    order.address,
+    order.companyName ? `Company: ${order.companyName}` : "",
+        order.gstNumber ? `GSTIN: ${order.gstNumber}` : "",
+    `Phone No.: ${order.phone}`,
+  ].filter(Boolean) as string[];
+
+  let sy = y + 48;
+  shipLines.forEach((line) => {
+    const wrapped = doc.splitTextToSize(String(line), 420);
+    doc.text(wrapped, left, sy);
+    sy += wrapped.length * 16;
+  });
+
+  try {
+    doc.addImage(logo, "PNG", right - 90, y + 20, 80, 80);
+  } catch {
+    /* ignore logo failures */
+  }
+
+  y += sec1H;
+
+  // ---------- Section 2: Package / payment info ----------
+  const sec2H = 120;
+  doc.line(M, y + sec2H, W - M, y + sec2H);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+
+  const infoLeft: [string, string][] = [
+    // ["Dimensions:", "N/A"],
+    ["Payment:", paymentLabel],
+    ["ORDER TOTAL:", `${grand.toFixed(2)} INR`],
+    // ["Weight:", "N/A"],
+  ];
+  let iy = y + 26;
+  infoLeft.forEach(([k, v]) => {
+    doc.setFont("helvetica", "normal");
+    doc.text(k, left, iy);
+    doc.setFont("helvetica", "bold");
+    doc.text(v, left + 90, iy);
+    iy += 20;
+  });
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(13);
+  doc.text(courierName, right, y + 34, { align: "right" });
+
+  y += sec2H;
+
+  // ---------- Section 3: Shipped By ----------
+  const sec3H = 150;
+  doc.line(M, y + sec3H, W - M, y + sec3H);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("Shipped By", left, y + 22);
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(9);
+  doc.text("(If undelivered, return to)", left + 78, y + 22);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10.5);
+  let by = y + 42;
+  const brandLines = [brand, ...brandAddressLines];
+  brandLines.forEach((line) => {
+    const wrapped = doc.splitTextToSize(line, 280);
+    doc.text(wrapped, left, by);
+    by += wrapped.length * 15;
+  });
+  if (brandGSTIN) {
+    doc.text(`GSTIN: ${brandGSTIN}`, left, by);
+    by += 15;
+  }
+  if (brandPhone) {
+    doc.text(`Phone No.: ${brandPhone}`, left, by);
+    by += 15;
+  }
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text(`Order #: ${order.id}`, right, y + 42, { align: "right" });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10.5);
+  doc.text(`Invoice No.: ${order.id}`, right, y + 66, { align: "right" });
+  doc.text(`Invoice Date: ${order.date}`, right, y + 84, { align: "right" });
+
+  y += sec3H;
+
+  // ---------- Section 4: Product details table ----------
+  const headH = 24;
+  const rowH = 150;
+
+  // Column widths (must sum to right - left)
+  const usable = right - left;
+  const colW = {
+    details: 220,
+    qty: 40,
+    unit: 55,
+    print: 55,
+    discount: 55,
+    gst: 45,
+    total: usable - (220 + 40 + 55 + 55 + 55 + 45), // remainder, keeps columns from conflicting
+  };
+
+  const x0 = left;
+  const x1 = x0 + colW.details; // qty col start
+  const x2 = x1 + colW.qty; // unit price col start
+  const x3 = x2 + colW.unit; // print price col start
+  const x4 = x3 + colW.print; // discount col start
+  const x5 = x4 + colW.discount; // gst col start
+  const x6 = x5 + colW.gst; // total col start
+  const x7 = right; // right edge
+
+  doc.setDrawColor(0);
+  doc.line(M, y + headH, W - M, y + headH);
+  doc.line(M, y + headH + rowH, W - M, y + headH + rowH);
+  [x1, x2, x3, x4, x5, x6].forEach((x) => {
+    doc.line(x, y, x, y + headH + rowH);
+  });
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.text("Product Details", x0 + 4, y + 16);
+  doc.text("Qty", x2 - 4, y + 16, { align: "right" });
+  doc.text("Unit Price", x3 - 4, y + 16, { align: "right" });
+  doc.text("Print Price", x4 - 4, y + 16, { align: "right" });
+  doc.text("Discount", x5 - 4, y + 16, { align: "right" });
+  doc.text("GST", x6 - 4, y + 16, { align: "right" });
+  doc.text("Total", x7 - 4, y + 16, { align: "right" });
+
+  // Product details cell — name, code, category, type, sub-category, material, sizes, print type
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  const detailLines: string[] = [
+    order.productName,
+    `Code: ${order.productCode}`,
+    `Category: ${order.category}`,
+    `Type: ${order.productType}`,
+    `Sub-category: ${order.subCategory}`,
+    `Material: ${order.material}`,
+    sizesLine ? `Sizes: ${sizesLine}` : "",
+    order.printType ? `Print: ${order.printType}` : "",
+  ].filter(Boolean);
+
+  let dy = y + headH + 14;
+  const maxDetailWidth = colW.details - 8;
+  detailLines.forEach((line) => {
+    const wrapped = doc.splitTextToSize(line, maxDetailWidth);
+    doc.text(wrapped, x0 + 4, dy);
+    dy += wrapped.length * 11;
+  });
+
+  // Numeric columns — vertically aligned near the top of the row, no overlap with details
+  const numY = y + headH + 16;
+  doc.setFontSize(9);
+  doc.text(String(order.qty), x2 - 4, numY, { align: "right" });
+  doc.text(order.unitPrice.toFixed(2), x3 - 4, numY, { align: "right" });
+  doc.text(printingTotal.toFixed(2), x4 - 4, numY, { align: "right" });
+  doc.text(discountAmt > 0 ? `-${discountAmt.toFixed(2)}` : "0.00", x5 - 4, numY, { align: "right" });
+  doc.text(gst.toFixed(2), x6 - 4, numY, { align: "right" });
+  doc.setFont("helvetica", "bold");
+  doc.text(grand.toFixed(2), x7 - 4, numY, { align: "right" });
+
+  y += headH + rowH;
+
+  // ---------- Section 5: disputes note ----------
+  const sec5H = 50;
+  doc.line(M, y + sec5H, W - M, y + sec5H);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  const disputeText = doc.splitTextToSize(
+    "All disputes are subject to local jurisdiction only. Goods once sold will only be taken back or exchanged as per the store's exchange/return policy.",
+    W - 2 * M - 24,
+  );
+  doc.text(disputeText, left, y + 20);
+
+  y += sec5H;
+
+  // ---------- Section 6: footer ----------
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text("THIS IS AN AUTO-GENERATED LABEL AND DOES NOT NEED SIGNATURE.", left, y + 26);
+  doc.setFont("helvetica", "bold");
+  doc.text(`Powered By: ${brand}`, right, y + 26, { align: "right" });
+
+  if (opts?.download !== false) doc.save(`${order.id}-shipping-slip.pdf`);
+  return doc;
+}
