@@ -75,40 +75,113 @@ export async function generateOrderPDF(
   //     W-30,
   //     doc.internal.pageSize.getHeight()-30
   // );
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  const cust = [order.customer, order.phone, order.email, order.address];
-  cust.forEach((line, i) => doc.text(String(line || ""), 40, y + i * 14, { maxWidth: 240 }));
+  // doc.setFont("helvetica", "normal");
+  // doc.setFontSize(10);
+  // const cust = [
+  //   order.customer,
+  //   order.phone,
+  //   order.email,
+  //   order.address,
+  //   order.companyName ? `Company: ${order.companyName}` : "",
+  //   order.gstNumber ? `GST: ${order.gstNumber}` : "",
+  // ].filter(Boolean);
+  // cust.forEach((line, i) => doc.text(String(line || ""), 40, y + i * 14, { maxWidth: 240 }));
 
+  // // later, if notes exist:
+  // if (order.notes?.trim()) {
+  //   y += 20; // adjust
+  //   doc.setFont("helvetica", "bold");
+  //   doc.text("Notes", 40, y);
+  //   y += 14;
+  //   doc.setFont("helvetica", "normal");
+  //   doc.text(order.notes, 40, y, { maxWidth: W - 80 });
+  // }
+  // const info: [string, string][] = [
+  //   ["Type", order.type],
+  //   ["Status", order.status],
+  //   ["Payment", `${order.paymentStatus} • ${order.paymentMethod}`],
+  //   ["Print", `${order.printType} @ ${order.printLocation}`],
+  // ];
+  // let infoY = y;
+
+  // info.forEach(([k, v]) => {
+  //   doc.setFont("helvetica", "bold");
+  //   doc.text(k, W / 2 + 20, infoY);
+
+  //   doc.setFont("helvetica", "normal");
+
+  //   // Automatically wrap long text
+  //   const wrapped = doc.splitTextToSize(String(v), 160);
+
+  //   doc.text(wrapped, W / 2 + 90, infoY);
+
+  //   // Move according to wrapped height
+  //   infoY += wrapped.length * 14;
+  // });
+
+  // // Make customer section and order info finish together
+  // y = Math.max(y + cust.length * 14, infoY);
+  // y += 14 * 5;
+
+    doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+
+  // ---- LEFT COLUMN: Customer details ----
+  const custItems: string[] = [
+    order.customer,
+    order.phone,
+    order.email,
+    order.address,
+  ].filter(Boolean) as string[];
+
+ if (order.companyName) custItems.push(`Company: ${order.companyName}`);
+  if (order.gstNumber) custItems.push(`GST: ${order.gstNumber}`);
+
+  let custY = y;
+  custItems.forEach((item) => {
+    const wrapped = doc.splitTextToSize(String(item), 240);
+    doc.text(wrapped, 40, custY);
+    custY += wrapped.length * 14;
+  });
+
+  // ---- RIGHT: Order Info ----
   const info: [string, string][] = [
     ["Type", order.type],
     ["Status", order.status],
     ["Payment", `${order.paymentStatus} • ${order.paymentMethod}`],
-    ["Print", `${order.printType} @ ${order.printLocation}`],
+    ["Print", `${order.printType || "—"}`],
   ];
+
   let infoY = y;
+  info.forEach(([k, v]) => {
+    doc.setFont("helvetica", "bold");
+    doc.text(k, W / 2 + 20, infoY);
+    doc.setFont("helvetica", "normal");
+    const wrapped = doc.splitTextToSize(String(v), 160);
+    doc.text(wrapped, W / 2 + 90, infoY);
+    infoY += wrapped.length * 14;
+  });
 
-info.forEach(([k, v]) => {
-  doc.setFont("helvetica", "bold");
-  doc.text(k, W / 2 + 20, infoY);
+  // Align bottom of both columns
+  y = Math.max(custY, infoY) + 12;
 
-  doc.setFont("helvetica", "normal");
+  
 
-  // Automatically wrap long text
-  const wrapped = doc.splitTextToSize(String(v), 160);
+ // ---- Optional Notes (full width, no overlap) ----
+  if (order.notes?.trim()) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("Notes", 40, y);
+    y += 12;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    const noteLines = doc.splitTextToSize(order.notes, W - 80);
+    doc.text(noteLines, 40, y);
+    y += noteLines.length * 12 + 10;
+  }
 
-  doc.text(wrapped, W / 2 + 90, infoY);
+  y += 8;
 
-  // Move according to wrapped height
-  infoY += wrapped.length * 14;
-});
-
-// Make customer section and order info finish together
-y = Math.max(
-  y + cust.length * 14,
-  infoY
-);
-  y += 14 * 5;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.text("Product", 40, y);
@@ -119,7 +192,7 @@ y = Math.max(
   doc.setFontSize(10);
   doc.text(`${order.productCode} — ${order.productName}`, 40, y);
   y += 14;
-   if (order.description && order.description.trim()) {
+  if (order.description && order.description.trim()) {
     const safeDescription = order.description.replace(/₹/g, "Rs.");
     const descLines = doc.splitTextToSize(safeDescription, W - 80);
     doc.setFont("helvetica", "normal");
@@ -177,19 +250,18 @@ y = Math.max(
   const gst = taxable * (order.gstPct / 100);
   const grand = order.totalAmount > 0 ? order.totalAmount : taxable + gst;
   y += 10;
-  doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
   doc.text("Invoice", 40, y);
-  y += 6; doc.line(40, y, W - 40, y); y += 16;
-  doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+  y += 6;
+  doc.line(40, y, W - 40, y);
+  y += 16;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
   const labelX = 40;
-const valueX = W - 40;
-const rsX = W - 95;
-const line = (
-    label: string,
-    value: string,
-    bold = false
-) => {
-
+  const valueX = W - 40;
+  const rsX = W - 95;
+  const line = (label: string, value: string, bold = false) => {
     doc.setFont("helvetica", bold ? "bold" : "normal");
 
     doc.text(label, labelX, y);
@@ -197,15 +269,15 @@ const line = (
     const amount = value.replace("Rs. ", "");
 
     doc.text("Rs.", rsX, y, {
-        align: "right",
+      align: "right",
     });
 
     doc.text(amount, valueX, y, {
-        align: "right",
+      align: "right",
     });
 
     y += 18;
-};
+  };
   line("Quantity", String(order.qty));
   line("Unit Price", rs(order.unitPrice));
   line("Subtotal", rs(subtotal));
@@ -213,32 +285,28 @@ const line = (
   if (discountAmt > 0) line(`Discount (${order.discountPct}%)`, `-${rs(discountAmt)}`);
   line(`GST (${order.gstPct}%)`, rs(gst));
   line("Shipping", rs(order.shipping));
-  doc.line(40, y, W - 40, y); y += 20;
+  doc.line(40, y, W - 40, y);
+  y += 20;
   line("Grand Total", rs(grand), true);
   const paid = order.paidAmount > 0 ? order.paidAmount : grand;
   line("Amount Paid", rs(paid));
   if (order.paidAmount > 0 && order.paidAmount < grand) {
     line("Balance Due", rs(grand - order.paidAmount));
   }
-  
+
   doc.line(40, y, W - 40, y);
   y += 12;
   doc.setFillColor(34, 102, 170);
   doc.setTextColor(20, 20, 20);
-doc.roundedRect(35, y - 16, W - 70, 34, 4, 4, "F");
+  doc.roundedRect(35, y - 16, W - 70, 34, 4, 4, "F");
   doc.setFontSize(13);
   doc.setTextColor(255);
 
-doc.text("Grand Total", 50, y + 6);
+  doc.text("Grand Total", 50, y + 6);
 
-doc.text(
-    rs(grand),
-    W - 50,
-    y + 6,
-    {
-        align: "right",
-    }
-);
+  doc.text(rs(grand), W - 50, y + 6, {
+    align: "right",
+  });
 
   y += 40;
   doc.setTextColor(20);

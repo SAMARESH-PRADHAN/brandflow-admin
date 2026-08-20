@@ -104,7 +104,7 @@ function OrderDetail() {
       }
     >
       <div className="print-area grid gap-4 lg:grid-cols-3">
-        <SectionCard title="Customer" className="lg:col-span-1">
+               <SectionCard title="Customer" className="lg:col-span-1">
           <div className="space-y-2 text-sm">
             <div>
               <span className="text-muted-foreground">Name: </span>
@@ -122,6 +122,24 @@ function OrderDetail() {
               <span className="text-muted-foreground">Address: </span>
               {order.address}
             </div>
+            {order.companyName ? (
+              <div>
+                <span className="text-muted-foreground">Company: </span>
+                {order.companyName}
+              </div>
+            ) : null}
+            {order.gstNumber ? (
+              <div>
+                <span className="text-muted-foreground">GST Number: </span>
+                {order.gstNumber}
+              </div>
+            ) : null}
+            {order.notes ? (
+              <div>
+                <span className="text-muted-foreground">Additional Notes: </span>
+                <span className="whitespace-pre-wrap">{order.notes}</span>
+              </div>
+            ) : null}
           </div>
         </SectionCard>
 

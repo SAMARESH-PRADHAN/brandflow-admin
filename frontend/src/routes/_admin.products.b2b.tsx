@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Eye, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, Loader2, Copy } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
 import { DataTable, exportCsv, type Column } from "@/components/admin/data-table";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -63,6 +63,18 @@ function B2BPage() {
     setF({ ...p, images: p.images ?? (p.image ? [p.image] : []) });
     setOpen(true);
   };
+  const openCopy = (p: B2BProduct) => {
+  setEditing(null);
+  const { id, code, images, image, createdAt, ...rest } = p;
+  setF({
+    ...rest,
+    code: "",
+    images: [],
+    image: "",
+  });
+  setCodeDuplicate(false);
+  setOpen(true);
+};
   const checkCodeDuplicate = () => {
   const code = (f.code ?? "").trim().toLowerCase();
   if (!code) { setCodeDuplicate(false); return; }
@@ -133,6 +145,9 @@ function B2BPage() {
           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(p)}>
             <Pencil className="h-4 w-4" />
           </Button>
+ <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openCopy(p)} title="Copy to new product">
+      <Copy className="h-4 w-4" />
+    </Button>
           <ConfirmButton
             trigger={
               <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive">

@@ -20,7 +20,7 @@ const nav = [
 { title: "Arreheniux Top Wear", url: "/products/new-collection", icon: PackagePlus },
     { title: "B2B Shop Products", url: "/products/b2b", icon: Boxes },
     // { title: "Welcome Kits", url: "/products/welcome-kits", icon: Gift },
-    { title: "Minimum Order Qty", url: "/moq-settings", icon: SlidersHorizontal },
+    { title: "MOQ & Discount", url: "/moq-settings", icon: SlidersHorizontal },
     { title: "Print Settings", url: "/print-settings", icon: Printer },
   ]},
   { label: "Orders", items: [

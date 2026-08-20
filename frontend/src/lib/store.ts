@@ -88,6 +88,9 @@ export type Order = {
   phone: string;
   email: string;
   address: string;
+  companyName?: string;
+gstNumber?: string;
+notes?: string;
   productId: string;
   productCode: string;
   productName: string;

@@ -39,6 +39,7 @@ async function insertOrder(body: Record<string, unknown>, isSample: boolean) {
   await execute(
     `INSERT INTO orders (
       id, customer_id, customer_name, phone, email, address,
+      company_name, gst_number, notes,
       product_id, product_code, product_name, category, product_type, sub_category,
       material, description, print_type, print_location, uploaded_logo,
       sizes, qty, unit_price,  printing_price, gst_pct, shipping,
@@ -47,7 +48,7 @@ async function insertOrder(body: Record<string, unknown>, isSample: boolean) {
     ) VALUES (
       $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,
       $22,$23,$24,$25,
-      $26,$27,$28,$29,$30,$31,$32,$33,$34
+      $26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37
     )`,
     [
       id,
@@ -56,6 +57,9 @@ async function insertOrder(body: Record<string, unknown>, isSample: boolean) {
       body.phone ?? "",
       body.email ?? "",
       body.address ?? "",
+      body.companyName ?? "",
+body.gstNumber ?? "",
+body.notes ?? "",
       body.productId ?? null,
       body.productCode ?? "",
       body.productName ?? "",
@@ -92,7 +96,7 @@ async function insertOrder(body: Record<string, unknown>, isSample: boolean) {
 export const orderRoutes = new Hono();
 /** List only — detail page still uses SELECT * on GET /:id */
 const ORDER_LIST_COLUMNS = `
-  id, customer_id, customer_name, phone, email, address,
+  id, customer_id, customer_name, phone, email, address, company_name, gst_number, notes,
   product_id, product_code, product_name, category, product_type, sub_category,
   material, description, print_type, print_location, uploaded_logo,
   sizes, qty, unit_price, printing_price, gst_pct, shipping,
@@ -150,6 +154,9 @@ orderRoutes.patch("/:id", async (c) => {
     phone: "phone",
     email: "email",
     address: "address",
+    companyName: "company_name",
+gstNumber:   "gst_number",
+notes:       "notes",
     productId: "product_id",
     productCode: "product_code",
     productName: "product_name",
