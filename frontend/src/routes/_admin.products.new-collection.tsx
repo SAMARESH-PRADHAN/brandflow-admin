@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Eye, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, Loader2, Copy } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
 import { DataTable, exportCsv, type Column } from "@/components/admin/data-table";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -55,22 +55,43 @@ function NewColl() {
     image: "",
     images: [] as string[],
   });
-const openNew = () => { setEditing(null); setF(empty()); setImagesUploading(false); setSubmitting(false); setOpen(true); };
-const openEdit = (p: NewCollectionProduct) => {
-  setEditing(p);
-  setF({ ...empty(), ...p, images: p.images ?? (p.image ? [p.image] : []) });
+  const openNew = () => {
+    setEditing(null);
+    setF(empty());
+    setImagesUploading(false);
+    setSubmitting(false);
+    setOpen(true);
+  };
+  const openEdit = (p: NewCollectionProduct) => {
+    setEditing(p);
+    setF({ ...empty(), ...p, images: p.images ?? (p.image ? [p.image] : []) });
+    setImagesUploading(false);
+    setSubmitting(false);
+    setOpen(true);
+  };
+  const openCopy = (p: NewCollectionProduct) => {
+  setEditing(null); // creating new
+  const { id, code, images, image, createdAt, ...rest } = p;
+  setF({
+    ...empty(),
+    ...rest,
+    code: "",
+    images: [],
+    image: "",
+  });
   setImagesUploading(false);
   setSubmitting(false);
   setOpen(true);
 };
-const checkCodeDuplicate = () => {
-  const code = (f.code ?? "").trim().toLowerCase();
-  if (!code) { setCodeDuplicate(false); return; }
-  const dup = data.some(
-    (p) => p.code.trim().toLowerCase() === code && p.id !== editing?.id
-  );
-  setCodeDuplicate(dup);
-};
+  const checkCodeDuplicate = () => {
+    const code = (f.code ?? "").trim().toLowerCase();
+    if (!code) {
+      setCodeDuplicate(false);
+      return;
+    }
+    const dup = data.some((p) => p.code.trim().toLowerCase() === code && p.id !== editing?.id);
+    setCodeDuplicate(dup);
+  };
 
   const cols: Column<NewCollectionProduct>[] = [
     {
@@ -126,6 +147,9 @@ const checkCodeDuplicate = () => {
           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(p)}>
             <Pencil className="h-4 w-4" />
           </Button>
+           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openCopy(p)} title="Copy to new item">
+      <Copy className="h-4 w-4" />
+    </Button> 
           <ConfirmButton
             trigger={
               <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive">
@@ -148,9 +172,9 @@ const checkCodeDuplicate = () => {
   ];
 
   return (
-   <PageShell
-  title="Arreheniux Top Wear"
-  subtitle="Seasonal drops & fresh launches"
+    <PageShell
+      title="Arreheniux Top Wear"
+      subtitle="Seasonal drops & fresh launches"
       actions={
         <Button onClick={openNew}>
           <Plus className="mr-1 h-4 w-4" /> Add Item
@@ -170,22 +194,30 @@ const checkCodeDuplicate = () => {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
-<DialogTitle>{editing ? "Edit" : "Add"} Arreheniux Top Wear Item</DialogTitle>
+            <DialogTitle>{editing ? "Edit" : "Add"} Arreheniux Top Wear Item</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 md:grid-cols-2">
             <F label="Code *">
-  <Input
-    value={f.code}
-    onChange={(e) => { setF({ ...f, code: e.target.value }); setCodeDuplicate(false); }}
-    onBlur={checkCodeDuplicate}
-    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); checkCodeDuplicate(); } }}
-  />
-  {codeDuplicate && (
-    <p className="mt-1 text-xs" style={{ color: "red" }}>
-      This product code already exists.
-    </p>
-  )}
-</F>
+              <Input
+                value={f.code}
+                onChange={(e) => {
+                  setF({ ...f, code: e.target.value });
+                  setCodeDuplicate(false);
+                }}
+                onBlur={checkCodeDuplicate}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    checkCodeDuplicate();
+                  }
+                }}
+              />
+              {codeDuplicate && (
+                <p className="mt-1 text-xs" style={{ color: "red" }}>
+                  This product code already exists.
+                </p>
+              )}
+            </F>
             <F label="Name *">
               <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
             </F>
@@ -206,7 +238,7 @@ const checkCodeDuplicate = () => {
                 </SelectContent>
               </Select>
             </F>
-            
+
             <F label="Original Price *">
               <Input
                 type="number"
@@ -269,55 +301,57 @@ const checkCodeDuplicate = () => {
             </TabsContent>
           </Tabs>
 
-         <DialogFooter>
-  <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
-    Cancel
-  </Button>
-  <Button
-    disabled={imagesUploading || submitting}
-    onClick={async () => {
-      if (!f.code?.trim() || !f.name?.trim() || !f.originalPrice) {
-        toast.error("Code, Name and Original Price are required");
-        return;
-      }
-      const dup = data.some(
-        (p) => p.code.trim().toLowerCase() === f.code.trim().toLowerCase() && p.id !== editing?.id
-      );
-      if (dup) {
-        toast.error("Product code already exists");
-        return;
-      }
-      setSubmitting(true);
-      try {
-        if (editing) {
-          await update(editing.id, f);
-          toast.success("Updated");
-        } else {
-          await add({ ...f, createdAt: new Date().toISOString().slice(0, 10) } as any);
-          toast.success("Added");
-        }
-        setOpen(false);
-      } catch (err) {
-        mutationError(err, editing ? "Failed to update item" : "Failed to add item");
-      } finally {
-        setSubmitting(false);
-      }
-    }}
-  >
-    {submitting ? (
-      <>
-        <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-        {editing ? "Saving..." : "Adding..."}
-      </>
-    ) : imagesUploading ? (
-      "Uploading image..."
-    ) : editing ? (
-      "Save"
-    ) : (
-      "Add"
-    )}
-  </Button>
-</DialogFooter>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
+              Cancel
+            </Button>
+            <Button
+              disabled={imagesUploading || submitting}
+              onClick={async () => {
+                if (!f.code?.trim() || !f.name?.trim() || !f.originalPrice) {
+                  toast.error("Code, Name and Original Price are required");
+                  return;
+                }
+                const dup = data.some(
+                  (p) =>
+                    p.code.trim().toLowerCase() === f.code.trim().toLowerCase() &&
+                    p.id !== editing?.id,
+                );
+                if (dup) {
+                  toast.error("Product code already exists");
+                  return;
+                }
+                setSubmitting(true);
+                try {
+                  if (editing) {
+                    await update(editing.id, f);
+                    toast.success("Updated");
+                  } else {
+                    await add({ ...f, createdAt: new Date().toISOString().slice(0, 10) } as any);
+                    toast.success("Added");
+                  }
+                  setOpen(false);
+                } catch (err) {
+                  mutationError(err, editing ? "Failed to update item" : "Failed to add item");
+                } finally {
+                  setSubmitting(false);
+                }
+              }}
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                  {editing ? "Saving..." : "Adding..."}
+                </>
+              ) : imagesUploading ? (
+                "Uploading image..."
+              ) : editing ? (
+                "Save"
+              ) : (
+                "Add"
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

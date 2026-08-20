@@ -1,5 +1,5 @@
 import { useMemo, useState ,useEffect } from "react";
-import { Plus, Pencil, Trash2, Eye, Filter, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, Filter, Loader2, Copy } from "lucide-react";
 import { PageShell } from "@/components/admin/page-shell";
 import { DataTable, exportCsv, type Column } from "@/components/admin/data-table";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -43,6 +43,7 @@ function ProductsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [viewing, setViewing] = useState<Product | null>(null);
+  const [copySource, setCopySource] = useState<Product | null>(null);
 
   // Sub-category filter options depend on the selected category filter.
   const filterSubOptions = useMemo(() => {
@@ -79,6 +80,11 @@ function ProductsPage() {
 
   const openNew = () => { setEditing(null); setOpen(true); };
   const openEdit = (p: Product) => { setEditing(p); setOpen(true); };
+  const openCopy = (p: Product) => {
+  setEditing(null);        // we're creating a NEW product
+  setCopySource(p);        // but pre-fill from this one
+  setOpen(true);
+};
 
   const cols: Column<Product>[] = [
     { key: "code", header: "Code", render: (p) => <span className="font-mono text-xs">{p.code}</span>, sortable: true, getValue: (p) => p.code },
@@ -106,7 +112,10 @@ function ProductsPage() {
       <div className="flex justify-end gap-1">
         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setViewing(p)}><Eye className="h-4 w-4" /></Button>
         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
-        <ConfirmButton
+ <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openCopy(p)} title="Copy to new product">
+      <Copy className="h-4 w-4" />
+    </Button>
+            <ConfirmButton
           trigger={<Button size="icon" variant="ghost" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>}
           title="Delete product?" description={`This will permanently delete ${p.name}.`}
           onConfirm={async () => {
@@ -159,7 +168,10 @@ function ProductsPage() {
       />
 
       <ProductDialog
-        open={open} onOpenChange={setOpen} editing={editing}
+        open={open}
+  onOpenChange={(v) => { setOpen(v); if (!v) setCopySource(null); }}
+  editing={editing}
+  copySource={copySource}
         existingProducts={data}   // ← add
         onSubmit={async (v) => {
           if (!v.code?.trim() || !v.name?.trim() || v.samplePrice == null || v.originalPrice == null) {
@@ -219,11 +231,12 @@ function normalizeProduct(p: Product) {
 }
 
 function ProductDialog({
-  open, onOpenChange, editing, onSubmit, existingProducts,
+  open, onOpenChange, editing, onSubmit, existingProducts, copySource,
 }: {
   open: boolean; onOpenChange: (v: boolean) => void; editing: Product | null;
   onSubmit: (v: Partial<Product>) => void | Promise<void>;
   existingProducts: Product[];
+  copySource?: Product | null;
 }) { 
   const firstCategory = CATEGORY_NAMES[0]!;
   const empty = {
@@ -249,12 +262,26 @@ function ProductDialog({
   // would keep showing stale data after the first open.)
   useEffect(() => {
     if (open) {
-      setF(editing ? normalizeProduct(editing) : empty);
+      if (editing) {
+        setF(normalizeProduct(editing));
+      } else if (copySource) {
+        // Copy everything except id/code/images
+        const { id, code, images, image, createdAt, ...rest } = normalizeProduct(copySource);
+        setF({
+          ...empty,
+          ...rest,
+          code: "",     // must be unique — admin fills a new code
+          images: [],
+          image: "",
+        });
+      } else {
+        setF(empty);
+      }
       setImagesUploading(false);
-    setSubmitting(false);
+      setSubmitting(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, editing]);
+  }, [open, editing, copySource]);
 
   const set = (k: string, v: any) => setF((s: any) => ({ ...s, [k]: v }));
 const checkCodeDuplicate = () => {
@@ -293,13 +320,13 @@ const checkCodeDuplicate = () => {
     // ARRHENIUX products aren't offered as samples or via Bulk Order on the
     // storefront, so force visibility back to "Category" whenever the admin
     // switches into this category (mirrors the storefront's own gating).
-    // visibility: name === "ARRHENIUX T-Shirts" ? "Category" : s.visibility,
+    visibility: name === "ARRHENIUX T-Shirts" ? "Category" : s.visibility,
   }));
 };
 const isWelcomeKit = f.category === "Corporate Welcome Kit";
   // ARRHENIUX T-Shirts: no Sample Price field, no "Show in Bulk Order" toggle —
   // matches the storefront where ARRHENIUX products skip samples/bulk entirely.
-  // const isArrheniux = f.category === "ARRHENIUX T-Shirts";
+  const isArrheniux = f.category === "ARRHENIUX T-Shirts";
   const onTypeChange = (type: "Regular" | "Premium") => {
     const nextSub = getSubOptions(f.category, type)[0] ?? "";
     setF((s: any) => ({ ...s, type, subCategory: nextSub }));
@@ -356,7 +383,9 @@ const isWelcomeKit = f.category === "Corporate Welcome Kit";
          {!isWelcomeKit && (
   <>
     <Field label="Material"><Input value={f.material} onChange={(e) => set("material", e.target.value)} /></Field>
+     {!isArrheniux && (
     <Field label="Sample Price *"><Input type="number" value={f.samplePrice} onChange={(e) => set("samplePrice", Number(e.target.value))} /></Field>
+     )}
     <Field label="Original Price *"><Input type="number" value={f.originalPrice} onChange={(e) => set("originalPrice", Number(e.target.value))} /></Field>
   </>
 )}
@@ -381,11 +410,11 @@ const isWelcomeKit = f.category === "Corporate Welcome Kit";
                 }}
               />
             </div>
-            {/* {!isArrheniux && ( */}
+            {!isArrheniux && (
               <div className="flex items-center justify-between rounded-lg border border-border p-3">
                 <div>
                   <Label className="text-xs">Show in Bulk Order section</Label>
-                  <div className="text-[11px] text-muted-foreground">Visible in B2B/bulk listing</div>
+                  <div className="text-[11px] text-muted-foreground">Visible in bulk listing</div>
                 </div>
                 <Switch
                   checked={f.visibility === "Bulk" || f.visibility === "Both"}
@@ -395,7 +424,7 @@ const isWelcomeKit = f.category === "Corporate Welcome Kit";
                   }}
                 />
               </div>
-        
+            )}
           </div>
           <div className="md:col-span-2">
             <Field label="Product Images (up to 4)">
