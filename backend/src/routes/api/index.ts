@@ -18,10 +18,12 @@ import { dashboardRoutes } from "./dashboard.js";
 import { moqSettingsRoutes } from "./moq-settings.js";
 import { discountTierRoutes } from "./discount-tiers.js";
 import { printSettingsRoutes } from "./print-settings.js";
+import { adminAuthRoutes } from "./admin-auth.js";
 
 export const apiRoutes = new Hono();
 
 apiRoutes.route("/uploads", uploadRoutes);
+apiRoutes.route("/admin-auth", adminAuthRoutes);
 
 apiRoutes.use("*", requireDb);
 
@@ -46,6 +48,7 @@ apiRoutes.get("/", (c) =>
       "discount-tiers",
       "print-settings",
       "uploads",
+      "admin-auth",
     ],
   }),
 );
