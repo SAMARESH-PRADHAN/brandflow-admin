@@ -166,3 +166,14 @@ export async function upsertPrintSetting(input: {
 export async function deletePrintSetting(id: string): Promise<void> {
   await request(`print-settings/${id}`, { method: "DELETE" });
 }
+
+export async function adminLogin(email: string, password: string): Promise<{ ok: boolean; email: string }> {
+  return request("admin-auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
+}
+
+export async function adminForgotPassword(masterKey: string, newPassword: string): Promise<{ ok: boolean }> {
+  return request("admin-auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ masterKey, newPassword }),
+  });
+}

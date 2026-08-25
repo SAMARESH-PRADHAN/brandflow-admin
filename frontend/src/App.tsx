@@ -1,10 +1,12 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 
 import { Suspense, lazy } from "react";
 
 import AdminLayout from "./routes/_admin";
+import { isAdminAuthed } from "./lib/auth";
+const LoginPage = lazy(() => import("./routes/login"));
 const DashboardPage = lazy(() => import("./routes/_admin.index"));
 const AnalyticsPage = lazy(() => import("./routes/_admin.analytics"));
 const ProductsPage = lazy(() => import("./routes/_admin.products"));
@@ -54,13 +56,19 @@ function NotFound() {
   );
 }
 
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  if (!isAdminAuthed()) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Suspense fallback={<div className="flex h-screen w-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>}>
           <Routes>
-          <Route element={<AdminLayout />}>
+          <Route path="login" element={<LoginPage />} />
+          <Route element={<RequireAuth><AdminLayout /></RequireAuth>}>
             <Route index element={<DashboardPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="products" element={<ProductsPage />} />

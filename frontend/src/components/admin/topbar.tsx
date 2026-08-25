@@ -1,9 +1,10 @@
-import { Link, useLocation } from "react-router-dom";
-import { Moon, Sun } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Moon, Sun, LogOut } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 // import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useTheme } from "@/hooks/use-theme";
+import { setAdminAuthed } from "@/lib/auth";
 import {
   Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
@@ -26,6 +27,7 @@ const routeLabels: Record<string, string> = {
 export function Topbar() {
   const { theme, toggle } = useTheme();
   const pathname = useLocation().pathname;
+  const navigate = useNavigate();
   // const { data: notifs, setAll, update } = useCollection<Notification>("notifications");
 
   // const unread = notifs.filter((n) => !n.read).length;
@@ -64,6 +66,18 @@ export function Topbar() {
 
       <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
         {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label="Log out"
+        onClick={() => {
+          setAdminAuthed(false);
+          navigate("/login", { replace: true });
+        }}
+      >
+        <LogOut className="h-4 w-4" />
       </Button>
 
       {/* <Popover>
