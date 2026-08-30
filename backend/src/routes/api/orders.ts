@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
-import { HTTPException } from "hono/http-exception";
 import { query, queryOne, execute } from "../../db/pool.js";
 import { mapOrder } from "../../lib/mappers.js";
 import { deleteByIdWithImageCleanup, cleanupRemovedImagesOnPatch, newId, parseJsonBody, patchById } from "../../lib/http.js";
@@ -33,7 +32,7 @@ function buildOrderFilters(c: Context, isSample: boolean) {
   return { where: `WHERE ${conditions.join(" AND ")}`, params };
 }
 
-export async function insertOrder(body: Record<string, unknown>, isSample: boolean) {
+async function insertOrder(body: Record<string, unknown>, isSample: boolean) {
   const id = (body.id as string) ?? newId(isSample ? "SMP" : "ORD");
   const timeline = body.timeline ?? [{ status: body.status ?? "Placed", at: body.date ?? new Date().toISOString().slice(0, 10) }];
 
@@ -132,11 +131,6 @@ orderRoutes.get("/:id", async (c) => {
 
 orderRoutes.post("/", async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
-  if (body.paymentStatus === "Paid" && body.paymentMethod !== "COD") {
-    throw new HTTPException(403, {
-      message: "Paid orders must go through the payment verification flow",
-    });
-  }
   const row = await insertOrder(body, false);
   return c.json(mapOrder(row!), 201);
 });

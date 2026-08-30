@@ -50,12 +50,10 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import crypto from "node:crypto";
-import { razorpay, verifyRazorpaySignature, fetchRazorpayPayment } from "../../lib/razorpay.js";
+import { razorpay, verifyRazorpaySignature } from "../../lib/razorpay.js";
 import { parseJsonBody } from "../../lib/http.js";
 import { env } from "../../config/env.js";
-import { newId } from "../../lib/http.js";
 import { queryOne, execute } from "../../db/pool.js";
-import { insertOrder } from "./orders.js";
 
 export const razorpayRoutes = new Hono();
 
@@ -81,110 +79,28 @@ razorpayRoutes.post("/create-order", async (c) => {
 });
 
 // ---------- 2. Verify (frontend callback) ----------
-// razorpayRoutes.post("/verify", async (c) => {
-//   const body = await parseJsonBody<{
-//     razorpay_order_id: string;
-//     razorpay_payment_id: string;
-//     razorpay_signature: string;
-//     internal_order_id?: string;
-//   }>(c);
-
-//   const ok = verifyRazorpaySignature(
-//     body.razorpay_order_id,
-//     body.razorpay_payment_id,
-//     body.razorpay_signature,
-//   );
-
-//   if (!ok) {
-//     throw new HTTPException(400, { message: "Payment verification failed" });
-//   }
-
-//   return c.json({
-//     verified: true,
-//     paymentId: body.razorpay_payment_id,
-//   });
-// });
-
-
-// ---------- 2. Verify + finalize the order ----------
 razorpayRoutes.post("/verify", async (c) => {
   const body = await parseJsonBody<{
     razorpay_order_id: string;
     razorpay_payment_id: string;
     razorpay_signature: string;
-    orderPayload: Record<string, unknown>; // cart/checkout details, sent NOW
+    internal_order_id?: string;
   }>(c);
 
-  // 1. Signature check (unchanged)
-  const sigOk = verifyRazorpaySignature(
+  const ok = verifyRazorpaySignature(
     body.razorpay_order_id,
     body.razorpay_payment_id,
     body.razorpay_signature,
   );
-  if (!sigOk) {
+
+  if (!ok) {
     throw new HTTPException(400, { message: "Payment verification failed" });
   }
 
-  // 2. Idempotency: has this exact payment already been processed?
-  const already = await queryOne<{ order_id: string }>(
-    "SELECT order_id FROM payments WHERE razorpay_payment_id = $1",
-    [body.razorpay_payment_id],
-  );
-  if (already) {
-    const existing = await queryOne("SELECT * FROM orders WHERE id = $1", [already.order_id]);
-    return c.json({ verified: true, order: existing });
-  }
-
-  // 3. Ask RAZORPAY (not the client, not our DB) what was actually paid.
-  const payment = await fetchRazorpayPayment(body.razorpay_payment_id);
-  if (payment.status !== "captured" && payment.status !== "authorized") {
-    throw new HTTPException(400, { message: "Payment not captured" });
-  }
-  if (payment.order_id !== body.razorpay_order_id) {
-    throw new HTTPException(400, { message: "Payment/order mismatch" });
-  }
-
-  // 4. Server decides the paid amount from Razorpay's response — never from
-  //    body.orderPayload.total or anything else the client sent.
-  const paidRupees = Number(payment.amount) / 100;
-
- let orderRow;
-try {
-  orderRow = await insertOrder(
-    {
-      ...body.orderPayload,
-      paid: paidRupees,
-      paymentStatus: "Paid",
-    },
-    false,
-  );
-} catch (err) {
-  console.error("[razorpay/verify] Order insert failed after payment captured:", {
+  return c.json({
+    verified: true,
     paymentId: body.razorpay_payment_id,
-    orderId: body.razorpay_order_id,
-    error: err,
   });
-  throw new HTTPException(500, {
-    message: "Payment captured but order could not be saved. Contact support with payment ID: " + body.razorpay_payment_id,
-  });
-}
-
-  await execute(
-    `INSERT INTO payments (id, order_id, customer, amount, method, status, paid_date, razorpay_order_id, razorpay_payment_id)
-     VALUES ($1,$2,$3,$4,$5,'Paid',$6,$7,$8)`,
-    [
-      newId("TXN"),
-      orderRow!.id,
-      (body.orderPayload as Record<string, unknown>).customer ?? "",
-      paidRupees,
-      payment.method ?? "UPI",
-      new Date().toISOString().slice(0, 10),
-      body.razorpay_order_id,
-      body.razorpay_payment_id,
-    ],
-  );
-
-  return c.json({ verified: true, order: orderRow });
 });
 
 // ---------- 3. Webhook (source of truth) ----------
