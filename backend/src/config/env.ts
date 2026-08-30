@@ -13,6 +13,7 @@ const envSchema = z.object({
   R2_PUBLIC_URL: z.string().url().optional(),
   RAZORPAY_KEY_ID: z.string().optional(),
 RAZORPAY_KEY_SECRET: z.string().optional(),
+RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
 GOOGLE_CLIENT_ID: z.string().optional(),
 GOOGLE_CLIENT_SECRET: z.string().optional(),
 });
