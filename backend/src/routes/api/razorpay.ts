@@ -148,7 +148,9 @@ razorpayRoutes.post("/verify", async (c) => {
   //    body.orderPayload.total or anything else the client sent.
   const paidRupees = Number(payment.amount) / 100;
 
-  const orderRow = await insertOrder(
+ let orderRow;
+try {
+  orderRow = await insertOrder(
     {
       ...body.orderPayload,
       paid: paidRupees,
@@ -156,6 +158,16 @@ razorpayRoutes.post("/verify", async (c) => {
     },
     false,
   );
+} catch (err) {
+  console.error("[razorpay/verify] Order insert failed after payment captured:", {
+    paymentId: body.razorpay_payment_id,
+    orderId: body.razorpay_order_id,
+    error: err,
+  });
+  throw new HTTPException(500, {
+    message: "Payment captured but order could not be saved. Contact support with payment ID: " + body.razorpay_payment_id,
+  });
+}
 
   await execute(
     `INSERT INTO payments (id, order_id, customer, amount, method, status, paid_date, razorpay_order_id, razorpay_payment_id)
