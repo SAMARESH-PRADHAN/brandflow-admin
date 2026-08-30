@@ -15,7 +15,3 @@ export function verifyRazorpaySignature(orderId: string, paymentId: string, sign
   return expected === signature;
 }
 
-export async function fetchRazorpayPayment(paymentId: string) {
-  // razorpay SDK exposes payments.fetch
-  return razorpay.payments.fetch(paymentId);
-}
