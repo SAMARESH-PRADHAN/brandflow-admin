@@ -59,17 +59,17 @@ export const CATALOG_TAXONOMY: TaxCategory[] = [
     hasTiers: true,
     regular: [
       "Spun Collar Neck T-Shirt", "Cut & Sew Collar Neck T-Shirts", "Corporate Economy Collar Neck T-Shirt",
-      "Reunions Collar Neck T-Shirts", "Marketing Collar Neck T-Shirts", "Petrol Pump Collar Neck T-Shirts",
+      "Construction Greay Collar Neck T-Shirts", "Marketing Collar Neck T-Shirts", "Petrol Pump Collar Neck T-Shirts",
       "Conference Collar Neck T-Shirts", "Gym Collar Neck T-Shirts", "Hotel Collar Neck T-Shirts",
-      "NGO Collar Neck T-Shirts", "Dotnet White Collar Neck T-Shirt", "Festival Group Collar Neck T-Shirts",
+      "NGO Collar Neck T-Shirts", "Dotnet Yoga White Collar Neck T-Shirt", "Festival Group Collar Neck T-Shirts",
       "Ranglan Collar Neck T-Shirt", "220 GSM Spun Matty Reflective Collar Neck T-shirt",
     ],
     premium: [
-      "Cotton Collar Neck T-Shirts", "Blended Collar Neck T-Shirts", "Drifit SAP Matty Collar Neck T-Shirts",
-      "Reunions Collar Neck T-Shirts", "Marketing Collar Neck T-Shirts", "Petrol Pump Collar Neck T-Shirts",
-      "Conference Collar Neck T-Shirts", "Gym Collar Neck T-Shirts", "Hotel Collar Neck T-Shirts",
-      "NGO Collar Neck T-Shirts", "SAP Matty White Collar Neck T-Shirt", "Cut & Sew Collar Neck T-Shirts",
-      "Festival Group Collar Neck T-Shirts", "SAP Matty Ranglan Collar Neck T-Shirt", "220 GSM PC Matty Reflective Collar Neck T-shirt",
+      "Cotton Conference Collar Neck T-Shirts", "Logistic Collar Neck T-Shirts", "Drifit SAP Matty Collar Neck T-Shirts",
+      "College Team Collar Neck T-Shirts", "IT Team Collar Neck T-Shirts", "Reunion Collar Neck T-Shirts",
+      "Architech Collar Neck T-Shirts", "Youth Group Red Collar Neck T-Shirts", "Alumini Group Collar Neck T-Shirts",
+      "Trade House Collar Neck T-Shirts", "SAP Matty White Collar Neck T-Shirt", "Cut & Sew Chain Collar Neck T-Shirts",
+      "Festival Group Collar Neck T-Shirts", "SAP Matty Ranglan Collar Neck T-Shirt", "240 GSM PC Matty Reflective Collar Neck T-shirt",
     ],
   },
   {
@@ -118,8 +118,8 @@ export const CATALOG_TAXONOMY: TaxCategory[] = [
     hasTiers: false,
     items: [
       "ARRHENIUX Cotton Round Neck T-Shirt", "ARRHENIUX Cotton Collar Neck T-Shirt",
-      "ARRHENIUX Blend Collar Neck T-Shirt", "ARRHENIUX Dryfit Collar Neck T-Shirt",
-      "ARRHENIUX Oversized T-Shirt", "ARRHENIUX Hoodie", "ARRHENIUX Polo T-Shirt",
+      "ARRHENIUX Blend Collar Neck T-Shirt", "ARRHENIUX Drifit Collar Neck T-Shirt",
+      "ARRHENIUX Allover Oversized T-Shirt", "ARRHENIUX Allover Hoodie", "ARRHENIUX Allover Drift Polo T-Shirt",
     ],
   },
 ];
