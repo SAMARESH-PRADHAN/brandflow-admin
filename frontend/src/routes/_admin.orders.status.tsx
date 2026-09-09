@@ -52,6 +52,13 @@ function KanbanPage() {
     }
     const next = STATUSES[idx + 1]!;
     // Route the update to whichever collection this order actually belongs to.
+
+    if (o.status === "Shipped" && next === "Delivered") {
+    if (!o.invoiceNumber || o.invoiceNumber.trim() === "") {
+      toast.error("Please generate invoice first before marking as Delivered");
+      return;
+    }
+  }
     const updateFn = o.isSample ? updateSample : updateNormal;
     try {
       await updateFn(o.id, {

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { useCollection, inrFull, type Order, type OrderStatus } from "@/lib/store";
 import { toast } from "sonner";
+import { GenerateInvoiceDialog } from "@/components/admin/generate-invoice-dialog";
 
 const STATUSES: (OrderStatus | "All")[] = ["All", "Placed", "Confirmed", "In Production", "Shipped", "Delivered"];
 
@@ -19,8 +20,8 @@ function OrdersPage() {
   const [tab, setTab] = useState<"All" | Order["type"]>("All");
   const [range, setRange] = useState<DateRange>({ from: "", to: "" });
   const [status, setStatus] = useState<"All" | OrderStatus>("All");
-
-  const { data, loading, pagination } = useCollection<Order>("orders", {
+const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
+  const { data, loading, pagination, update } = useCollection<Order>("orders", {
     page,
     limit: 10,
     type: tab === "All" ? undefined : tab,
@@ -58,9 +59,23 @@ function OrdersPage() {
     
     { key: "status", header: "Status", render: (o) => <StatusBadge value={o.status} /> },
     { key: "logo", header: "Artwork", render: (o) => o.uploadedLogo ? <img loading="lazy" src={o.uploadedLogo} alt="artwork" className="h-8 w-12 rounded border border-border object-cover" /> : <span className="text-[10px] text-muted-foreground">—</span> },
-    { key: "actions", header: "", render: (o) => (
-      <Button asChild size="sm" variant="outline"><Link to={`/orders/${o.id}`}><Eye className="mr-1 h-3.5 w-3.5" /> Details</Link></Button>
-    ), className: "text-right" },
+   {
+  key: "actions",
+  header: "",
+  render: (o) => (
+    <div className="flex items-center justify-end gap-1.5">
+      <Button size="sm" variant="outline" onClick={() => setInvoiceOrder(o)}>
+        Generate Invoice
+      </Button>
+      <Button asChild size="sm" variant="outline">
+        <Link to={`/orders/${o.id}`}>
+          <Eye className="mr-1 h-3.5 w-3.5" /> Details
+        </Link>
+      </Button>
+    </div>
+  ),
+  className: "text-right",
+},
   ];
 
   return (
@@ -103,6 +118,14 @@ function OrdersPage() {
           }}
         />
       </div>
+      <GenerateInvoiceDialog
+  order={invoiceOrder}
+  open={!!invoiceOrder}
+  onOpenChange={(v) => !v && setInvoiceOrder(null)}
+  onSave={async (id, invoiceNumber) => {
+    await update(id, { invoiceNumber });
+  }}
+/>
     </PageShell>
   );
 }
