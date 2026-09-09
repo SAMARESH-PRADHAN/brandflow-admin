@@ -188,6 +188,7 @@ notes:       (row.notes as string) ?? "",
     isSample: Boolean(row.is_sample),
     date: formatDate(row.order_date),
     timeline: jsonArray(row.timeline),
+    invoiceNumber: (row.invoice_number as string) ?? "",
   };
 }
 

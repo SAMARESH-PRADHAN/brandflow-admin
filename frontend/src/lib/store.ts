@@ -119,6 +119,7 @@ notes?: string;
   totalAmount: number;
   paidAmount: number;
   timeline: { status: OrderStatus; at: string }[];
+  invoiceNumber?: string;
 };
 export type Customer = {
   id: string;

@@ -363,18 +363,14 @@ export async function generateShippingSlipPDF(
   },
 ) {
   const brand = opts?.brand ?? "ARRHENIUX";
-
-  // ⬇️ EDIT THIS: your real company return address, shown in "Shipped By".
-  const brandAddressLines = opts?.brandAddressLines ?? [
-    "Q.No F34/6, Near the Maa Mangala Flyash Bricks,",
-    "Tarini Vihar, Bhubaneswar",
-    "Bhubaneswar, Odisha, India",
-    "751031",
-  ];
-  // ⬇️ EDIT THIS: your real GSTIN.
-  const brandGSTIN = opts?.brandGSTIN ?? "21AHNPJ5720C1ZU";
-  // ⬇️ EDIT THIS: your real support/contact phone.
-  const brandPhone = opts?.brandPhone ?? "9937864993";
+const brandAddressLines = opts?.brandAddressLines ?? [
+  "Plot No. 88 Niladrivihar,",
+  "Chandrasekharapur, Bhubaneswar,",
+  "Odisha, India",
+  "751016",
+];
+const brandGSTIN = opts?.brandGSTIN ?? "21BLBPB7509J1ZI";
+const brandPhone = opts?.brandPhone ?? "9777624205";
 
   const courierName = opts?.courierName ?? "Standard Surface Shipping";
 
@@ -382,6 +378,29 @@ export async function generateShippingSlipPDF(
   const logo = await loadLogo();
   const W = doc.internal.pageSize.getWidth();
   const M = 25;
+
+ function numberToWords(num: number): string {
+  if (num === 0) return "Zero Rupees Only";
+  const ones = [
+    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+    "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen",
+  ];
+  const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+  const convert = (n: number): string => {
+    if (n < 20) return ones[n];
+    if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? " " + ones[n % 10] : "");
+    if (n < 1000) return ones[Math.floor(n / 100)] + " Hundred" + (n % 100 ? " " + convert(n % 100) : "");
+    if (n < 100000) return convert(Math.floor(n / 1000)) + " Thousand" + (n % 1000 ? " " + convert(n % 1000) : "");
+    if (n < 10000000) return convert(Math.floor(n / 100000)) + " Lakh" + (n % 100000 ? " " + convert(n % 100000) : "");
+    return convert(Math.floor(n / 10000000)) + " Crore" + (n % 10000000 ? " " + convert(n % 10000000) : "");
+  };
+  const rupees = Math.floor(num);
+  const paise = Math.round((num - rupees) * 100);
+  let result = convert(rupees) + " Rupees";
+  if (paise > 0) result += " and " + convert(paise) + " Paise";
+  return result + " Only";
+}
+
 
   const subtotal = order.qty * order.unitPrice;
   const printingTotal = order.printingPrice ?? 0;
@@ -577,13 +596,49 @@ export async function generateShippingSlipPDF(
   doc.setFont("helvetica", "bold");
   doc.text(grand.toFixed(2), x7 - 4, numY, { align: "right" });
 
-  y += headH + rowH;
+   y += headH + rowH;
 
-  // ---------- Section 5: disputes note ----------
+  // ---------- Section 5: Amount in Words (separate box) ----------
+  const wordsText = numberToWords(grand);
+  const wordsLines = doc.splitTextToSize(wordsText, right - left - 28);
+
+  // Padding: top 16 + label 18 + gap 8 + lines + bottom 14
+  const wordsBoxH = 16 + 18 + 8 + (wordsLines.length * 17) + 11;
+
+  // Bottom border of this block
+  doc.setDrawColor(0);
+  doc.setLineWidth(1);
+  doc.line(M, y + wordsBoxH, W - M, y + wordsBoxH);
+
+  // Soft background
+  // doc.setFillColor(245, 247, 250);
+  // doc.rect(M + 1, y + 1, W - 2 * M - 2, wordsBoxH - 2, "F");
+
+  // Label
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(30, 30, 30);
+  doc.text("Amount in Words", left + 12, y + 20);
+
+  // Words – larger size, with safe bottom padding
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(20, 20, 20);
+
+  let wy = y + 42; // start after label + gap
+  wordsLines.forEach((line: string) => {
+    doc.text(line, left + 12, wy);
+    wy += 17;
+  });
+
+  y += wordsBoxH;
+
+  // ---------- Section 6: disputes note ----------
   const sec5H = 50;
   doc.line(M, y + sec5H, W - M, y + sec5H);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
+  doc.setTextColor(40, 40, 40);
   const disputeText = doc.splitTextToSize(
     "All disputes are subject to local jurisdiction only. Goods once sold will only be taken back or exchanged as per the store's exchange/return policy.",
     W - 2 * M - 24,
@@ -592,9 +647,10 @@ export async function generateShippingSlipPDF(
 
   y += sec5H;
 
-  // ---------- Section 6: footer ----------
+ // ---------- Section 7: footer ----------
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
+  doc.setTextColor(60, 60, 60);
   doc.text("THIS IS AN AUTO-GENERATED LABEL AND DOES NOT NEED SIGNATURE.", left, y + 26);
   doc.setFont("helvetica", "bold");
   doc.text(`Powered By: ${brand}`, right, y + 26, { align: "right" });

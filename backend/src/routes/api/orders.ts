@@ -2,7 +2,13 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { query, queryOne, execute } from "../../db/pool.js";
 import { mapOrder } from "../../lib/mappers.js";
-import { deleteByIdWithImageCleanup, cleanupRemovedImagesOnPatch, newId, parseJsonBody, patchById } from "../../lib/http.js";
+import {
+  deleteByIdWithImageCleanup,
+  cleanupRemovedImagesOnPatch,
+  newId,
+  parseJsonBody,
+  patchById,
+} from "../../lib/http.js";
 
 function buildOrderFilters(c: Context, isSample: boolean) {
   const type = c.req.query("type");
@@ -34,7 +40,12 @@ function buildOrderFilters(c: Context, isSample: boolean) {
 
 async function insertOrder(body: Record<string, unknown>, isSample: boolean) {
   const id = (body.id as string) ?? newId(isSample ? "SMP" : "ORD");
-  const timeline = body.timeline ?? [{ status: body.status ?? "Placed", at: body.date ?? new Date().toISOString().slice(0, 10) }];
+  const timeline = body.timeline ?? [
+    {
+      status: body.status ?? "Placed",
+      at: body.date ?? new Date().toISOString().slice(0, 10),
+    },
+  ];
 
   await execute(
     `INSERT INTO orders (
@@ -58,8 +69,8 @@ async function insertOrder(body: Record<string, unknown>, isSample: boolean) {
       body.email ?? "",
       body.address ?? "",
       body.companyName ?? "",
-body.gstNumber ?? "",
-body.notes ?? "",
+      body.gstNumber ?? "",
+      body.notes ?? "",
       body.productId ?? null,
       body.productCode ?? "",
       body.productName ?? "",
@@ -101,30 +112,35 @@ const ORDER_LIST_COLUMNS = `
   material, description, print_type, print_location, uploaded_logo,
   sizes, qty, unit_price, printing_price, gst_pct, shipping,
   discount_pct, discount_amt, total_amount, paid_amount,
-  type, status, payment_status, payment_method, is_sample, order_date, timeline
+  type, status, payment_status, payment_method, is_sample, order_date, timeline, invoice_number
 `;
 orderRoutes.get("/", async (c) => {
   const { where, params } = buildOrderFilters(c, false);
   const p = Math.max(1, parseInt(c.req.query("page") ?? "1") || 1);
-  const l = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "50") || 50));
+  const l = Math.min(
+    100,
+    Math.max(1, parseInt(c.req.query("limit") ?? "50") || 50),
+  );
   const offset = (p - 1) * l;
   params.push(l, offset);
 
   const rows = await query(
     `SELECT ${ORDER_LIST_COLUMNS}, count(*) OVER() as _total_count 
-     FROM orders ${where} ORDER BY order_date DESC LIMIT $${params.length - 1} OFFSET $${params.length}`, 
-    params
+     FROM orders ${where} ORDER BY order_date DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+    params,
   );
-  
+
   const totalCount = parseInt(String((rows[0] as any)?._total_count ?? "0"));
   return c.json({
     data: rows.map(mapOrder),
-    pagination: { page: p, limit: l, total: totalCount }
+    pagination: { page: p, limit: l, total: totalCount },
   });
 });
 
 orderRoutes.get("/:id", async (c) => {
-  const row = await queryOne("SELECT * FROM orders WHERE id = $1", [c.req.param("id")]);
+  const row = await queryOne("SELECT * FROM orders WHERE id = $1", [
+    c.req.param("id"),
+  ]);
   if (!row) return c.json({ error: "Order not found" }, 404);
   return c.json(mapOrder(row));
 });
@@ -139,9 +155,44 @@ orderRoutes.patch("/:id", async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
   if (body.sizes !== undefined) body.sizes = JSON.stringify(body.sizes);
   if (body.timeline !== undefined) body.timeline = JSON.stringify(body.timeline);
+
   const id = c.req.param("id");
-  const existing = await queryOne("SELECT id, uploaded_logo FROM orders WHERE id = $1", [id]);
+  const existing = await queryOne(
+    "SELECT id, status, invoice_number, uploaded_logo FROM orders WHERE id = $1",
+    [id]
+  );
   if (!existing) return c.json({ error: "Order not found" }, 404);
+
+  // --- Unique invoice number ---
+  if (body.invoiceNumber !== undefined && String(body.invoiceNumber).trim() !== "") {
+    const clash = await queryOne(
+      `SELECT id FROM orders
+       WHERE invoice_number = $1 AND id <> $2
+         AND invoice_number IS NOT NULL AND invoice_number <> ''`,
+      [String(body.invoiceNumber).trim(), id]
+    );
+    if (clash) {
+      return c.json({ error: "Invoice number already used on another order" }, 409);
+    }
+  }
+
+  // --- Cannot mark Delivered without invoice ---
+  if (body.status === "Delivered") {
+    const currentStatus = (existing as any).status;
+    const invoiceNo =
+      body.invoiceNumber !== undefined
+        ? body.invoiceNumber
+        : (existing as any).invoice_number;
+    if (
+      currentStatus === "Shipped" &&
+      (!invoiceNo || String(invoiceNo).trim() === "")
+    ) {
+      return c.json(
+        { error: "Cannot mark as Delivered. Please generate invoice first." },
+        400
+      );
+    }
+  }
 
   await cleanupRemovedImagesOnPatch(existing as Record<string, unknown>, body, {
     imageBodyKey: "uploadedLogo",
@@ -155,8 +206,8 @@ orderRoutes.patch("/:id", async (c) => {
     email: "email",
     address: "address",
     companyName: "company_name",
-gstNumber:   "gst_number",
-notes:       "notes",
+    gstNumber: "gst_number",
+    notes: "notes",
     productId: "product_id",
     productCode: "product_code",
     productName: "product_name",
@@ -184,6 +235,7 @@ notes:       "notes",
     date: "order_date",
     sizes: "sizes",
     timeline: "timeline",
+    invoiceNumber: "invoice_number",
   });
 
   return c.json(mapOrder(row!));
@@ -202,20 +254,23 @@ export const sampleOrderRoutes = new Hono();
 sampleOrderRoutes.get("/", async (c) => {
   const { where, params } = buildOrderFilters(c, true);
   const p = Math.max(1, parseInt(c.req.query("page") ?? "1") || 1);
-  const l = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "50") || 50));
+  const l = Math.min(
+    100,
+    Math.max(1, parseInt(c.req.query("limit") ?? "50") || 50),
+  );
   const offset = (p - 1) * l;
   params.push(l, offset);
 
   const rows = await query(
     `SELECT ${ORDER_LIST_COLUMNS}, count(*) OVER() as _total_count 
-     FROM orders ${where} ORDER BY order_date DESC LIMIT $${params.length - 1} OFFSET $${params.length}`, 
-    params
+     FROM orders ${where} ORDER BY order_date DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+    params,
   );
-  
+
   const totalCount = parseInt(String((rows[0] as any)?._total_count ?? "0"));
   return c.json({
     data: rows.map(mapOrder),
-    pagination: { page: p, limit: l, total: totalCount }
+    pagination: { page: p, limit: l, total: totalCount },
   });
 });
 
@@ -227,15 +282,50 @@ sampleOrderRoutes.post("/", async (c) => {
 sampleOrderRoutes.patch("/:id", async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
   if (body.timeline !== undefined) body.timeline = JSON.stringify(body.timeline);
+
   const id = c.req.param("id");
-  const existing = await queryOne("SELECT id FROM orders WHERE id = $1 AND is_sample = true", [id]);
+  const existing = await queryOne(
+    "SELECT id, status, invoice_number FROM orders WHERE id = $1 AND is_sample = true",
+    [id]
+  );
   if (!existing) return c.json({ error: "Sample order not found" }, 404);
+
+  // Unique invoice number
+  if (body.invoiceNumber !== undefined && String(body.invoiceNumber).trim() !== "") {
+    const clash = await queryOne(
+      `SELECT id FROM orders
+       WHERE invoice_number = $1 AND id <> $2
+         AND invoice_number IS NOT NULL AND invoice_number <> ''`,
+      [String(body.invoiceNumber).trim(), id]
+    );
+    if (clash) {
+      return c.json({ error: "Invoice number already used on another order" }, 409);
+    }
+  }
+
+  // Cannot mark Delivered without invoice
+  if (body.status === "Delivered") {
+    const currentStatus = (existing as any).status;
+    const invoiceNo =
+      body.invoiceNumber !== undefined
+        ? body.invoiceNumber
+        : (existing as any).invoice_number;
+    if (
+      currentStatus === "Shipped" &&
+      (!invoiceNo || String(invoiceNo).trim() === "")
+    ) {
+      return c.json(
+        { error: "Cannot mark as Delivered. Please generate invoice first." },
+        400
+      );
+    }
+  }
 
   const row = await patchById("orders", id, body, {
     status: "status",
     paymentStatus: "payment_status",
-    // add other fields as needed
     timeline: "timeline",
+    invoiceNumber: "invoice_number",
   });
   return c.json(mapOrder(row!));
 });
