@@ -17,7 +17,7 @@ type Props = {
   order: Order | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onSave: (orderId: string, invoiceNumber: string) => Promise<void>;
+  onSave: (orderId: string, invoiceNumber: string, date: string) => Promise<void>;
 };
 
 export function GenerateInvoiceDialog({
@@ -28,37 +28,56 @@ export function GenerateInvoiceDialog({
 }: Props) {
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [saving, setSaving] = useState(false);
+const [invoiceDate, setInvoiceDate] = useState("");
 
   useEffect(() => {
     if (order && open) {
       setInvoiceNumber(order.invoiceNumber || "");
+      setInvoiceDate(order.date || "");
     }
   }, [order, open]);
 
   if (!order) return null;
 
   const handleSaveAndDownload = async () => {
-    const no = invoiceNumber.trim();
-    if (!no) {
-      toast.error("Please enter invoice number");
-      return;
-    }
-    setSaving(true);
-    try {
-      await onSave(order.id, no);
-      await downloadTaxInvoice(order, { invoiceNumber: no });
-      toast.success("Invoice saved & downloaded");
-      onOpenChange(false);
-    } catch (err: any) {
-      const msg =
-        err?.message ||
-        err?.error ||
-        "Failed to save invoice (number may already be used)";
-      toast.error(msg);
-    } finally {
-      setSaving(false);
-    }
-  };
+  const no = invoiceNumber.trim();
+  if (!no) {
+    toast.error("Please enter invoice number");
+    return;
+  }
+
+  const originalDate = order.date || "";
+  const newDate = invoiceDate.trim();
+
+  // If date was changed → ask for confirmation
+  if (newDate && newDate !== originalDate) {
+    const confirmed = window.confirm(
+      `You are changing the order date from "${originalDate}" to "${newDate}".\n\nThis will permanently update the order date. Continue?`
+    );
+    if (!confirmed) return;
+  }
+
+  setSaving(true);
+  try {
+    // Save invoice number + (possibly new) date
+    await onSave(order.id, no, newDate || originalDate);
+
+    // Use the updated date in the PDF
+    const orderForPdf = { ...order, date: newDate || originalDate, invoiceNumber: no };
+    await downloadTaxInvoice(orderForPdf, { invoiceNumber: no });
+
+    toast.success("Invoice saved & downloaded");
+    onOpenChange(false);
+  } catch (err: any) {
+    const msg =
+      err?.message ||
+      err?.error ||
+      "Failed to save invoice (number may already be used)";
+    toast.error(msg);
+  } finally {
+    setSaving(false);
+  }
+};
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -80,13 +99,17 @@ export function GenerateInvoiceDialog({
             </p>
           </div>
 
-          <div className="rounded-lg border border-border bg-secondary/40 px-3 py-2 text-sm">
-            <span className="text-muted-foreground">Invoice Date: </span>
-            <b>{order.date}</b>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              Same as order date (already shown on customer invoice)
-            </p>
-          </div>
+          <div className="space-y-1.5">
+  <Label>Invoice / Order Date</Label>
+  <Input
+    type="date"
+    value={invoiceDate}
+    onChange={(e) => setInvoiceDate(e.target.value)}
+  />
+  <p className="text-[11px] text-muted-foreground">
+    Changing this will also update the order date after confirmation.
+  </p>
+</div>
         </div>
 
         <DialogFooter>

@@ -24,7 +24,7 @@ function SamplesPage() {
 const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null)
   const { data, pagination, loading, update } = useCollection<Order>("sampleOrders", {
     page,
-    limit: 10,
+    limit: 100,
     type: tab === "All" ? undefined : tab,
     status: status === "All" ? undefined : status,
     from: range.from || undefined,
@@ -109,9 +109,9 @@ const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null)
   order={invoiceOrder}
   open={!!invoiceOrder}
   onOpenChange={(v) => !v && setInvoiceOrder(null)}
-  onSave={async (id, invoiceNumber) => {
-    await update(id, { invoiceNumber });
-  }}
+ onSave={async (id, invoiceNumber, date) => {
+  await update(id, { invoiceNumber, date });
+}}
 />
     </PageShell>
   );

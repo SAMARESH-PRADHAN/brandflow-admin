@@ -3,28 +3,59 @@ import { ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 
 export type Column<T> = {
-  key: string; header: string; render: (row: T) => ReactNode;
-  className?: string; sortable?: boolean; getValue?: (row: T) => string | number;
+  key: string;
+  header: string;
+  render: (row: T) => ReactNode;
+  className?: string;
+  sortable?: boolean;
+  getValue?: (row: T) => string | number;
 };
 
 export function DataTable<T extends { id: string }>({
-  rows, columns, pageSize = 10, searchable = true, searchKeys, emptyText = "No results",
-  onExport, loading = false, skeletonRows = 8,
-  serverSide = false, serverTotalPages = 1, onPageChange, onSearchChange, onSortChange,
-  currentPage = 1, currentSearch = "", currentSort,
+  rows,
+  columns,
+  pageSize = 10,
+  searchable = true,
+  searchKeys,
+  emptyText = "No results",
+  onExport,
+  loading = false,
+  skeletonRows = 8,
+  serverSide = false,
+  serverTotalPages = 1,
+  onPageChange,
+  onSearchChange,
+  onSortChange,
+  currentPage = 1,
+  currentSearch = "",
+  currentSort,
 }: {
-  rows: T[]; columns: Column<T>[]; pageSize?: number;
-  searchable?: boolean; searchKeys?: (keyof T)[]; emptyText?: string;
-  onExport?: () => void; loading?: boolean; skeletonRows?: number;
-  serverSide?: boolean; serverTotalPages?: number; 
+  rows: T[];
+  columns: Column<T>[];
+  pageSize?: number;
+  searchable?: boolean;
+  searchKeys?: (keyof T)[];
+  emptyText?: string;
+  onExport?: () => void;
+  loading?: boolean;
+  skeletonRows?: number;
+  serverSide?: boolean;
+  serverTotalPages?: number;
   onPageChange?: (page: number) => void;
   onSearchChange?: (q: string) => void;
   onSortChange?: (sort: { key: string; dir: 1 | -1 } | null) => void;
-  currentPage?: number; currentSearch?: string; currentSort?: { key: string; dir: 1 | -1 } | null;
+  currentPage?: number;
+  currentSearch?: string;
+  currentSort?: { key: string; dir: 1 | -1 } | null;
 }) {
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
@@ -35,10 +66,12 @@ export function DataTable<T extends { id: string }>({
   const activeSort = serverSide ? currentSort : sort;
 
   const handleSearch = (val: string) => {
-    if (serverSide) {
-      if (onSearchChange) onSearchChange(val);
+    if (serverSide && onSearchChange) {
+      // Parent controls search (future server search)
+      onSearchChange(val);
       if (onPageChange) onPageChange(1);
     } else {
+      // Client-side search (works even when data is paginated from server)
       setQ(val);
       setPage(1);
     }
@@ -53,10 +86,11 @@ export function DataTable<T extends { id: string }>({
   };
 
   const handleSort = (colKey: string) => {
-    const newSort = activeSort?.key === colKey && activeSort.dir === 1 
-      ? { key: colKey, dir: -1 as const } 
-      : { key: colKey, dir: 1 as const };
-      
+    const newSort =
+      activeSort?.key === colKey && activeSort.dir === 1
+        ? { key: colKey, dir: -1 as const }
+        : { key: colKey, dir: 1 as const };
+
     if (serverSide) {
       if (onSortChange) onSortChange(newSort);
     } else {
@@ -65,30 +99,45 @@ export function DataTable<T extends { id: string }>({
   };
 
   const filtered = useMemo(() => {
-    if (serverSide) return rows;
+    // Pure server-side only when parent handles search itself
+    if (serverSide && onSearchChange) return rows;
+
     let out = rows;
-    if (q) {
-      const needle = q.toLowerCase();
+
+    // Use the correct search text for both modes
+    const searchText = serverSide ? currentSearch || q : q;
+
+    if (searchText) {
+      const needle = searchText.toLowerCase();
       out = out.filter((r) => {
         const keys = (searchKeys ?? (Object.keys(r) as (keyof T)[])) as (keyof T)[];
-        return keys.some((k) => String((r as any)[k] ?? "").toLowerCase().includes(needle));
+        return keys.some((k) =>
+          String((r as any)[k] ?? "")
+            .toLowerCase()
+            .includes(needle),
+        );
       });
     }
-    if (sort) {
+
+    if (sort && !serverSide) {
       const col = columns.find((c) => c.key === sort.key);
       if (col?.getValue) {
         out = [...out].sort((a, b) => {
-          const va = col.getValue!(a), vb = col.getValue!(b);
+          const va = col.getValue!(a),
+            vb = col.getValue!(b);
           if (va < vb) return -1 * sort.dir;
           if (va > vb) return 1 * sort.dir;
           return 0;
         });
       }
     }
-    return out;
-  }, [rows, q, sort, columns, searchKeys, serverSide]);
 
-  const totalPages = serverSide ? serverTotalPages : Math.max(1, Math.ceil(filtered.length / pageSize));
+    return out;
+  }, [rows, q, sort, columns, searchKeys, serverSide, onSearchChange, currentSearch]);
+
+  const totalPages = serverSide
+    ? serverTotalPages
+    : Math.max(1, Math.ceil(filtered.length / pageSize));
   const p = serverSide ? currentPage : Math.min(page, totalPages);
   const paged = serverSide ? filtered : filtered.slice((p - 1) * pageSize, p * pageSize);
   const skelCount = skeletonRows ?? pageSize;
@@ -100,10 +149,17 @@ export function DataTable<T extends { id: string }>({
           {searchable && (
             <div className="relative min-w-[220px] flex-1 sm:max-w-xs">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={activeQ} onChange={(e) => handleSearch(e.target.value)} placeholder="Search…" className="pl-9" />
+              <Input
+                value={serverSide && onSearchChange ? currentSearch : q}
+                onChange={(e) => handleSearch(e.target.value)}
+                placeholder="Search…"
+                className="pl-9"
+              />
             </div>
           )}
-          <div className="ml-auto text-xs text-muted-foreground">{serverSide ? (serverTotalPages > 0 ? "..." : "0") : filtered.length} result{(!serverSide && filtered.length === 1) ? "" : "s"}</div>
+         <div className="ml-auto text-xs text-muted-foreground">
+  {loading ? "Loading…" : `${filtered.length} result${filtered.length === 1 ? "" : "s"}`}
+</div>
           {onExport && (
             <Button variant="outline" size="sm" onClick={onExport}>
               <Download className="mr-1 h-4 w-4" /> Export
@@ -124,7 +180,9 @@ export function DataTable<T extends { id: string }>({
                   style={{ cursor: c.sortable ? "pointer" : undefined }}
                 >
                   {c.header}
-                  {c.sortable && activeSort?.key === c.key && <span className="ml-1 text-xs">{activeSort.dir === 1 ? "▲" : "▼"}</span>}
+                  {c.sortable && activeSort?.key === c.key && (
+                    <span className="ml-1 text-xs">{activeSort.dir === 1 ? "▲" : "▼"}</span>
+                  )}
                 </TableHead>
               ))}
             </TableRow>
@@ -141,14 +199,25 @@ export function DataTable<T extends { id: string }>({
                 </TableRow>
               ))
             ) : paged.length === 0 ? (
-              <TableRow><TableCell colSpan={columns.length} className="py-12 text-center text-sm text-muted-foreground">{emptyText}</TableCell></TableRow>
-            ) : paged.map((row) => (
-              <TableRow key={row.id} className="group">
-                {columns.map((c) => (
-                  <TableCell key={c.key} className={c.className}>{c.render(row)}</TableCell>
-                ))}
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="py-12 text-center text-sm text-muted-foreground"
+                >
+                  {emptyText}
+                </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              paged.map((row) => (
+                <TableRow key={row.id} className="group">
+                  {columns.map((c) => (
+                    <TableCell key={c.key} className={c.className}>
+                      {c.render(row)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -158,8 +227,15 @@ export function DataTable<T extends { id: string }>({
           <Button variant="outline" size="sm" disabled={p === 1} onClick={() => handlePage(p - 1)}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-xs text-muted-foreground">Page {p} of {totalPages}</span>
-          <Button variant="outline" size="sm" disabled={p === totalPages} onClick={() => handlePage(p + 1)}>
+          <span className="text-xs text-muted-foreground">
+            Page {p} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={p === totalPages}
+            onClick={() => handlePage(p + 1)}
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
@@ -177,6 +253,8 @@ export function exportCsv(filename: string, rows: Record<string, any>[]) {
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = filename; a.click();
+  a.href = url;
+  a.download = filename;
+  a.click();
   URL.revokeObjectURL(url);
 }

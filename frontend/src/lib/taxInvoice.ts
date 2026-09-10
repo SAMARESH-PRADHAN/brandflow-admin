@@ -842,7 +842,7 @@ export async function downloadTaxInvoice(order: Order, opts?: { invoiceNumber?: 
   // Amount in words
   // -------------------------------------------------------------------------
 
-  y += 4;
+  y += 3;
 
   doc.setFillColor(...CREAM);
 
@@ -866,8 +866,21 @@ export async function downloadTaxInvoice(order: Order, opts?: { invoiceNumber?: 
 
   doc.text(wrappedWords, M + 42, y + 5);
 
-  y += 16;
+  y += 12;
+// ---- HSN / SAC Code ------------------------------------------------------
+doc.setFillColor(...CREAM);
+doc.roundedRect(M, y, contentW, 7, 1.2, 1.2, "F");
 
+doc.setFont("helvetica", "bold");
+doc.setFontSize(8);
+doc.setTextColor(...PRIMARY);
+doc.text("HSN/SAC CODE", M + 4, y + 4.8);
+
+doc.setFont("helvetica", "normal");
+doc.setTextColor(...INK);
+doc.text("61099010", M + 38, y + 4.8);
+
+y += 9;
   // -------------------------------------------------------------------------
   // Footer — SAME AS CUSTOMER INVOICE
   // -------------------------------------------------------------------------

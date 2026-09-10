@@ -33,7 +33,7 @@ function ProductsPage() {
 
   const { data, pagination, add, update, remove, loading } = useCollection<Product>("products", {
     page,
-    limit: 10,
+    limit: 100,
     category: fCat === "All" ? undefined : fCat,
     type: fType === "All" ? undefined : fType,
     subCategory: fSub === "All" ? undefined : fSub,

@@ -245,7 +245,7 @@ function TierEditor({
             type="number"
             min={1}
             value={r.minQty}
-            className="h-7 w-16"
+            className="h-7 w-24"
             onChange={(e) => update(i, { minQty: Number(e.target.value) })}
           />
           <span className="text-muted-foreground">to</span>
@@ -254,7 +254,7 @@ function TierEditor({
             min={1}
             placeholder="∞"
             value={r.maxQty ?? ""}
-            className="h-7 w-16"
+            className="h-7 w-24"
             onChange={(e) =>
               update(i, { maxQty: e.target.value === "" ? null : Number(e.target.value) })
             }
@@ -265,7 +265,7 @@ function TierEditor({
             min={0}
             max={100}
             value={r.discountPct}
-            className="h-7 w-16"
+            className="h-7 w-24"
             onChange={(e) => update(i, { discountPct: Number(e.target.value) })}
           />
           <span className="text-muted-foreground">%</span>
