@@ -326,6 +326,7 @@ sampleOrderRoutes.patch("/:id", async (c) => {
     paymentStatus: "payment_status",
     timeline: "timeline",
     invoiceNumber: "invoice_number",
+    date: "order_date",
   });
   return c.json(mapOrder(row!));
 });
