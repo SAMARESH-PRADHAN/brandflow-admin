@@ -84,7 +84,10 @@ export async function updateItem<T>(key: string, id: string, body: unknown): Pro
 export async function deleteItem(key: string, id: string): Promise<void> {
   await request(`${pathFor(key)}/${id}`, { method: "DELETE" });
 }
-
+export async function getItem<T>(key: string, id: string): Promise<T> {
+  // no-store: backend sends Cache-Control max-age=60, we don't want stale data after an edit
+  return request<T>(`${pathFor(key)}/${id}`, { cache: "no-store" });
+}
 export async function markAllNotificationsRead<T>(): Promise<T[]> {
   return request<T[]>("notifications/read-all", { method: "PATCH" });
 }
