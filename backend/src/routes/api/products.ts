@@ -24,7 +24,7 @@ productRoutes.get("/", async (c) => {
   if (visibility) { params.push(visibility); conditions.push(`visibility = $${params.length}`); }
 
   const p = Math.max(1, parseInt(c.req.query("page") ?? "1") || 1);
-  const l = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "50") || 50));
+  const l = Math.min(500, Math.max(1, parseInt(c.req.query("limit") ?? "300") || 300));
   const offset = (p - 1) * l;
   params.push(l, offset);
 

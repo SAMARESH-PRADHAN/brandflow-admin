@@ -58,28 +58,65 @@ function ProductsPage() {
   const [viewing, setViewing] = useState<Product | null>(null);
   const [copySource, setCopySource] = useState<Product | null>(null);
 
-  // Sub-category filter options depend on the selected category filter.
+  // // Sub-category filter options depend on the selected category filter.
+  // const filterSubOptions = useMemo(() => {
+  //   if (fCat === "All") {
+  //     // union of every sub-category across all categories
+  //     const all = new Set<string>();
+  //     CATEGORY_NAMES.forEach((name) => {
+  //       const cat = findTaxCategory(name);
+  //       if (!cat) return;
+  //       if (cat.hasTiers) {
+  //         (cat.regular ?? []).forEach((s) => all.add(s));
+  //         (cat.premium ?? []).forEach((s) => all.add(s));
+  //       } else {
+  //         (cat.items ?? []).forEach((s) => all.add(s));
+  //       }
+  //     });
+  //     return Array.from(all);
+  //   }
+  //   const cat = findTaxCategory(fCat);
+  //   if (!cat) return [];
+  //   if (!cat.hasTiers) return cat.items ?? [];
+  //   return [...new Set([...(cat.regular ?? []), ...(cat.premium ?? [])])];
+  // }, [fCat]);
+
+    // Sub-category filter options depend on Category + Type
   const filterSubOptions = useMemo(() => {
+    // No category selected → show all subs (or only for selected type if type is set)
     if (fCat === "All") {
-      // union of every sub-category across all categories
       const all = new Set<string>();
       CATEGORY_NAMES.forEach((name) => {
         const cat = findTaxCategory(name);
         if (!cat) return;
-        if (cat.hasTiers) {
-          (cat.regular ?? []).forEach((s) => all.add(s));
-          (cat.premium ?? []).forEach((s) => all.add(s));
-        } else {
+        if (!cat.hasTiers) {
           (cat.items ?? []).forEach((s) => all.add(s));
+          return;
+        }
+        if (fType === "All" || fType === "Regular") {
+          (cat.regular ?? []).forEach((s) => all.add(s));
+        }
+        if (fType === "All" || fType === "Premium") {
+          (cat.premium ?? []).forEach((s) => all.add(s));
         }
       });
       return Array.from(all);
     }
+
+    // Category selected
     const cat = findTaxCategory(fCat);
     if (!cat) return [];
     if (!cat.hasTiers) return cat.items ?? [];
+
+    // Use type-aware helper when Type is Regular or Premium
+    if (fType === "Regular" || fType === "Premium") {
+      return getSubOptions(fCat, fType as Tier);
+    }
+
+    // Type = All → show both tiers for that category
     return [...new Set([...(cat.regular ?? []), ...(cat.premium ?? [])])];
-  }, [fCat]);
+  }, [fCat, fType]);
+
 
   const filtered = useMemo(() => {
     if (pagination) return data;
@@ -252,7 +289,15 @@ function ProductsPage() {
           }}
           options={["All", ...CATEGORY_NAMES]}
         />
-        <FilterSelect label="Type" value={fType} onChange={setFType} options={["All", ...TYPES]} />
+        <FilterSelect
+  label="Type"
+  value={fType}
+  onChange={(v) => {
+    setFType(v);
+    setFSub("All"); // reset sub when type changes
+  }}
+  options={["All", ...TYPES]}
+/>
         <FilterSelect
           label="Sub Category"
           value={fSub}
