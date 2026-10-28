@@ -145,9 +145,67 @@ orderRoutes.get("/:id", async (c) => {
   return c.json(mapOrder(row));
 });
 
+// orderRoutes.post("/", async (c) => {
+//   const body = await parseJsonBody<Record<string, unknown>>(c);
+//   const row = await insertOrder(body, false);
+//   return c.json(mapOrder(row!), 201);
+// });
+
 orderRoutes.post("/", async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
+
+  // If a coupon code was sent, re-validate and apply discount server-side
+  const couponCode = (body.couponCode as string | undefined)?.trim()?.toUpperCase();
+  if (couponCode) {
+    const couponRow = await queryOne(
+      `SELECT * FROM coupons WHERE LOWER(code) = LOWER($1)`,
+      [couponCode],
+    );
+    if (couponRow) {
+      const cartTotal = Number(body.total) || 0;
+      let discountAmount = 0;
+      if (couponRow.discount_type === "fixed") {
+        discountAmount = Math.min(Number(couponRow.discount_value), cartTotal);
+      } else {
+        discountAmount = Math.round((cartTotal * Number(couponRow.discount_value)) / 100);
+      }
+      // Override frontend values with server-calculated ones
+      body.discountAmt = discountAmount;
+      body.discountPct = 0; // coupon is fixed amount, not %
+      body.total = Math.max(0, cartTotal - discountAmount);
+    }
+  }
+
   const row = await insertOrder(body, false);
+
+  // Record coupon usage
+  if (couponCode && row) {
+    try {
+      await execute(
+        `INSERT INTO coupon_usages (
+          id, coupon_id, coupon_code, customer_id, customer_name,
+          customer_email, order_id, discount_amount
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [
+          newId("CU"),
+          (await queryOne(`SELECT id FROM coupons WHERE LOWER(code) = LOWER($1)`, [couponCode]))?.id,
+          couponCode,
+          body.customerId ?? null,
+          body.customer ?? null,
+          body.email ?? null,
+          (row as any).id,
+          body.discountAmt ?? 0,
+        ],
+      );
+      await execute(
+        `UPDATE coupons SET used_count = used_count + 1 WHERE LOWER(code) = LOWER($1)`,
+        [couponCode],
+      );
+    } catch (err) {
+      console.error("Failed to record coupon usage:", err);
+    }
+  }
+
   return c.json(mapOrder(row!), 201);
 });
 

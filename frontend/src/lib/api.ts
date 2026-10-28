@@ -16,6 +16,7 @@ const PATHS: Record<string, string> = {
    moqSettings: "moq-settings",
    discountTiers: "discount-tiers",
    printSettings: "print-settings",
+   coupons: "coupons",
 };
 
 export type DiscountTier = {
@@ -179,4 +180,69 @@ export async function adminForgotPassword(masterKey: string, newPassword: string
     method: "POST",
     body: JSON.stringify({ masterKey, newPassword }),
   });
+}
+
+
+// ── Coupons ───────────────────────────────────────────────────────────────
+
+export type Coupon = {
+  id: string;
+  code: string;
+  name: string;
+  discountType: "fixed" | "percent";
+  discountValue: number;
+  minOrderAmount: number;
+  maxUses: number | null;
+  usedCount: number;
+  startsAt: string;
+  expiresAt: string | null;
+  isActive: boolean;
+  createdBy: string | null;
+  createdAt: string;
+};
+
+export type CouponUsage = {
+  id: string;
+  couponId: string;
+  couponCode: string;
+  customerId: string | null;
+  customerName: string | null;
+  customerEmail: string | null;
+  orderId: string | null;
+  discountAmount: number;
+  usedAt: string;
+};
+
+export async function fetchCoupons(): Promise<Coupon[]> {
+  return request<Coupon[]>("coupons");
+}
+
+export async function createCoupon(input: {
+  code: string;
+  name: string;
+  discountType: "fixed" | "percent";
+  discountValue: number;
+  minOrderAmount?: number;
+  maxUses?: number | null;
+  startsAt?: string;
+  expiresAt?: string | null;
+  isActive?: boolean;
+  createdBy?: string;
+}): Promise<Coupon> {
+  return request<Coupon>("coupons", { method: "POST", body: JSON.stringify(input) });
+}
+
+export async function updateCoupon(
+  id: string,
+  body: Partial<Coupon>,
+): Promise<Coupon> {
+  return request<Coupon>(`coupons/${id}`, { method: "PATCH", body: JSON.stringify(body) });
+}
+
+export async function deleteCoupon(id: string): Promise<void> {
+  await request(`coupons/${id}`, { method: "DELETE" });
+}
+
+export async function fetchCouponUsages(id: string): Promise<CouponUsage[]> {
+  return request<CouponUsage[]>(`coupons/${id}/usages`);
 }
