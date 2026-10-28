@@ -308,3 +308,36 @@ export function mapSettings(row: Record<string, unknown>) {
     theme: row.theme as "light" | "dark",
   };
 }
+
+
+export function mapCoupon(row: Record<string, unknown>) {
+  return {
+    id: row.id as string,
+    code: row.code as string,
+    name: row.name as string,
+    discountType: row.discount_type as "fixed" | "percent",
+    discountValue: num(row.discount_value),
+    minOrderAmount: num(row.min_order_amount),
+    maxUses: row.max_uses == null ? null : num(row.max_uses),
+    usedCount: num(row.used_count),
+    startsAt: formatDateTime(row.starts_at),
+    expiresAt: row.expires_at ? formatDateTime(row.expires_at) : null,
+    isActive: Boolean(row.is_active),
+    createdBy: (row.created_by as string) ?? null,
+    createdAt: formatDateTime(row.created_at),
+  };
+}
+
+export function mapCouponUsage(row: Record<string, unknown>) {
+  return {
+    id: row.id as string,
+    couponId: row.coupon_id as string,
+    couponCode: row.coupon_code as string,
+    customerId: (row.customer_id as string) ?? null,
+    customerName: (row.customer_name as string) ?? null,
+    customerEmail: (row.customer_email as string) ?? null,
+    orderId: (row.order_id as string) ?? null,
+    discountAmount: num(row.discount_amount),
+    usedAt: formatDateTime(row.used_at),
+  };
+}

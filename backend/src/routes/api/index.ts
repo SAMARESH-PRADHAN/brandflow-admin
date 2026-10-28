@@ -19,6 +19,7 @@ import { moqSettingsRoutes } from "./moq-settings.js";
 import { discountTierRoutes } from "./discount-tiers.js";
 import { printSettingsRoutes } from "./print-settings.js";
 import { adminAuthRoutes } from "./admin-auth.js";
+import { couponRoutes } from "./coupons.js";
 
 export const apiRoutes = new Hono();
 
@@ -49,6 +50,7 @@ apiRoutes.get("/", (c) =>
       "print-settings",
       "uploads",
       "admin-auth",
+      "coupons",
     ],
   }),
 );
@@ -70,3 +72,4 @@ apiRoutes.route("/razorpay", razorpayRoutes);
 apiRoutes.route("/moq-settings", moqSettingsRoutes);
 apiRoutes.route("/discount-tiers", discountTierRoutes);
 apiRoutes.route("/print-settings", printSettingsRoutes);
+apiRoutes.route("/coupons", couponRoutes);

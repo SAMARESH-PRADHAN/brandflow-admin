@@ -23,7 +23,7 @@ const AgentsPage = lazy(() => import("./routes/_admin.agents"));
 const AgentVisitsPage = lazy(() => import("./routes/_admin.agent-visits"));
 const PaymentsPage = lazy(() => import("./routes/_admin.payments"));
 const ReviewsPage = lazy(() => import("./routes/_admin.reviews"));
-
+const CouponsPage = lazy(() => import("./routes/_admin.coupons"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -85,6 +85,7 @@ export default function App() {
             <Route path="agent-visits" element={<AgentVisitsPage />} />
             <Route path="payments" element={<PaymentsPage />} />
             <Route path="reviews" element={<ReviewsPage />} />
+            <Route path="coupons" element={<CouponsPage />} />
             
           </Route>
           <Route path="*" element={<NotFound />} />

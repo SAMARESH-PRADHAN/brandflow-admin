@@ -24,7 +24,7 @@ dashboardRoutes.get("/", async (c) => {
       }>(
         `
         SELECT
-          (SELECT COALESCE(SUM(qty * unit_price), 0) FROM orders WHERE is_sample = false) AS revenue,
+          (SELECT COALESCE(SUM(paid_amount), 0) FROM orders WHERE is_sample = false) AS revenue,
           (SELECT COUNT(*) FROM orders WHERE is_sample = false) AS total_orders,
           (SELECT COUNT(*) FROM orders WHERE is_sample = false AND status IN ('Placed', 'Confirmed')) AS pending,
           (SELECT COUNT(*) FROM orders WHERE is_sample = false AND status = 'Delivered') AS completed,
@@ -33,7 +33,7 @@ dashboardRoutes.get("/", async (c) => {
           (SELECT COUNT(*) FROM products) AS products,
           (SELECT COUNT(*) FROM reviews) AS reviews,
           (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE status = 'Pending') AS pending_payments,
-          (SELECT COALESCE(SUM(qty * unit_price), 0) FROM orders WHERE is_sample = false AND order_date = $1) AS today_sales
+         (SELECT COALESCE(SUM(paid_amount), 0) FROM orders WHERE is_sample = false AND order_date = $1) AS today_sales
       `,
         [today],
       ),
@@ -41,8 +41,8 @@ dashboardRoutes.get("/", async (c) => {
       // Monthly revenue (last 8 months)
       query<{ label: string; revenue: string; orders: string }>(`
         SELECT to_char(order_date, 'YYYY-MM') AS label,
-               COALESCE(SUM(qty * unit_price), 0) AS revenue,
-               COUNT(*)::text AS orders
+               COALESCE(SUM(paid_amount), 0) AS revenue,
+COUNT(*)::text AS orders
         FROM orders
         WHERE is_sample = false
           AND order_date >= (CURRENT_DATE - INTERVAL '8 months')
@@ -59,7 +59,7 @@ dashboardRoutes.get("/", async (c) => {
 
       // Category sales (top 8)
       query<{ name: string; value: string }>(`
-        SELECT category AS name, COALESCE(SUM(qty * unit_price), 0) AS value
+        SELECT category AS name, COALESCE(SUM(paid_amount), 0) AS value
         FROM orders WHERE is_sample = false AND category <> ''
         GROUP BY category
         ORDER BY value DESC
@@ -70,7 +70,7 @@ dashboardRoutes.get("/", async (c) => {
       query<{ name: string; qty: string; revenue: string }>(`
         SELECT product_name AS name,
                SUM(qty)::text AS qty,
-               COALESCE(SUM(qty * unit_price), 0) AS revenue
+COALESCE(SUM(paid_amount), 0) AS revenue
         FROM orders
         WHERE is_sample = false AND product_name <> ''
         GROUP BY product_id, product_name

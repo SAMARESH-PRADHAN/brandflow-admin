@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, BarChart3, Package, PackagePlus, Boxes, Gift,
   ShoppingCart, ClipboardList, GitBranch, Users, Briefcase, MapPin,
-  CreditCard, Star, SlidersHorizontal, Printer,
+  CreditCard, Star, SlidersHorizontal, Printer, Ticket,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -17,11 +17,12 @@ const nav = [
   ]},
   { label: "Product Management", items: [
     { title: "Products", url: "/products", icon: Package },
-{ title: "Arreheniux Top Wear", url: "/products/new-collection", icon: PackagePlus },
+    { title: "Arreheniux Top Wear", url: "/products/new-collection", icon: PackagePlus },
     { title: "B2B Shop Products", url: "/products/b2b", icon: Boxes },
     // { title: "Welcome Kits", url: "/products/welcome-kits", icon: Gift },
     { title: "MOQ & Discount", url: "/moq-settings", icon: SlidersHorizontal },
     { title: "Print Settings", url: "/print-settings", icon: Printer },
+    { title: "Coupon Codes", url: "/coupons", icon: Ticket },
   ]},
   { label: "Orders", items: [
     { title: "All Orders", url: "/orders", icon: ShoppingCart },
