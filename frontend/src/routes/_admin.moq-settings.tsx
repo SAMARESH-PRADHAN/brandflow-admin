@@ -16,7 +16,6 @@ import {
 import { CATALOG_TAXONOMY } from "@/lib/catalog-taxonomy";
 import { ConfirmButton } from "@/components/admin/confirm-button";
 
-
 const DEFAULT_MIN_QTY = 5;
 const CUSTOM_ACCESSORIES = "Custom Accessories";
 
@@ -157,21 +156,80 @@ function MoqSettingsPage() {
   return (
     <PageShell
       title="Minimum Order Quantities & Discounts"
-      subtitle="Set MOQ and quantity discount tiers per category. Custom Accessories can be set per item."
+      subtitle="Set MOQ and discount tiers per category (default) and optionally per subcategory."
     >
-      <div className="space-y-3">
-        {CATALOG_TAXONOMY.map((cat) => (
-          <div key={cat.name} className="rounded-xl border border-border p-4">
-            <div className="mb-3 text-sm font-semibold">{cat.name}</div>
-            {cat.name !== CUSTOM_ACCESSORIES ? (
-              renderBucket(cat.name, null)
-            ) : (
-              <div className="grid gap-2 sm:grid-cols-2">
-                {(cat.items ?? []).map((item) => renderBucket(cat.name, item, item))}
+            <div className="space-y-3">
+        {CATALOG_TAXONOMY.map((cat) => {
+          return (
+            <div key={cat.name} className="rounded-xl border border-border p-4">
+              <div className="mb-3 text-sm font-semibold">{cat.name}</div>
+
+              {/* Category-wide default */}
+              <div className="mb-4">
+                <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Category default
+                </p>
+                {renderBucket(cat.name, null, "All subcategories (default)")}
               </div>
-            )}
-          </div>
-        ))}
+
+              {cat.hasTiers ? (
+                <div className="space-y-4">
+                  {/* Regular */}
+                  {(cat.regular ?? []).length > 0 && (
+                    <div>
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className="rounded-full bg-secondary px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                          Regular
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {(cat.regular ?? []).length} subcategories
+                        </span>
+                      </div>
+                      <div className="grid gap-2 md:grid-cols-2">
+                        {(cat.regular ?? []).map((sub) =>
+                          renderBucket(cat.name, sub, sub),
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Premium */}
+                  {(cat.premium ?? []).length > 0 && (
+                    <div>
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                          Premium
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {(cat.premium ?? []).length} subcategories
+                        </span>
+                      </div>
+                      <div className="grid gap-2 md:grid-cols-2">
+                        {(cat.premium ?? []).map((sub) =>
+                          renderBucket(cat.name, sub, sub),
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* No tiers (Accessories, School Uniform, ARRHENIUX, etc.) */
+                (cat.items ?? []).length > 0 && (
+                  <div>
+                    <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                      Subcategories
+                    </p>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      {(cat.items ?? []).map((sub) =>
+                        renderBucket(cat.name, sub, sub),
+                      )}
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+          );
+        })}
       </div>
     </PageShell>
   );

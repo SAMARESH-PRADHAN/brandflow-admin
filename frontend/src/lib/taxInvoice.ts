@@ -444,7 +444,7 @@ export async function downloadTaxInvoice(order: Order, opts?: { invoiceNumber?: 
 
     address,
 
-    notes ? `Notes: ${notes}` : "",
+    // notes ? `Notes: ${notes}` : "",
   ].filter(Boolean);
 
   const maxLines = Math.max(fromLines.length, billToLines.length);
@@ -643,6 +643,9 @@ export async function downloadTaxInvoice(order: Order, opts?: { invoiceNumber?: 
     detailLines.push(
       `Print: ${order.printType}${order.printLocation ? ` — ${order.printLocation}` : ""}`,
     );
+  }
+  if (order.notes){
+    detailLines.push(`Notes: ${order.notes}`)
   }
 
   if (sizesLine) {
