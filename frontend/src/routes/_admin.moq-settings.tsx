@@ -29,7 +29,7 @@ const DEFAULT_TIERS: EditableTier[] = [
   { minQty: 10, maxQty: 24, discountPct: 10, isBulk: false },
   { minQty: 25, maxQty: 49, discountPct: 20, isBulk: false },
   { minQty: 50, maxQty: 80, discountPct: 30, isBulk: false },
-  { minQty: 81, maxQty: null, discountPct: 40, isBulk: true },
+  { minQty: 81, maxQty: null, discountPct: 40, isBulk: false },
 ];
 
 function MoqSettingsPage() {
@@ -282,12 +282,13 @@ function TierEditor({
 
   const update = (i: number, patch: Partial<EditableTier>) =>
     setRows((prev) =>
-      prev.map((r, idx) => {
-        if (idx !== i) return r;
-        const next = { ...r, ...patch };
-        if (next.minQty <= 80 && next.isBulk) next.isBulk = false;
-        return next;
-      }),
+      // prev.map((r, idx) => {
+      //   if (idx !== i) return r;
+      //   const next = { ...r, ...patch };
+      //   if (next.minQty <= 80 && next.isBulk) next.isBulk = false;
+      //   return next;
+      // }),
+      prev.map((r, idx) => (idx !== i ? r : { ...r, ...patch, isBulk: false })),
     );
   const addRow = () =>
     setRows((prev) => [...prev, { minQty: 1, maxQty: null, discountPct: 0, isBulk: false }]);
@@ -327,7 +328,7 @@ function TierEditor({
             onChange={(e) => update(i, { discountPct: Number(e.target.value) })}
           />
           <span className="text-muted-foreground">%</span>
-          {r.minQty > 80 && (
+          {/* {r.minQty > 80 && (
             <label className="flex items-center gap-1 text-[10px] uppercase text-muted-foreground">
               <input
                 type="checkbox"
@@ -341,7 +342,7 @@ function TierEditor({
               />
               Bulk tier
             </label>
-          )}
+          )} */}
           <ConfirmButton
             trigger={
               <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive">

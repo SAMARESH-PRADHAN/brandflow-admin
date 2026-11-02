@@ -81,7 +81,7 @@ function ProductsPage() {
   //   return [...new Set([...(cat.regular ?? []), ...(cat.premium ?? [])])];
   // }, [fCat]);
 
-    // Sub-category filter options depend on Category + Type
+  // Sub-category filter options depend on Category + Type
   const filterSubOptions = useMemo(() => {
     // No category selected → show all subs (or only for selected type if type is set)
     if (fCat === "All") {
@@ -116,7 +116,6 @@ function ProductsPage() {
     // Type = All → show both tiers for that category
     return [...new Set([...(cat.regular ?? []), ...(cat.premium ?? [])])];
   }, [fCat, fType]);
-
 
   const filtered = useMemo(() => {
     if (pagination) return data;
@@ -290,14 +289,14 @@ function ProductsPage() {
           options={["All", ...CATEGORY_NAMES]}
         />
         <FilterSelect
-  label="Type"
-  value={fType}
-  onChange={(v) => {
-    setFType(v);
-    setFSub("All"); // reset sub when type changes
-  }}
-  options={["All", ...TYPES]}
-/>
+          label="Type"
+          value={fType}
+          onChange={(v) => {
+            setFType(v);
+            setFSub("All"); // reset sub when type changes
+          }}
+          options={["All", ...TYPES]}
+        />
         <FilterSelect
           label="Sub Category"
           value={fSub}
@@ -366,17 +365,16 @@ function ProductsPage() {
           ) {
             toast.error("Code, Name, Sample Price and Original Price are required");
             return;
-            }
-            const dup = data.some(
-              (p) =>
-                p.code.trim().toLowerCase() === v.code!.trim().toLowerCase() &&
-                p.id !== editing?.id,
-            );
-            if (dup) {
-              toast.error("Product code already exists");
-              return;
-            }
-          
+          }
+          const dup = data.some(
+            (p) =>
+              p.code.trim().toLowerCase() === v.code!.trim().toLowerCase() && p.id !== editing?.id,
+          );
+          if (dup) {
+            toast.error("Product code already exists");
+            return;
+          }
+
           try {
             if (editing) {
               await update(editing.id, v);
@@ -701,7 +699,7 @@ function ProductDialog({
             {!isArrheniux && (
               <div className="flex items-center justify-between rounded-lg border border-border p-3">
                 <div>
-                  <Label className="text-xs">Show in Bulk Order section</Label>
+                  <Label className="text-xs">Show in All Products section</Label>
                   <div className="text-[11px] text-muted-foreground">Visible in bulk listing</div>
                 </div>
                 <Switch

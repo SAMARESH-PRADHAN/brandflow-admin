@@ -79,12 +79,12 @@ const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
   ];
 
   return (
-    <PageShell title="All Orders" subtitle="Normal, Bulk, B2B and New Collection orders in one place">
+    <PageShell title="All Orders" subtitle="Normal, B2B and New Collection orders in one place">
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
         <TabsList className="flex-wrap">
           <TabsTrigger value="All">All ({data.length})</TabsTrigger>
           <TabsTrigger value="Normal">Normal ({data.filter((o) => o.type === "Normal").length})</TabsTrigger>
-          <TabsTrigger value="Bulk">Bulk ({data.filter((o) => o.type === "Bulk").length})</TabsTrigger>
+          {/* <TabsTrigger value="Bulk">Bulk ({data.filter((o) => o.type === "Bulk").length})</TabsTrigger> */}
           <TabsTrigger value="B2B">B2B ({data.filter((o) => o.type === "B2B").length})</TabsTrigger>
           <TabsTrigger value="New Collection">New Collection ({data.filter((o) => o.type === "New Collection").length})</TabsTrigger>
         </TabsList>
