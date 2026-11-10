@@ -195,20 +195,38 @@ export async function downloadTaxInvoice(order: Order, opts?: { invoiceNumber?: 
   // Amount calculations
   // -------------------------------------------------------------------------
 
-  const productSubtotal = Math.max(0, (order.qty || 0) * (order.unitPrice || 0));
+  // const productSubtotal = Math.max(0, (order.qty || 0) * (order.unitPrice || 0));
 
-  const printingPrice = Math.max(0, order.printingPrice || 0);
+  // const printingPrice = Math.max(0, order.printingPrice || 0);
 
-  const discountAmt = Math.max(0, order.discountAmt || 0);
+  // const discountAmt = Math.max(0, order.discountAmt || 0);
 
   const discountPct = Math.max(0, order.discountPct || 0);
 
-  const shipping = Math.max(0, order.shipping || 0);
+  // const shipping = Math.max(0, order.shipping || 0);
 
-  const gstPct = Math.max(0, order.gstPct ?? 5);
+  // const gstPct = Math.max(0, order.gstPct ?? 5);
 
-  // Same basic calculation used by the customer invoice.
-  const taxableAmount = Math.max(0, productSubtotal + printingPrice - discountAmt + shipping);
+  // // Same basic calculation used by the customer invoice.
+  // const taxableAmount = Math.max(0, productSubtotal + printingPrice - discountAmt + shipping);
+
+  const productSubtotal = Math.max(0, (order.qty || 0) * (order.unitPrice || 0));
+const printingPrice = Math.max(0, order.printingPrice || 0);
+const discountAmt = Math.max(0, order.discountAmt || 0);
+const productAfterDiscount = Math.max(0, productSubtotal - discountAmt);
+const afterDiscount = productAfterDiscount + printingPrice;
+const shipping = Math.max(0, order.shipping || 0);
+const gstPct = Math.max(0, order.gstPct ?? 5);
+
+const taxableAmount = Math.max(0, afterDiscount + shipping);
+// const total =
+//   order.totalAmount > 0
+//     ? order.totalAmount
+//     : taxableAmount + (taxableAmount * gstPct) / 100;
+
+
+// const effectivePerPc =
+//   order.qty > 0 ? Math.round(afterDiscount / order.qty) : 0;
 
   // Admin totalAmount is the source of truth.
   const total =
@@ -217,10 +235,10 @@ export async function downloadTaxInvoice(order: Order, opts?: { invoiceNumber?: 
   const paid = Math.max(0, order.paidAmount || 0);
 
   const due = Math.max(0, total - paid);
-
+const gstAmount = Math.max(0, total - taxableAmount);
   // GST is derived so displayed values remain consistent
   // with the final total.
-  const gstAmount = Math.max(0, total - (productSubtotal + printingPrice - discountAmt + shipping));
+  // const gstAmount = Math.max(0, total - (productSubtotal + printingPrice - discountAmt + shipping));
 
   // -------------------------------------------------------------------------
   // Customer information
