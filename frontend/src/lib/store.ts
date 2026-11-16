@@ -80,7 +80,7 @@ export type WelcomeKitItem = {
   description: string;
 };
 export type OrderStatus = "Placed" | "Confirmed" | "In Production" | "Shipped" | "Delivered";
-export type OrderType = "Normal" | "Bulk" | "B2B" | "New Collection";
+export type OrderType = "Normal" | "Bulk" | "B2B" | "New Collection" | "Sales Agent";
 export type Order = {
   id: string;
   customerId: string;
@@ -109,6 +109,13 @@ notes?: string;
   gstPct: number;
   shipping: number;
   type: OrderType;
+  // Sales Agent (empty for non-agent orders)
+  salesAgentId?: string | null;
+  salesAgentCode?: string;
+  salesAgentName?: string;
+  baseUnitPrice?: number;
+  agentUnitPrice?: number;
+  agentEarning?: number;
   status: OrderStatus;
   paymentStatus: "Paid" | "Pending" | "Partial" | "Failed" | "Refunded";
   paymentMethod: "UPI" | "Credit Card" | "Net Banking" | "COD" | "Wallet";
@@ -120,6 +127,9 @@ notes?: string;
   paidAmount: number;
   timeline: { status: OrderStatus; at: string }[];
   invoiceNumber?: string;
+    platformEarning?: number;
+      agentPayoutStatus?: "Pending" | "Paid";
+  agentPayoutAt?: string | null;
 };
 export type Customer = {
   id: string;
@@ -131,6 +141,22 @@ export type Customer = {
   totalSpend: number;
   joinDate: string;
   status: "Active" | "Inactive";
+};
+
+export type SalesAgent = {
+  id: string;
+ code?: string;
+  shareToken?: string;
+  name: string;
+  phone: string;
+  email: string;
+  address: string;
+  status: "Active" | "Inactive";
+  joinDate: string;
+  createdAt?: string;
+  updatedAt?: string;
+    payoutStatus?: "Pending" | "Paid";
+  payoutUpdatedAt?: string | null;
 };
 export type Agent = {
   id: string;
@@ -218,6 +244,7 @@ export const KEYS = {
   payments: "payments",
   reviews: "reviews",
   settings: "settings",
+    salesAgents: "salesAgents",
 } as const;
 
 // ============ Hook ============

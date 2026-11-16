@@ -17,6 +17,7 @@ const PATHS: Record<string, string> = {
    discountTiers: "discount-tiers",
    printSettings: "print-settings",
    coupons: "coupons",
+     salesAgents: "sales-agents",
 };
 
 export type DiscountTier = {

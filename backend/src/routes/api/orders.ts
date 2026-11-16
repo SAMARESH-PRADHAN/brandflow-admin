@@ -47,6 +47,98 @@ async function insertOrder(body: Record<string, unknown>, isSample: boolean) {
     },
   ];
 
+  // ---- Sales Agent resolution (authoritative) ----
+  let salesAgentId: string | null =
+    typeof body.salesAgentId === "string" && body.salesAgentId
+      ? body.salesAgentId
+      : null;
+  let salesAgentCode = "";
+  let salesAgentName = "";
+  let baseUnitPrice = Number(body.baseUnitPrice ?? 0) || 0;
+  let agentUnitPrice = Number(body.agentUnitPrice ?? body.unitPrice ?? 0) || 0;
+  let agentEarning = 0;
+  let platformEarning = 0;
+  let orderType = (body.type as string) ?? "Normal";
+  let unitPrice = Number(body.unitPrice ?? 0) || 0;
+  const qty = Number(body.qty ?? 1) || 1;
+
+  // Resolve agent by id or shareToken
+  if (!salesAgentId && typeof body.shareToken === "string" && body.shareToken) {
+    const byToken = await queryOne(
+      `SELECT id, code, name, status FROM sales_agents WHERE share_token = $1`,
+      [body.shareToken],
+    );
+    if (byToken && byToken.status === "Active") {
+      salesAgentId = byToken.id as string;
+    }
+  }
+
+  if (salesAgentId) {
+    const agent = await queryOne(
+      `SELECT id, code, name, status FROM sales_agents WHERE id = $1`,
+      [salesAgentId],
+    );
+
+    if (!agent || agent.status !== "Active") {
+      // Ignore invalid/inactive agent — treat as normal order
+      salesAgentId = null;
+    } else {
+      salesAgentCode = String(agent.code ?? "");
+      salesAgentName = String(agent.name ?? "");
+      orderType = "Sales Agent";
+
+      // Base price from catalog product (never trust frontend for base)
+      const productId = body.productId as string | null | undefined;
+      if (productId) {
+        const product = await queryOne(
+          `SELECT id, original_price FROM products WHERE id = $1`,
+          [productId],
+        );
+        if (product) {
+          baseUnitPrice = Number(product.original_price ?? 0) || 0;
+        }
+
+        const priceRow = await queryOne(
+          `SELECT agent_price FROM sales_agent_product_prices
+           WHERE sales_agent_id = $1 AND product_id = $2`,
+          [salesAgentId, productId],
+        );
+        const catalogAgentPrice =
+          priceRow != null ? Number(priceRow.agent_price) : baseUnitPrice;
+
+        // Agent sell price cannot be below base
+        const safeAgentPrice = Math.max(catalogAgentPrice, baseUnitPrice);
+
+        // Customer-facing unit price should be the agent price
+        // (coupons may reduce further on frontend — keep unitPrice from body
+        // only if it is still >= base after discount; otherwise clamp.)
+        const frontendUnit =
+          Number(body.unitPrice ?? safeAgentPrice) || safeAgentPrice;
+        unitPrice = Math.max(frontendUnit, 0);
+        agentUnitPrice = safeAgentPrice;
+
+        // Earnings on catalog margin × qty (not reduced by coupon in v1)
+        // If you prefer earnings on actual paid unit after coupon, use unitPrice instead of safeAgentPrice.
+        const marginPerUnit = Math.max(0, safeAgentPrice - baseUnitPrice);
+        const totalMargin = marginPerUnit * qty;
+
+        agentEarning = Math.round(totalMargin * 0.8 * 100) / 100;
+        platformEarning = Math.round(totalMargin * 0.2 * 100) / 100;
+      } else {
+        baseUnitPrice = Math.max(baseUnitPrice, 0);
+        agentUnitPrice = Math.max(agentUnitPrice, baseUnitPrice);
+        unitPrice = Number(body.unitPrice ?? agentUnitPrice) || agentUnitPrice;
+
+        const marginPerUnit = Math.max(0, agentUnitPrice - baseUnitPrice);
+
+        const totalMargin = marginPerUnit * qty;
+
+        agentEarning = Math.round(totalMargin * 0.8 * 100) / 100;
+        platformEarning = Math.round(totalMargin * 0.2 * 100) / 100;
+      }
+    }
+  }
+
   await execute(
     `INSERT INTO orders (
       id, customer_id, customer_name, phone, email, address,
@@ -55,11 +147,14 @@ async function insertOrder(body: Record<string, unknown>, isSample: boolean) {
       material, description, print_type, print_location, uploaded_logo,
       sizes, qty, unit_price,  printing_price, gst_pct, shipping,
       discount_pct, discount_amt, total_amount, paid_amount,
-      type, status, payment_status, payment_method, is_sample, order_date, timeline
+      type, status, payment_status, payment_method, is_sample, order_date, timeline,
+      sales_agent_id, sales_agent_code, sales_agent_name,
+      base_unit_price, agent_unit_price, agent_earning, platform_earning
     ) VALUES (
       $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,
       $22,$23,$24,$25,
-      $26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37
+      $26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,
+      $38,$39,$40,$41,$42,$43,$44
     )`,
     [
       id,
@@ -83,8 +178,8 @@ async function insertOrder(body: Record<string, unknown>, isSample: boolean) {
       body.printLocation ?? "",
       body.uploadedLogo ?? "",
       JSON.stringify(body.sizes ?? {}),
-      body.qty ?? 1,
-      body.unitPrice ?? 0,
+      qty,
+      unitPrice,
       body.printingPrice ?? 0,
       body.gstPct ?? 5,
       body.shipping ?? 0,
@@ -92,13 +187,20 @@ async function insertOrder(body: Record<string, unknown>, isSample: boolean) {
       body.discountAmt ?? 0,
       body.total ?? 0,
       body.paid ?? 0,
-      body.type ?? "Normal",
+      orderType,
       body.status ?? "Placed",
       body.paymentStatus ?? "Pending",
       body.paymentMethod ?? "UPI",
       isSample,
       body.date ?? new Date().toISOString().slice(0, 10),
       JSON.stringify(timeline),
+      salesAgentId,
+      salesAgentCode,
+      salesAgentName,
+      baseUnitPrice,
+      agentUnitPrice,
+      agentEarning,
+      platformEarning,
     ],
   );
 
@@ -112,7 +214,10 @@ const ORDER_LIST_COLUMNS = `
   material, description, print_type, print_location, uploaded_logo,
   sizes, qty, unit_price, printing_price, gst_pct, shipping,
   discount_pct, discount_amt, total_amount, paid_amount,
-  type, status, payment_status, payment_method, is_sample, order_date, timeline, invoice_number
+  type, status, payment_status, payment_method, is_sample, order_date, timeline,
+  invoice_number, razorpay_order_id,
+  sales_agent_id, sales_agent_code, sales_agent_name,
+  base_unit_price, agent_unit_price, agent_earning, platform_earning, agent_payout_status, agent_payout_at
 `;
 orderRoutes.get("/", async (c) => {
   const { where, params } = buildOrderFilters(c, false);
@@ -155,7 +260,9 @@ orderRoutes.post("/", async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
 
   // If a coupon code was sent, re-validate and apply discount server-side
-  const couponCode = (body.couponCode as string | undefined)?.trim()?.toUpperCase();
+  const couponCode = (body.couponCode as string | undefined)
+    ?.trim()
+    ?.toUpperCase();
   if (couponCode) {
     const couponRow = await queryOne(
       `SELECT * FROM coupons WHERE LOWER(code) = LOWER($1)`,
@@ -167,7 +274,9 @@ orderRoutes.post("/", async (c) => {
       if (couponRow.discount_type === "fixed") {
         discountAmount = Math.min(Number(couponRow.discount_value), cartTotal);
       } else {
-        discountAmount = Math.round((cartTotal * Number(couponRow.discount_value)) / 100);
+        discountAmount = Math.round(
+          (cartTotal * Number(couponRow.discount_value)) / 100,
+        );
       }
       // Override frontend values with server-calculated ones
       body.discountAmt = discountAmount;
@@ -188,7 +297,12 @@ orderRoutes.post("/", async (c) => {
         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
         [
           newId("CU"),
-          (await queryOne(`SELECT id FROM coupons WHERE LOWER(code) = LOWER($1)`, [couponCode]))?.id,
+          (
+            await queryOne(
+              `SELECT id FROM coupons WHERE LOWER(code) = LOWER($1)`,
+              [couponCode],
+            )
+          )?.id,
           couponCode,
           body.customerId ?? null,
           body.customer ?? null,
@@ -212,25 +326,32 @@ orderRoutes.post("/", async (c) => {
 orderRoutes.patch("/:id", async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
   if (body.sizes !== undefined) body.sizes = JSON.stringify(body.sizes);
-  if (body.timeline !== undefined) body.timeline = JSON.stringify(body.timeline);
+  if (body.timeline !== undefined)
+    body.timeline = JSON.stringify(body.timeline);
 
   const id = c.req.param("id");
   const existing = await queryOne(
     "SELECT id, status, invoice_number, uploaded_logo FROM orders WHERE id = $1",
-    [id]
+    [id],
   );
   if (!existing) return c.json({ error: "Order not found" }, 404);
 
   // --- Unique invoice number ---
-  if (body.invoiceNumber !== undefined && String(body.invoiceNumber).trim() !== "") {
+  if (
+    body.invoiceNumber !== undefined &&
+    String(body.invoiceNumber).trim() !== ""
+  ) {
     const clash = await queryOne(
       `SELECT id FROM orders
        WHERE invoice_number = $1 AND id <> $2
          AND invoice_number IS NOT NULL AND invoice_number <> ''`,
-      [String(body.invoiceNumber).trim(), id]
+      [String(body.invoiceNumber).trim(), id],
     );
     if (clash) {
-      return c.json({ error: "Invoice number already used on another order" }, 409);
+      return c.json(
+        { error: "Invoice number already used on another order" },
+        409,
+      );
     }
   }
 
@@ -247,11 +368,20 @@ orderRoutes.patch("/:id", async (c) => {
     ) {
       return c.json(
         { error: "Cannot mark as Delivered. Please generate invoice first." },
-        400
+        400,
       );
     }
   }
-
+  // if (body.agentPayoutStatus !== undefined) {
+  //   await execute(
+  //     `UPDATE orders
+  //      SET agent_payout_status = $1,
+  //          agent_payout_at = CASE WHEN $1 = 'Paid' THEN now() ELSE NULL END,
+  //          updated_at = now()
+  //      WHERE id = $2`,
+  //     [body.agentPayoutStatus, c.req.param("id")],
+  //   );
+  // }
   await cleanupRemovedImagesOnPatch(existing as Record<string, unknown>, body, {
     imageBodyKey: "uploadedLogo",
     imageDbColumn: "uploaded_logo",
@@ -294,11 +424,35 @@ orderRoutes.patch("/:id", async (c) => {
     sizes: "sizes",
     timeline: "timeline",
     invoiceNumber: "invoice_number",
+    agentPayoutStatus: "agent_payout_status",
   });
 
   return c.json(mapOrder(row!));
 });
 
+orderRoutes.patch("/:id/agent-payout", async (c) => {
+  const id = c.req.param("id");
+  const body = await parseJsonBody<{ status?: string }>(c);
+  const status = body.status === "Paid" ? "Paid" : "Pending";
+
+  const existing = await queryOne(`SELECT id, type FROM orders WHERE id = $1`, [id]);
+  if (!existing) return c.json({ error: "Order not found" }, 404);
+  if (existing.type !== "Sales Agent") {
+    return c.json({ error: "Only Sales Agent orders support agent payout" }, 400);
+  }
+
+  await execute(
+    `UPDATE orders
+     SET agent_payout_status = $1,
+         agent_payout_at = CASE WHEN $1 = 'Paid' THEN now() ELSE NULL END,
+         updated_at = now()
+     WHERE id = $2`,
+    [status, id],
+  );
+
+  const row = await queryOne(`SELECT * FROM orders WHERE id = $1`, [id]);
+  return c.json(mapOrder(row!));
+});
 orderRoutes.delete("/:id", async (c) => {
   await deleteByIdWithImageCleanup("orders", c.req.param("id"), {
     imageDbColumn: "uploaded_logo",
@@ -339,25 +493,32 @@ sampleOrderRoutes.post("/", async (c) => {
 });
 sampleOrderRoutes.patch("/:id", async (c) => {
   const body = await parseJsonBody<Record<string, unknown>>(c);
-  if (body.timeline !== undefined) body.timeline = JSON.stringify(body.timeline);
+  if (body.timeline !== undefined)
+    body.timeline = JSON.stringify(body.timeline);
 
   const id = c.req.param("id");
   const existing = await queryOne(
     "SELECT id, status, invoice_number FROM orders WHERE id = $1 AND is_sample = true",
-    [id]
+    [id],
   );
   if (!existing) return c.json({ error: "Sample order not found" }, 404);
 
   // Unique invoice number
-  if (body.invoiceNumber !== undefined && String(body.invoiceNumber).trim() !== "") {
+  if (
+    body.invoiceNumber !== undefined &&
+    String(body.invoiceNumber).trim() !== ""
+  ) {
     const clash = await queryOne(
       `SELECT id FROM orders
        WHERE invoice_number = $1 AND id <> $2
          AND invoice_number IS NOT NULL AND invoice_number <> ''`,
-      [String(body.invoiceNumber).trim(), id]
+      [String(body.invoiceNumber).trim(), id],
     );
     if (clash) {
-      return c.json({ error: "Invoice number already used on another order" }, 409);
+      return c.json(
+        { error: "Invoice number already used on another order" },
+        409,
+      );
     }
   }
 
@@ -374,7 +535,7 @@ sampleOrderRoutes.patch("/:id", async (c) => {
     ) {
       return c.json(
         { error: "Cannot mark as Delivered. Please generate invoice first." },
-        400
+        400,
       );
     }
   }

@@ -149,6 +149,43 @@ export function mapAgent(row: Record<string, unknown>) {
   };
 }
 
+export function mapSalesAgent(row: Record<string, unknown>) {
+  return {
+    id: row.id as string,
+    code: row.code as string,
+    shareToken: row.share_token as string,
+    name: row.name as string,
+    phone: row.phone as string,
+    email: row.email as string,
+    address: row.address as string,
+    status: row.status as "Active" | "Inactive",
+    joinDate: formatDate(row.join_date),
+    createdAt: formatDateTime(row.created_at),
+    updatedAt: formatDateTime(row.updated_at),
+    payoutStatus: (row.payout_status as "Pending" | "Paid") ?? "Pending",
+payoutUpdatedAt: row.payout_updated_at
+  ? formatDateTime(row.payout_updated_at)
+  : null,
+  };
+}
+
+export function mapSalesAgentProductPrice(row: Record<string, unknown>) {
+  return {
+    id: row.id as string,
+    salesAgentId: row.sales_agent_id as string,
+    productId: row.product_id as string,
+    agentPrice: num(row.agent_price),
+    // optional joined product fields when selected
+    productCode: (row.product_code as string) ?? undefined,
+    productName: (row.product_name as string) ?? undefined,
+    originalPrice: row.original_price !== undefined ? num(row.original_price) : undefined,
+    image: (row.image as string) ?? undefined,
+    category: (row.category as string) ?? undefined,
+    type: (row.type as string) ?? undefined,
+    subCategory: (row.sub_category as string) ?? undefined,
+  };
+}
+
 export function mapOrder(row: Record<string, unknown>) {
   return {
     id: row.id as string,
@@ -181,7 +218,7 @@ notes:       (row.notes as string) ?? "",
     discountAmt: num(row.discount_amt),
     totalAmount: num(row.total_amount),
     paidAmount: num(row.paid_amount),
-    type: row.type as "Normal" | "Bulk" | "B2B" | "New Collection",
+    type: row.type as "Normal" | "Bulk" | "B2B" | "New Collection" | "Sales Agent",
     status: row.status as "Placed" | "Confirmed" | "In Production" | "Shipped" | "Delivered",
     paymentStatus: row.payment_status as "Paid" | "Pending" | "Partial" | "Failed" | "Refunded",
     paymentMethod: row.payment_method as "UPI" | "Credit Card" | "Net Banking" | "COD" | "Wallet",
@@ -189,6 +226,16 @@ notes:       (row.notes as string) ?? "",
     date: formatDate(row.order_date),
     timeline: jsonArray(row.timeline),
     invoiceNumber: (row.invoice_number as string) ?? "",
+        // Sales Agent fields (null/empty for Normal / B2B orders)
+    salesAgentId: (row.sales_agent_id as string) ?? null,
+    salesAgentCode: (row.sales_agent_code as string) ?? "",
+    salesAgentName: (row.sales_agent_name as string) ?? "",
+    baseUnitPrice: num(row.base_unit_price),
+    agentUnitPrice: num(row.agent_unit_price),
+    agentEarning: num(row.agent_earning),
+        agentPayoutStatus: (row.agent_payout_status as "Pending" | "Paid") ?? "Pending",
+    agentPayoutAt: row.agent_payout_at ? formatDateTime(row.agent_payout_at) : null,
+    platformEarning: num(row.platform_earning),
   };
 }
 
