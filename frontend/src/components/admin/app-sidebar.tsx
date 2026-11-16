@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, BarChart3, Package, PackagePlus, Boxes, Gift,
   ShoppingCart, ClipboardList, GitBranch, Users, Briefcase, MapPin,
-  CreditCard, Star, SlidersHorizontal, Printer, Ticket,
+  CreditCard, Star, SlidersHorizontal, Printer, Ticket, UserPlus,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -32,6 +32,7 @@ const nav = [
   { label: "Users", items: [
     { title: "Customers", url: "/customers", icon: Users },
     { title: "B2B Agents", url: "/agents", icon: Briefcase },
+    { title: "Sales Agents", url: "/sales-agents", icon: UserPlus },
     { title: "Agent Visits", url: "/agent-visits", icon: MapPin },
   ]},
   { label: "Business", items: [

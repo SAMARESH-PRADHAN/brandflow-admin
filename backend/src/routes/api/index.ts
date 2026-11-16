@@ -20,6 +20,7 @@ import { discountTierRoutes } from "./discount-tiers.js";
 import { printSettingsRoutes } from "./print-settings.js";
 import { adminAuthRoutes } from "./admin-auth.js";
 import { couponRoutes } from "./coupons.js";
+import { salesAgentRoutes } from "./sales-agents.js";
 
 export const apiRoutes = new Hono();
 
@@ -51,6 +52,7 @@ apiRoutes.get("/", (c) =>
       "uploads",
       "admin-auth",
       "coupons",
+      "sales-agents",
     ],
   }),
 );
@@ -61,6 +63,7 @@ apiRoutes.route("/new-collection", newCollectionRoutes);
 apiRoutes.route("/welcome-kits", welcomeKitRoutes);
 apiRoutes.route("/customers", customerRoutes);
 apiRoutes.route("/agents", agentRoutes);
+apiRoutes.route("/sales-agents", salesAgentRoutes);
 apiRoutes.route("/agent-visits", agentVisitRoutes);
 apiRoutes.route("/orders", orderRoutes);
 apiRoutes.route("/sample-orders", sampleOrderRoutes);

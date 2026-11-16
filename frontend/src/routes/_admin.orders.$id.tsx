@@ -157,7 +157,28 @@ function OrderDetail() {
           </div>
           <div className="mt-3 rounded-lg bg-secondary/40 p-3 text-xs">{order.description}</div>
         </SectionCard>
-
+        {order.type === "Sales Agent" && (
+          <SectionCard title="Sales Agent" className="lg:col-span-3">
+            <div className="grid gap-3 md:grid-cols-3 text-sm">
+              <div>
+                <div className="text-xs text-muted-foreground">Agent</div>
+                <div className="font-medium">{order.salesAgentName || "—"}</div>
+                <div className="font-mono text-xs text-muted-foreground">{order.salesAgentCode || ""}</div>
+              </div>
+              <Row label="Base unit price" value={inrFull(order.baseUnitPrice ?? 0)} />
+              <Row label="Agent unit price" value={inrFull(order.agentUnitPrice ?? order.unitPrice ?? 0)} />
+              <Row label="Qty" value={String(order.qty)} />
+              <Row label="Customer total" value={inrFull(order.totalAmount || order.qty * order.unitPrice)} />
+                            <Row
+                label="Total margin"
+                value={inrFull((order.agentEarning ?? 0) + (order.platformEarning ?? 0))}
+              />
+              <Row label="Agent earning (80%)" value={inrFull(order.agentEarning ?? 0)} />
+              <Row label="Arrheniux share (20%)" value={inrFull(order.platformEarning ?? 0)} />
+              <Row label="Agent payout" value={order.agentPayoutStatus ?? "Pending"} />
+            </div>
+          </SectionCard>
+        )}
         <SectionCard title="Customer Artwork / Logo" className="lg:col-span-3">
           {order.uploadedLogo ? (
             <div className="flex flex-wrap items-center gap-4">
