@@ -166,6 +166,12 @@ export function mapSalesAgent(row: Record<string, unknown>) {
 payoutUpdatedAt: row.payout_updated_at
   ? formatDateTime(row.payout_updated_at)
   : null,
+  panNumber: (row.pan_number as string) ?? "",
+    aadhaarNumber: (row.aadhaar_number as string) ?? "",
+    bankAccountName: (row.bank_account_name as string) ?? "",
+    bankAccountNumber: (row.bank_account_number as string) ?? "",
+    bankIfsc: (row.bank_ifsc as string) ?? "",
+    bankName: (row.bank_name as string) ?? "",
   };
 }
 
