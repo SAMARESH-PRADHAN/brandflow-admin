@@ -75,8 +75,9 @@ salesAgentRoutes.post("/", rateLimit(10, 60000), async (c) => {
   }
 
   await execute(
-    `INSERT INTO sales_agents (id, code, share_token, name, phone, email, address, status, join_date)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+    `INSERT INTO sales_agents (id, code, share_token, name, phone, email, address, status, join_date, pan_number, aadhaar_number,
+     bank_account_name, bank_account_number, bank_ifsc, bank_name)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
     [
       id,
       code,
@@ -87,6 +88,12 @@ salesAgentRoutes.post("/", rateLimit(10, 60000), async (c) => {
       body.address ?? "",
       body.status ?? "Active",
       body.joinDate ?? new Date().toISOString().slice(0, 10),
+      body.panNumber ?? "",
+    body.aadhaarNumber ?? "",
+    body.bankAccountName ?? "",
+    body.bankAccountNumber ?? "",
+    body.bankIfsc ?? "",
+    body.bankName ?? "",
     ],
   );
 
@@ -117,6 +124,12 @@ salesAgentRoutes.patch("/:id", async (c) => {
     status: "status",
     joinDate: "join_date",
     payoutStatus: "payout_status",
+    panNumber: "pan_number",
+  aadhaarNumber: "aadhaar_number",
+  bankAccountName: "bank_account_name",
+  bankAccountNumber: "bank_account_number",
+  bankIfsc: "bank_ifsc",
+  bankName: "bank_name",
   });
 
    if (body.payoutStatus !== undefined) {

@@ -157,6 +157,12 @@ export type SalesAgent = {
   updatedAt?: string;
     payoutStatus?: "Pending" | "Paid";
   payoutUpdatedAt?: string | null;
+  panNumber?: string;
+  aadhaarNumber?: string;
+  bankAccountName?: string;
+  bankAccountNumber?: string;
+  bankIfsc?: string;
+  bankName?: string;
 };
 export type Agent = {
   id: string;
