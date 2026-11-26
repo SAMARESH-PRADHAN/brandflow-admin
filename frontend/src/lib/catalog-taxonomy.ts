@@ -22,19 +22,19 @@ export const B2B_SUBCATEGORY_NAMES = [
 ] as const;
 export const CATALOG_TAXONOMY: TaxCategory[] = [
   {
-    name: "Oversized T-Shirts",
+    name: "Custom Oversized T-Shirts",
     hasTiers: true,
-    regular: ["Polycotton Oversized T-Shirts"],
+    regular: ["Polycotton Oversize T-Shirts"],
     premium: ["Cotton Oversized T-Shirts", "Terry / Loopnet Oversized T-Shirts"],
   },
   {
-    name: "Hoodies",
+    name: "Custom Hoodies",
     hasTiers: true,
     regular: ["Spun Fleece Hoodies"],
     premium: ["Polycotton Hoodies", "American Fleece Hoodies", "Cotton Hoodies"],
   },
   {
-    name: "Jersey",
+    name: "Custom Jersey",
     hasTiers: true,
     regular: ["All Over Printed Jersey", "Front Printed Jersey", "Front & Back Printed Jersey"],
     premium: ["All Over Printed Jersey", "Front Printed Jersey", "Front & Back Printed Jersey"],
@@ -49,7 +49,7 @@ export const CATALOG_TAXONOMY: TaxCategory[] = [
     ],
     premium: [
       "240 GSM Cotton Polo T-Shirts", "240 GSM Polycotton Polo T-Shirts", "240 GSM CP Polo T-Shirts",
-      "240 GSM Spun Polo T-Shirts (Polyester)", "240 GSM Honeycomb Polo T-Shirts (Polyester)",
+      "240 GSM Spun Polo T-Shirts (Polyester)", "180 GSM Techno Matty Polo T-Shirts (Premium Polyster)",
       "180 GSM SAP Matty Polo T-Shirts (Premium Polyester)", "180 GSM Dotnet Polo T-Shirts (Polyester)",
       "170 GSM Nirmal Net Polo T-Shirts (Polyester)",
     ],
@@ -82,11 +82,11 @@ export const CATALOG_TAXONOMY: TaxCategory[] = [
     premium: [
       "Cotton Round Neck T-Shirts", "Polycotton Round Neck T-Shirts",
       "Corporate SAP Matty Round Neck T-Shirts", "SAP Matty White Round Neck T-Shirts",
-      "Cotton Gym Round Neck T-Shirts",
+      "Sublimation Round Neck T-Shirts",
     ],
   },
   {
-    name: "Aprons",
+    name: "Custom Aprons",
     hasTiers: true,
     regular: ["University Apron", "Nurse Apron", "Medical Apron"],
     premium: ["University Apron", "Nurse Apron", "Medical Apron"],
